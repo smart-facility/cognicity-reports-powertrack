@@ -1,0 +1,17 @@
+{
+	"name": "cognicity-reports",
+	"description": "CogniCity reports module",
+	"version": "0.0.1",
+	"author": "Tomas Holderness <tomas@uow.edu.au>",
+	"preferGlobal":false,
+	"private": true,
+	"dependencies": {
+		"express": ">=3.2.6",
+		"daemonize2": ">=0.4.2",
+		"ntwitter": ">=0.5.0",
+		"pg": ">=2.0.0"
+	},
+	"engines":{
+		"node":">=0.10.12"
+		}
+}
