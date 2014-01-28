@@ -16,7 +16,7 @@ config.twitter.consumer_secret = '';
 config.twitter.access_token_key = '';
 config.twitter.access_token_secret = '';
 
-//Twitter stream parametes
+//Twitter stream parameters
 config.twitter.bbox = '106.5894, -6.4354, 107.0782, -5.9029'; // Jakarta appx.
 config.twitter.track = 'flood, banjir'; //Twitter track keywords
 config.twitter.city = 'jakarta'; //User profile location keyword
