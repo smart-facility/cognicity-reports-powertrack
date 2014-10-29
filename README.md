@@ -17,6 +17,7 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 * Node-Postgres version 2.0.0 or later
 * ntwitter version 0.5.0 or later
 * gnip version 0.2.1 or later
+* winston version 0.8.1 or later
 
 ### Installation
 Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](http://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
@@ -25,6 +26,11 @@ Install the node dependencies in package.json using NPM: `npm install`
 
 ### Configuration
 App configuration parameters are stored in a configuration file which is parsed by app.js. See sample-reports-config.js for an example configuration.
+
+#### Logging parameters
+* level - info or debug are most useful here, debug will give you more verbose logging output
+* maxFileSize - max size (in bytes) of each log file before a new one is created
+* maxFiles - number of log files to retain
 
 #### Gnip parameters
 * stream [true | false] - set to true to connect to Gnip stream.

@@ -4,7 +4,12 @@ var config = {};
 
 // Instance name - default name for this configuration (will be server process name)
 config.instance = 'cognicity-reports-powertrack';
-config.debug = true; // Debug mode; if on, more logging is produced
+
+//Logging configuration
+config.logger = {}
+config.logger.level = "info"; // What level to log at; info or debug are most useful
+config.logger.maxFileSize = 1024 * 1024 * 100; // Max file size in bytes of each log file; default 100MB
+config.logger.maxFiles = 10; // Max number of log files kept
 
 //Twitter app authentication details
 config.twitter = {};
