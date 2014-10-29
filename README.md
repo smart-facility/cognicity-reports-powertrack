@@ -19,14 +19,22 @@ Cognicity-reports is the NodeJS reports module for the CogniCity framework, resp
 * gnip version 0.2.1 or later
 
 ### Installation
-Download the source code for cognicity-reports from github: [http://github.com/smart-facility/cognicity-reports](http://github.com/smart-facility/cognicity-reports) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
+Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](http://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
 
 Install the node dependencies in package.json using NPM: `npm install`
 
 ### Configuration
 App configuration parameters are stored in a configuration file which is parsed by app.js. See sample-reports-config.js for an example configuration.
 
-#### Twitter stream configuration
+#### Gnip parameters
+* stream [true | false] - set to true to connect to Gnip stream.
+* streamTimeout - Gnip stream timeout, should be >30s (in milliseconds)
+* username - Gnip username
+* password - Gnip password
+* steamUrl - URL to fetch JSON stream from Gnip Powertrack
+* rulesUrl - URL to fetch JSON rules from Gnip Powertrack
+
+#### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
 
 #### Twitter stream parameters
@@ -35,7 +43,6 @@ Set the app authentication parameters as provided by Twitter. See the [ntwitter-
 * city - specify user city to help filter tweets without geolocation data
 * users - the Twitter account usernames designated for confirmation tweets.
 * send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
-* stream [true | false] - set to true to connect to twitter stream.
 
 #### Twitter message text
 * invite_in/en - Text for confrmation request tweets [Bahasa Indonesian/English]
