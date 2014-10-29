@@ -15,19 +15,25 @@ Usage:	node daemon.js cognicity-reports-config.js start
 var sys = require('util');
 var fs = require('fs');
 var twitter = require('ntwitter'); //twitter streaming API
+var Gnip = require('gnip');
 var pg = require('pg'); //Postgres
 
+// Verify expected arguments
 if (process.argv[2]){
 	var config = require(__dirname+'/'+process.argv[2]); 
-	}
-
-else{
+} else {
 	throw new Error('No config file. Usage: node app.js config.js')
-	}
-	
+}
+
+// TODO Verify DB connection is up
+
 // Create a list of keywords and usernames from config
 config.twitter.keywords = config.twitter.track.split(',');
 config.twitter.usernames = config.twitter.users.split(',');
+
+// Gnip vars
+var stream;
+var streamReconnectTimeout = 1;
 
 //Twitter
 var twit = new twitter({
@@ -38,12 +44,11 @@ var twit = new twitter({
 });
 
 twit.verifyCredentials(function (err, data) {
-if (err) {
-	log("inviteMsg - Error verifying credentials: " + err);
-	process.exit(1);
-	}
-else {
-	log("Twitter credentials succesfully verified");
+	if (err) {
+		log("inviteMsg - Error verifying credentials: " + err);
+		process.exit(1);
+	} else {
+		log("Twitter credentials succesfully verified");
 	}
 });
 
@@ -55,9 +60,11 @@ function openLog(logfile) {
 }
 var logStream = openLog(__dirname+"/"+config.instance+".log");
 function log(msg) {
-    logStream.write(msg + "\n");
+    logStream.write((new Date).toUTCString() + ": " + msg + "\n");
 }
-
+function debug(msg) {
+	if ( debug ) logStream.write( (new Date).toUTCString() + ": " + 'DEBUG: ' + msg + "\n" );
+}
 
 // Send @reply Twitter message
 function sendReplyTweet(user, message, callback){
@@ -97,6 +104,7 @@ function sendReplyTweet(user, message, callback){
 					}
 				}
 			}
+			done();
 		});
 	});
 }
@@ -222,7 +230,8 @@ function insertNonSpatial(tweet){
 };
 	
 function filter(tweet){
-
+	debug( 'filter: Received tweet: screen_name="' + tweet.user.screen_name + '", text="' + tweet.text.replace("\n", "") + '", coordinates="' + tweet.coordinates + '"' );
+	
 	//Keyword check
 	for (var i=0; i<config.twitter.keywords.length; i++){
 		var re = new RegExp(config.twitter.keywords[i], "gi");
@@ -236,21 +245,26 @@ function filter(tweet){
 					//regexp for city
 					var re = new RegExp(config.twitter.city, "gi");
 					
-					//Geo check
 					if (tweet.coordinates != null){
+						//Geo check
+						debug( 'filter: Tweet matched username, confirmed' );
 						insertConfirmed(tweet); //user + geo = confirmed report!
-					}
-					
-					//City location check
-					else if(tweet.place != null && tweet.place.match(re) || tweet.user.location != null && tweet.user.location.match(re)){
+					} else if ( ( tweet.place != null && tweet.place.match(re) ) || ( tweet.user.location != null && tweet.user.location.match(re) ) ){
+						//City location check
+						debug( 'filter: Tweet matched username, no coordaintes but place/location match' );
+						
 						if (tweet.lang == 'id'){
 							insertNonSpatial(tweet); //User sent us a message but no geo, log as such
 							sendReplyTweet(tweet.user.screen_name, config.twitter.thanks_text_in); //send geo reminder
-							}
+						}
 						else {
 							insertNonSpatial(tweet); //User sent us a message but no geo, log as such
 							sendReplyTweet(tweet.user.screen_name, config.twitter.thanks_text_en) //send geo reminder
-							}	
+						}	
+					} else {
+						debug( 'filter: Tweet matched username but no geo or place' );
+						// TODO Should this happen? Can we avoid the place/location check above and
+						// send geo reminder to anyone tweeting @user with keyword?
 					}
 					return;
 				}
@@ -259,6 +273,8 @@ function filter(tweet){
 					
 					//Geo check
 					if (tweet.coordinates != null){
+						debug( 'filter: Tweet has geo but unconfirmed, sending invite' );
+
 						insertUnConfirmed(tweet) //insert unconfirmed report, then invite the user to participate
 						if (tweet.lang == 'id'){
 							sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_in, function(){
@@ -274,7 +290,10 @@ function filter(tweet){
 					
 					//no geo, no user - but keyword so send invite
 					else {
-
+						debug( 'filter: Tweet no geo and unconfirmed, sending invite' );
+						
+						// TODO We should be checking location and place here and only sending invite
+						// if we get a match
 						if (tweet.lang == 'id'){
 							sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_in, function(){
 								insertInvitee(tweet);
@@ -291,62 +310,95 @@ function filter(tweet){
 			}
 		}
 	}
+	
+	debug( 'filter: Tweet did not match any keywords' );
 }
 
 //Stream
 function connectStream(){
+	// Connect Gnip stream and setup event handlers
+	var reconnectTimeoutHandle;
 
-	if (config.twitter.stream == true){
-		twit.stream('statuses/filter',{'locations':config.twitter.bbox, 'track':config.twitter.track} ,function(stream){
-			stream.on('data', function (data){
-				if (data.warning){
-					log(JSON.stringify(data.warning.code)+':'+JSON.stringify(data.warning.message));
-				}
-				if (data.disconnect){
-					log('disconnect code:'+JSON.stringify(data.disconnect.code));
-				}
-				else {
-					filter(data);					
-					time = new Date().getTime(); //Updated the time with last tweet.
-					}
-				});
-			stream.on('error', function(error, code){
-				log('Twitter stream error: ' + JSON.stringify(error) + JSON.stringify(code));
-				log('Stream error details: ' + JSON.stringify(arguments)); //Added extra log details to help with debugging.
-				})
-			stream.on('end', function(){
-				log('stream has been disconnected');
-				})
-			stream.on('destroy', function(){
-				log('stream has died');
-				})
-			//Catch an un-handled disconnection
-			if (time!=0){
-				if (new Date().getTime() - time > config.twitter.stream.timeout){
-					// Try to destroy the existing stream
-					log(new Date()+': Un-handled stream error, reached timeout - attempting to reconnect')
-					stream.destroy;
-					// Start stream again and reset time.
-					time = 0;
-					connectStream();
-				}
-			}
-		})
-	};
-}
-var time = 0;
-// Brute force stream management  - create a new stream if existing one dies without a trace.
-function forceStreamAlive(){
-	if (time != 0){
-		if (new Date().getTime() - time > config.twitter.timeout){
-			log(new Date()+': Timeout for connectStream() function - attempting to create a new stream');
-			time = 0;
-			connectStream();
-		}
+	function reconnectSocket() {
+		// Try and destroy the existing socket, if it exists
+		log( 'connectStream: Connection lost, destroying socket' );
+		if ( stream._req ) stream._req.destroy();
+		// Attempt to reconnect
+		log( 'connectStream: Attempting to reconnect stream' );
+		stream.start();
+		streamReconnectTimeout *= 2;
+		// TODO Set max timeout and notify if we hit it?
 	}
-	setTimeout(forceStreamAlive, 1000)
+
+	function reconnectStream() {				
+		if (reconnectTimeoutHandle) clearTimeout(reconnectTimeoutHandle);
+		debug( 'connectStream: queing reconnect for ' + streamReconnectTimeout );
+		reconnectTimeoutHandle = setTimeout( reconnectSocket, streamReconnectTimeout*1000 );
+	}
+	
+	stream = new Gnip.Stream({
+	    url : config.gnip.steamUrl,
+	    user : config.gnip.username,
+	    password : config.gnip.password
+	});
+	stream.on('ready', function() {
+	    log('connectStream: Stream ready!');
+	    streamReconnectTimeout = 1;
+		// Augment Gnip.Stream._req (Socket) object with a timeout handler.
+		// We are accessing a private member here so updates to gnip could break this,
+	    // but gnip module does not expose the socket or methods to handle timeout.
+		stream._req.setTimeout( config.gnip.streamTimeout, function() {
+			reconnectStream();
+		});
+	});
+	stream.on('object', function(tweet) {
+	    filter(tweet);
+	});
+	stream.on('error', function(err) {
+	    log("connectStream: Error connecting stream:" + err);
+		reconnectStream();
+	});
+	stream.on('end', function(err) {
+	    log("connectStream: Stream ended: " + err);
+		reconnectStream();
+	});
+
+	var rules = new Gnip.Rules({
+	    url : config.gnip.rulesUrl,
+	    user : config.gnip.username,
+	    password : config.gnip.password
+	});
+	// TODO Create rules programatically from config
+	/*
+	var newRules = [
+	    '#hashtag', 
+	    'keyword', 
+	    '@user',
+	    {value: 'keyword as object'},
+	    {value: '@demianr85', tag: 'rule tag'}
+	];
+	
+	rules.update(newRules, function(err) {
+	    if (err) throw err;
+	    stream.start();
+	});
+	*/
+	
+	log('connectStream: Connecting stream...');
+	stream.start();
 }
 
-log(new Date()+': mj-reports instance: '+config.instance+' started');
-connectStream();
-forceStreamAlive();
+// TODO Notify on failure
+// TODO Get backfill data?
+// TODO Get replay data?
+// TODO Make logging messages consistent - date, method, msg
+// TODO Optimize filter method, precompile regexes
+
+// Catch unhandled exceptions and log
+process.on('uncaughtException', function (err) {
+	log('uncaughtException: ' + err.message + err.stack);
+	process.exit(1);
+});
+
+// Start up - connect the Gnip stream
+if ( config.gnip.stream ) connectStream();

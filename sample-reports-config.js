@@ -4,17 +4,23 @@ var config = {};
 
 // Instance name - default name for this configuration (will be server process name)
 config.instance = 'cognicity-reports';
-
-//Twitter stream config
-config.twitter = {};
-config.twitter.stream = true; //Set to false to turn off twitter connection (for testing)
-config.twitter.timeout = 900000; //Default twitter stream timeout (milliseconds) 600000 (10 minutes)
+config.debug = true; // Debug mode; if on, more logging is produced
 
 //Twitter app authentication details
+config.twitter = {};
 config.twitter.consumer_key = '';
 config.twitter.consumer_secret = '';
 config.twitter.access_token_key = '';
 config.twitter.access_token_secret = '';
+
+//Gnip Powertrack API
+config.gnip = {};
+config.gnip.stream = true; //connect to stream and log reports?
+config.gnip.streamTimeout = 60000; // Must be >30s as a keep-alive is sent at least every 30s
+config.gnip.username = 'username';
+config.gnip.password = 'password';
+config.gnip.steamUrl = 'https://stream.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod.json';
+config.gnip.rulesUrl = 'https://api.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod/rules.json';
 
 //Twitter stream parameters
 config.twitter.bbox = '106.5894, -6.4354, 107.0782, -5.9029'; // Jakarta appx.
@@ -22,7 +28,6 @@ config.twitter.track = 'flood, banjir'; //Twitter track keywords
 config.twitter.city = 'jakarta'; //User profile location keyword
 config.twitter.users = '@petajkt'; //Verification twitter account
 config.twitter.send_enabled = false; //send verfication requests?
-config.twitter.stream = true; //connect to stream and log reports?
 
 //Twitter message texts
 config.twitter.invite_text_in = 'Invite/Verification Tweet Text [IN]';

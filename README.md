@@ -15,6 +15,8 @@ Cognicity-reports is the NodeJS reports module for the CogniCity framework, resp
 * Express version 3.2.6 or later
 * Node-Daemonize 2 version 0.4.2 or later
 * Node-Postgres version 2.0.0 or later
+* ntwitter version 0.5.0 or later
+* gnip version 0.2.1 or later
 
 ### Installation
 Download the source code for cognicity-reports from github: [http://github.com/smart-facility/cognicity-reports](http://github.com/smart-facility/cognicity-reports) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
