@@ -2,11 +2,11 @@ CogniCity
 ===========
 **Open Source GeoSocial Intelligence Framework**
 
-####cognicity-reports: NodeJS app to collect unconfirmed reports from Twitter and send verification requests.
+####cognicity-reports-powertrack: NodeJS app to collect unconfirmed reports from Twitter via Gnip PowerTrack and send verification requests.
 
 
 ### About
-Cognicity-reports is the NodeJS reports module for the CogniCity framework, responsible for collecting relevant tweets, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
+Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity framework, responsible for collecting relevant tweets via Gnip PowerTrack, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
 
 ### Dependencies
 * NodeJS version 0.10.12 or later
@@ -31,8 +31,8 @@ App configuration parameters are stored in a configuration file which is parsed 
 * streamTimeout - Gnip stream timeout, should be >30s (in milliseconds)
 * username - Gnip username
 * password - Gnip password
-* steamUrl - URL to fetch JSON stream from Gnip Powertrack
-* rulesUrl - URL to fetch JSON rules from Gnip Powertrack
+* steamUrl - URL to fetch JSON stream from Gnip PowerTrack
+* rulesUrl - URL to fetch JSON rules from Gnip PowerTrack
 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.

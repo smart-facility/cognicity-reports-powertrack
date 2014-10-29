@@ -3,7 +3,7 @@
 var config = {};
 
 // Instance name - default name for this configuration (will be server process name)
-config.instance = 'cognicity-reports';
+config.instance = 'cognicity-reports-powertrack';
 config.debug = true; // Debug mode; if on, more logging is produced
 
 //Twitter app authentication details

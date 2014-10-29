@@ -11,6 +11,8 @@ Usage:	node daemon.js cognicity-reports-config.js start
 		node daemon.js cognicity-reports-config.js stop
 */
 
+// TODO jsdoc methods
+
 //Modules
 var sys = require('util');
 var fs = require('fs');
@@ -26,6 +28,7 @@ if (process.argv[2]){
 }
 
 // TODO Verify DB connection is up
+// TODO Handle DB conenction errors in DB functions (as well as query errors)
 
 // Create a list of keywords and usernames from config
 config.twitter.keywords = config.twitter.track.split(',');
@@ -53,6 +56,7 @@ twit.verifyCredentials(function (err, data) {
 });
 
 //Logging
+// TODO Make logging messages consistent - date, method, msg
 function openLog(logfile) {
     return fs.createWriteStream(logfile, {
         flags: "a", encoding: "utf8", mode: 0644
@@ -78,6 +82,7 @@ function sendReplyTweet(user, message, callback){
 				log(err, sql);
 				done(); // release database connection on error.
 			}
+
 			if (result && result.rows){
 				if (result.rows.length == 0){
 					if (config.twitter.send_enabled == true){
@@ -198,12 +203,9 @@ function insertNonSpatialUser(tweet){
 		var sql = "INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweet.user.screen_name+"'));"
 		
 		client.query(sql, function(err, result){
-			if (err){
-				log(err, sql);
-				done();
-			}
+			if (err) log("insertNonSpatialUser: ERROR: " + err.message + ", " + err.stack + ", " + sql);
+			else log("insertNonSpatialUser: Inserted non-spatial user");
 			done();
-			log(new Date()+'Inserted non-spatial user');
 		});	
 	});
 }
@@ -230,6 +232,8 @@ function insertNonSpatial(tweet){
 };
 	
 function filter(tweet){
+	// TODO Optimize filter method, precompile regexes
+
 	debug( 'filter: Received tweet: screen_name="' + tweet.user.screen_name + '", text="' + tweet.text.replace("\n", "") + '", coordinates="' + tweet.coordinates + '"' );
 	
 	//Keyword check
@@ -238,20 +242,19 @@ function filter(tweet){
 		if (tweet.text.match(re)){
 			
 			//Username check
-			for (var i=0; i<config.twitter.usernames.length; i++){
-				var re = new RegExp(config.twitter.usernames[i], "gi");
+			// TODO Should we cope with 0 usernames?
+			for (var j=0; j<config.twitter.usernames.length; j++){
+				var re = new RegExp(config.twitter.usernames[j], "gi");
 				if (tweet.text.match(re)){
-					
-					//regexp for city
-					var re = new RegExp(config.twitter.city, "gi");
-					
+										
+					// TODO Do real bounding box check here to cope with tweets with geo not in target location
 					if (tweet.coordinates != null){
 						//Geo check
 						debug( 'filter: Tweet matched username, confirmed' );
 						insertConfirmed(tweet); //user + geo = confirmed report!
-					} else if ( ( tweet.place != null && tweet.place.match(re) ) || ( tweet.user.location != null && tweet.user.location.match(re) ) ){
-						//City location check
-						debug( 'filter: Tweet matched username, no coordaintes but place/location match' );
+					} else {
+						// Keyword, username, no geo
+						debug( 'filter: Tweet matched username, no coordinates, asking for geo' );
 						
 						if (tweet.lang == 'id'){
 							insertNonSpatial(tweet); //User sent us a message but no geo, log as such
@@ -261,17 +264,15 @@ function filter(tweet){
 							insertNonSpatial(tweet); //User sent us a message but no geo, log as such
 							sendReplyTweet(tweet.user.screen_name, config.twitter.thanks_text_en) //send geo reminder
 						}	
-					} else {
-						debug( 'filter: Tweet matched username but no geo or place' );
-						// TODO Should this happen? Can we avoid the place/location check above and
-						// send geo reminder to anyone tweeting @user with keyword?
 					}
 					return;
 				}
+				
 				//End of usernames list, no match so message is unconfirmed
-				else if(i == config.twitter.usernames.length-1){
+				else if(j == config.twitter.usernames.length-1){
 					
 					//Geo check
+					// TODO Do real bounding box check here to cope with tweets with geo not in target location
 					if (tweet.coordinates != null){
 						debug( 'filter: Tweet has geo but unconfirmed, sending invite' );
 
@@ -279,31 +280,35 @@ function filter(tweet){
 						if (tweet.lang == 'id'){
 							sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_in, function(){
 								insertInvitee(tweet);
-								});	
-							}
-						else {
+							});	
+						} else {
 							sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_en, function(){
 								insertInvitee(tweet);			
-								});
-							}
+							});
+						}
 					}
 					
-					//no geo, no user - but keyword so send invite
+					//keyword, no geo, no user - send invite if location match
 					else {
-						debug( 'filter: Tweet no geo and unconfirmed, sending invite' );
 						
-						// TODO We should be checking location and place here and only sending invite
-						// if we get a match
-						if (tweet.lang == 'id'){
-							sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_in, function(){
-								insertInvitee(tweet);
+						//regexp for city
+						var re = new RegExp(config.twitter.city, "gi");
+
+						if ( ( tweet.place && tweet.place.full_name && tweet.place.full_name.match(re) ) || ( tweet.user.location != null && tweet.user.location.match(re) ) ) {
+							debug( 'filter: Tweet no geo and unconfirmed, location match, sending invite' );
+							
+							if (tweet.lang == 'id'){
+								sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_in, function(){
+									insertInvitee(tweet);
 								});
-							}
-						else {
-							sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_en, function(){
-								insertInvitee(tweet);
+							} else {
+								sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_en, function(){
+									insertInvitee(tweet);
 								});
-							}
+							}							
+						} else {
+							debug( 'filter: Tweet no geo and unconfirmed, no location match, no-op' );							
+						}
 					}
 					return;
 				}	
@@ -319,6 +324,8 @@ function connectStream(){
 	// Connect Gnip stream and setup event handlers
 	var reconnectTimeoutHandle;
 
+	// TODO Get backfill data on reconnect?
+	// TODO Get replay data on reconnect?
 	function reconnectSocket() {
 		// Try and destroy the existing socket, if it exists
 		log( 'connectStream: Connection lost, destroying socket' );
@@ -330,6 +337,9 @@ function connectStream(){
 		// TODO Set max timeout and notify if we hit it?
 	}
 
+	// TODO We get called twice for disconnect, once from error once from end
+	// Is this normal? Can we only use one event? Or is it possible to get only
+	// one of those handlers called under some error situations.
 	function reconnectStream() {				
 		if (reconnectTimeoutHandle) clearTimeout(reconnectTimeoutHandle);
 		debug( 'connectStream: queing reconnect for ' + streamReconnectTimeout );
@@ -352,7 +362,12 @@ function connectStream(){
 		});
 	});
 	stream.on('object', function(tweet) {
-	    filter(tweet);
+		// Catch errors here, otherwise rrror in filter method is presented as stream error
+		try {
+		    filter(tweet);
+		} catch (err) {
+		    log("connectStream: Error on object handler:" + err.message + ", " + err.stack);
+		}
 	});
 	stream.on('error', function(err) {
 	    log("connectStream: Error connecting stream:" + err);
@@ -388,16 +403,15 @@ function connectStream(){
 	stream.start();
 }
 
-// TODO Notify on failure
-// TODO Get backfill data?
-// TODO Get replay data?
-// TODO Make logging messages consistent - date, method, msg
-// TODO Optimize filter method, precompile regexes
-
 // Catch unhandled exceptions and log
 process.on('uncaughtException', function (err) {
-	log('uncaughtException: ' + err.message + err.stack);
+	log('uncaughtException: ' + err.message + ", " + err.stack);
 	process.exit(1);
+});
+
+process.on('SIGTERM', function() {
+	log('Exit: Application shutting down');
+	process.exit(0);
 });
 
 // Start up - connect the Gnip stream
