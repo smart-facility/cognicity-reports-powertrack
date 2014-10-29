@@ -39,16 +39,19 @@ config.twitter.usernames = config.twitter.users.split(',');
 var stream;
 var streamReconnectTimeout = 1;
 
-//Logging
+// Logging configuration
 winston
+	// Configure custom File transport to write plain text messages
 	.add(winston.transports.File, { 
-		filename: __dirname+"/"+config.instance+".log",
-		json: false,
-		maxsize: config.logger.maxFileSize,
-		maxFiles: config.logger.maxFiles,
-		level: config.logger.level
+		filename: __dirname+"/"+config.instance+".log", // Write to projectname.log
+		json: false, // Write in plain text, not JSON
+		maxsize: config.logger.maxFileSize, // Max size of each file
+		maxFiles: config.logger.maxFiles, // Max number of files
+		level: config.logger.level // Level of log messages
 	})
+	// Console transport is no use to us when running as a daemon
 	.remove(winston.transports.Console)
+	// Ask Winston to format plain text messages nicely
 	.cli();
 
 //Twitter
@@ -61,10 +64,10 @@ var twit = new twitter({
 
 twit.verifyCredentials(function (err, data) {
 	if (err) {
-		winston.error("inviteMsg - Error verifying credentials: " + err);
+		winston.error("twit.verifyCredentials: Error verifying credentials: " + err);
 		process.exit(1);
 	} else {
-		winston.info("Twitter credentials succesfully verified");
+		winston.info("twit.verifyCredentials: Twitter credentials succesfully verified");
 	}
 });
 
@@ -409,7 +412,7 @@ process.on('uncaughtException', function (err) {
 });
 
 process.on('SIGTERM', function() {
-	winston.info('Exit: Application shutting down');
+	winston.info('SIGTERM: Application shutting down');
 	process.exit(0);
 });
 

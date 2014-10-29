@@ -78,7 +78,7 @@ project-name daemon stopped
 ```
 
 ### Logging
-Express logger writes to project-name.log
+Winston writes to project-name.log (and project-name#.log if configured for multiple files)
 
 ### License
 This software is released under the GPLv3 License. See License.txt for details.
