@@ -19,7 +19,7 @@ var fs = require('fs');
 var twitter = require('ntwitter'); //twitter streaming API
 var Gnip = require('gnip');
 var pg = require('pg'); //Postgres
-var winston = require('winston');
+var logger = require('winston');
 
 // Verify expected arguments
 if (process.argv[2]){
@@ -36,9 +36,9 @@ var stream;
 var streamReconnectTimeout = 1;
 
 // Logging configuration
-winston
+logger
 	// Configure custom File transport to write plain text messages
-	.add(winston.transports.File, { 
+	.add(logger.transports.File, { 
 		filename: __dirname+"/"+config.instance+".log", // Write to projectname.log
 		json: false, // Write in plain text, not JSON
 		maxsize: config.logger.maxFileSize, // Max size of each file
@@ -46,7 +46,7 @@ winston
 		level: config.logger.level // Level of log messages
 	})
 	// Console transport is no use to us when running as a daemon
-	.remove(winston.transports.Console);
+	.remove(logger.transports.Console);
 
 //Twitter
 var twit = new twitter({
@@ -58,20 +58,27 @@ var twit = new twitter({
 
 twit.verifyCredentials(function (err, data) {
 	if (err) {
-		winston.error("twit.verifyCredentials: Error verifying credentials: " + err);
+		logger.error("twit.verifyCredentials: Error verifying credentials: " + err);
 		process.exit(1);
 	} else {
-		winston.info("twit.verifyCredentials: Twitter credentials succesfully verified");
+		logger.info("twit.verifyCredentials: Twitter credentials succesfully verified");
 	}
 });
 
+/**
+ * Resolve message code from config.twitter.
+ * Will fall back to trying to resolve message using default language set in configuration.
+ * @param {string} code Code to lookup in config.twitter 
+ * @param {string} lang Language to lookup in config.twitter[code]
+ * @returns {string} Message code, or null if not resolved.
+ */
 function getMessage(code, lang) {
 	if (config.twitter[code]) {
 		if (config.twitter[code][lang]) return config.twitter[code][lang];
 		if (config.twitter[code][config.twitter.defaultLanguage]) return config.twitter[code][config.twitter.defaultLanguage];
 	}
 	
-	winston.warn( "getMessage: Code could not be resolved for '" + code + "' and lang '" + lang +"'" );
+	logger.warn( "getMessage: Code could not be resolved for '" + code + "' and lang '" + lang +"'" );
 	return null;
 }
 
@@ -84,7 +91,7 @@ function sendReplyTweet(user, message, callback){
 		
 		client.query(sql, function(err, result){
 			if (err){
-				winston.error(err + ", " + sql);
+				logger.error(err + ", " + sql);
 				done(); // release database connection on error.
 			}
 
@@ -93,7 +100,7 @@ function sendReplyTweet(user, message, callback){
 					if (config.twitter.send_enabled == true){
 						twit.updateStatus('@'+user+' '+message, function(err, data){
 							if (err) {
-								winston.error('Tweeting failed: ' + err);
+								logger.error('Tweeting failed: ' + err);
 								}
 							else {
 								if (callback){
@@ -106,8 +113,8 @@ function sendReplyTweet(user, message, callback){
 					}
 					
 					else { // for testing
-						winston.info('sendReplyTweet is in test mode - no message will be sent. Callback will still run.');
-						winston.info('@'+user+' '+message);
+						logger.info('sendReplyTweet is in test mode - no message will be sent. Callback will still run.');
+						logger.info('@'+user+' '+message);
 						if (callback){
 							callback();
 						}
@@ -126,12 +133,12 @@ function insertConfirmedUser(tweet){
 		var sql = "SELECT upsert_tweet_users(md5('"+tweet.actor.preferredUsername+"'));";
 		client.query(sql, function(err, result){
 			if (err){
-				winston.error(err + ", " + sql);
+				logger.error(err + ", " + sql);
 				done();
 			}
 		});
 		if (err){
-			winston.error(err + ", " + sql);
+			logger.error(err + ", " + sql);
 			done();
 		}
 	});
@@ -146,15 +153,15 @@ function insertConfirmed(tweet){
 		
 		client.query(sql, function(err, result){
 			if (err){
-				winston.error(err + ", " + sql);
+				logger.error(err + ", " + sql);
 				done();
 			}
 			done();
-			winston.info('Logged confirmed tweet report');
+			logger.info('Logged confirmed tweet report');
 			insertConfirmedUser(tweet);
 			});
 		if (err){
-			winston.error(err + ", " + sql);
+			logger.error(err + ", " + sql);
 			done();	
 			}	
 		});
@@ -166,16 +173,16 @@ function insertInvitee(tweet){
 		
 		client.query(sql, function(err, result){
 			if (err){
-				winston.error(err + ", " + sql);
+				logger.error(err + ", " + sql);
 				done();
 			}
 			else {
 				done();
-				winston.info('Logged new invitee');	
+				logger.info('Logged new invitee');	
 			}
 		});
 		if (err){
-			winston.error(err + ", " + sql);
+			logger.error(err + ", " + sql);
 			done();
 		}
 	});
@@ -188,16 +195,16 @@ function insertUnConfirmed(tweet){
 		var sql = "INSERT INTO "+config.pg.table_unconfirmed+" (created_at, the_geom) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText("+geomString+"));"
 		client.query(sql, function(err, result){
 			if (err){
-				winston.error(err + ", " + sql);
+				logger.error(err + ", " + sql);
 				done();
 			}
 			else {
 				done();
-				winston.info('Logged unconfirmed tweet report');
+				logger.info('Logged unconfirmed tweet report');
 			}
 		});
 		if (err){
-			winston.error(err + ", " + sql);
+			logger.error(err + ", " + sql);
 			done();
 		}
 	});
@@ -208,8 +215,8 @@ function insertNonSpatialUser(tweet){
 		var sql = "INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
 		
 		client.query(sql, function(err, result){
-			if (err) winston.error("insertNonSpatialUser: " + err.message + ", " + err.stack + ", " + sql);
-			else winston.info("insertNonSpatialUser: Inserted non-spatial user");
+			if (err) logger.error("insertNonSpatialUser: " + err.message + ", " + err.stack + ", " + sql);
+			else logger.info("insertNonSpatialUser: Inserted non-spatial user");
 			done();
 		});	
 	});
@@ -222,22 +229,22 @@ function insertNonSpatial(tweet){
 	
 		client.query(sql, function(err, result){
 			if (err){
-				winston.error(err + ", " + sql);
+				logger.error(err + ", " + sql);
 				done();
 			}
 			done();
 			insertNonSpatialUser(tweet);
-			winston.info('Inserted non-spatial tweet');
+			logger.info('Inserted non-spatial tweet');
 		});
 		if (err){
-			winston.error(err + ", " + sql);
+			logger.error(err + ", " + sql);
 			done();
 		}	
 	});
 };
 	
 function filter(tweet){
-	winston.verbose( 'filter: Received tweet: screen_name="' + tweet.actor.preferredUsername + '", text="' + tweet.body.replace("\n", "") + '", coordinates="' + (tweet.geo && tweet.geo.coordinates ? tweet.geo.coordinates[0]+", "+tweet.geo.coordinates[1] : 'N/A') + '"' );
+	logger.verbose( 'filter: Received tweet: screen_name="' + tweet.actor.preferredUsername + '", text="' + tweet.body.replace("\n", "") + '", coordinates="' + (tweet.geo && tweet.geo.coordinates ? tweet.geo.coordinates[0]+", "+tweet.geo.coordinates[1] : 'N/A') + '"' );
 	
 	// Everything incoming has a keyword already, so we now try and categorize it
 	// using the Gnip tags
@@ -252,26 +259,26 @@ function filter(tweet){
 			if (rule.tag.indexOf("location")===0) locationMatch = true;
 		}
 	});
-	winston.verbose("filter: Categorized tweet via Gnip tags as " + (hasGeo?'+':'-') + "GEO " + (addressed?'+':'-') + "ADDRESSED " + (locationMatch?'+':'-') + "LOCATION");
+	logger.verbose("filter: Categorized tweet via Gnip tags as " + (hasGeo?'+':'-') + "GEO " + (addressed?'+':'-') + "ADDRESSED " + (locationMatch?'+':'-') + "LOCATION");
 	
 	// Perform the actions for the categorization of the tween
 	if ( hasGeo && addressed ) {
-		winston.verbose( 'filter: +GEO +ADDRESSED = confirmed report' );
+		logger.verbose( 'filter: +GEO +ADDRESSED = confirmed report' );
 		insertConfirmed(tweet); //user + geo = confirmed report!	
 		
 	} else if ( !hasGeo && addressed ) {
 		// Keyword, username, no geo
-		winston.verbose( 'filter: -GEO +ADDRESSED = ask user for geo' );
+		logger.verbose( 'filter: -GEO +ADDRESSED = ask user for geo' );
 		
 		if (tweet.geo && tweet.geo.coordinates) {
-			winston.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking for geo' );
+			logger.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking for geo' );
 		} else {
 			insertNonSpatial(tweet); //User sent us a message but no geo, log as such
 			sendReplyTweet( tweet.actor.preferredUsername, getMessage('thanks_text', tweet.twitter_lang) ) //send geo reminder
 		}
 		
 	} else if ( hasGeo && !addressed ) {
-		winston.verbose( 'filter: +GEO -ADDRESSED = unconfirmed report, ask user to participate' );
+		logger.verbose( 'filter: +GEO -ADDRESSED = unconfirmed report, ask user to participate' );
 
 		insertUnConfirmed(tweet) //insert unconfirmed report, then invite the user to participate
 		sendReplyTweet(tweet.actor.preferredUsername, getMessage('invite_text', tweet.twitter_lang), function(){
@@ -279,10 +286,10 @@ function filter(tweet){
 		});	
 		
 	} else if ( !hasGeo && !addressed && locationMatch ) {
-		winston.verbose( 'filter: -GEO -ADDRESSED +LOCATION = ask user to participate' );
+		logger.verbose( 'filter: -GEO -ADDRESSED +LOCATION = ask user to participate' );
 		
 		if (tweet.geo && tweet.geo.coordinates) {
-			winston.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking to participate' );
+			logger.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking to participate' );
 		} else {
 			sendReplyTweet(tweet.actor.preferredUsername, getMessage('invite_text', tweet.twitter_lang), function(){
 				insertInvitee(tweet);
@@ -290,7 +297,7 @@ function filter(tweet){
 		}
 		
 	} else {
-		winston.warn( 'filter: Tweet did not match category actions' );
+		logger.warn( 'filter: Tweet did not match category actions' );
 	}
 }
 
@@ -303,10 +310,10 @@ function connectStream(){
 	// TODO Get replay data on reconnect?
 	function reconnectSocket() {
 		// Try and destroy the existing socket, if it exists
-		winston.warn( 'connectStream: Connection lost, destroying socket' );
+		logger.warn( 'connectStream: Connection lost, destroying socket' );
 		if ( stream._req ) stream._req.destroy();
 		// Attempt to reconnect
-		winston.info( 'connectStream: Attempting to reconnect stream' );
+		logger.info( 'connectStream: Attempting to reconnect stream' );
 		stream.start();
 		streamReconnectTimeout *= 2;
 		// TODO Set max timeout and notify if we hit it?
@@ -317,7 +324,7 @@ function connectStream(){
 	// one of those handlers called under some error situations.
 	function reconnectStream() {				
 		if (reconnectTimeoutHandle) clearTimeout(reconnectTimeoutHandle);
-		winston.info( 'connectStream: queing reconnect for ' + streamReconnectTimeout );
+		logger.info( 'connectStream: queing reconnect for ' + streamReconnectTimeout );
 		reconnectTimeoutHandle = setTimeout( reconnectSocket, streamReconnectTimeout*1000 );
 	}
 	
@@ -328,7 +335,7 @@ function connectStream(){
 	});
 	
 	stream.on('ready', function() {
-		winston.info('connectStream: Stream ready!');
+		logger.info('connectStream: Stream ready!');
 	    streamReconnectTimeout = 1;
 		// Augment Gnip.Stream._req (Socket) object with a timeout handler.
 		// We are accessing a private member here so updates to gnip could break this,
@@ -340,22 +347,22 @@ function connectStream(){
 
 	stream.on('tweet', function(tweet) {
 		// Catch errors here, otherwise error in filter method is presented as stream error
-		winston.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweet));
+		logger.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweet));
 		try {
 		    filter(tweet);
 		} catch (err) {
-			winston.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);
+			logger.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);
 		}
 	});
 	
 	stream.on('error', function(err) {
-		winston.error("connectStream: Error connecting stream:" + err);
+		logger.error("connectStream: Error connecting stream:" + err);
 		reconnectStream();
 	});
 	
 	// TODO Do we need to catch the 'end' event?
 	stream.on('end', function() {
-		winston.error("connectStream: Stream ended");
+		logger.error("connectStream: Stream ended");
 		reconnectStream();
 	});
 
@@ -373,12 +380,12 @@ function connectStream(){
 			value: config.gnip.rules[tag]
 		});
 	}
-	winston.debug('connectStream: Rules = ' + JSON.stringify(newRules));
+	logger.debug('connectStream: Rules = ' + JSON.stringify(newRules));
 	
-	winston.info('connectStream: Updating rules...');
+	logger.info('connectStream: Updating rules...');
 	rules.update(newRules, function(err) {
 	    if (err) throw err;
-		winston.info('connectStream: Connecting stream...');
+		logger.info('connectStream: Connecting stream...');
 		stream.start();
 	});
 	
@@ -386,12 +393,12 @@ function connectStream(){
 
 // Catch unhandled exceptions and log
 process.on('uncaughtException', function (err) {
-	winston.error('uncaughtException: ' + err.message + ", " + err.stack);
+	logger.error('uncaughtException: ' + err.message + ", " + err.stack);
 	process.exit(1);
 });
 
 process.on('SIGTERM', function() {
-	winston.info('SIGTERM: Application shutting down');
+	logger.info('SIGTERM: Application shutting down');
 	process.exit(0);
 });
 
