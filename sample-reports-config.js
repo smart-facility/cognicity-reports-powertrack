@@ -39,10 +39,16 @@ config.gnip.rules = [
 config.twitter.send_enabled = false; //send verfication requests?
 
 //Twitter message texts
-config.twitter.invite_text_in = 'Invite/Verification Tweet Text [IN]';
-config.twitter.invite_text_en = 'Invite/Verification Tweet Text [EN]';
-config.twitter.thanks_text_in = 'Thanks/location-enabled reminder Tweet Text [IN]';
-config.twitter.thanks_text_en = 'Thanks/location-enabled reminder Tweet Text [EN]';
+// Note we use IN here not ID because that's what twitter returns
+config.twitter.defaultLanguage = 'en';
+config.twitter.invite_text = {
+	'in' : 'Invite/Verification Tweet Text [IN]',
+	'en' : 'Invite/Verification Tweet Text [EN]'
+};
+config.twitter.thanks_text = {
+	'in' : 'Thanks/location-enabled reminder Tweet Text [IN]',
+	'en' : 'Thanks/location-enabled reminder Tweet Text [EN]'
+};
 
 //Postgres database connection
 config.pg = {};

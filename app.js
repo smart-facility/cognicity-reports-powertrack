@@ -65,6 +65,16 @@ twit.verifyCredentials(function (err, data) {
 	}
 });
 
+function getMessage(code, lang) {
+	if (config.twitter[code]) {
+		if (config.twitter[code][lang]) return config.twitter[code][lang];
+		if (config.twitter[code][config.twitter.defaultLanguage]) return config.twitter[code][config.twitter.defaultLanguage];
+	}
+	
+	winston.warn( "getMessage: Code could not be resolved for '" + code + "' and lang '" + lang +"'" );
+	return null;
+}
+
 // Send @reply Twitter message
 function sendReplyTweet(user, message, callback){
 
@@ -256,28 +266,17 @@ function filter(tweet){
 		if (tweet.geo && tweet.geo.coordinates) {
 			winston.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking for geo' );
 		} else {
-			if (tweet.twitter_lang == 'id'){
-				insertNonSpatial(tweet); //User sent us a message but no geo, log as such
-				sendReplyTweet(tweet.actor.preferredUsername, config.twitter.thanks_text_in); //send geo reminder
-			} else {
-				insertNonSpatial(tweet); //User sent us a message but no geo, log as such
-				sendReplyTweet(tweet.actor.preferredUsername, config.twitter.thanks_text_en) //send geo reminder
-			}	
+			insertNonSpatial(tweet); //User sent us a message but no geo, log as such
+			sendReplyTweet( tweet.actor.preferredUsername, getMessage('thanks_text', tweet.twitter_lang) ) //send geo reminder
 		}
 		
 	} else if ( hasGeo && !addressed ) {
 		winston.verbose( 'filter: +GEO -ADDRESSED = unconfirmed report, ask user to participate' );
 
 		insertUnConfirmed(tweet) //insert unconfirmed report, then invite the user to participate
-		if (tweet.twitter_lang == 'id'){
-			sendReplyTweet(tweet.actor.preferredUsername, config.twitter.invite_text_in, function(){
-				insertInvitee(tweet);
-			});	
-		} else {
-			sendReplyTweet(tweet.actor.preferredUsername, config.twitter.invite_text_en, function(){
-				insertInvitee(tweet);			
-			});
-		}		
+		sendReplyTweet(tweet.actor.preferredUsername, getMessage('invite_text', tweet.twitter_lang), function(){
+			insertInvitee(tweet);
+		});	
 		
 	} else if ( !hasGeo && !addressed && locationMatch ) {
 		winston.verbose( 'filter: -GEO -ADDRESSED +LOCATION = ask user to participate' );
@@ -285,15 +284,9 @@ function filter(tweet){
 		if (tweet.geo && tweet.geo.coordinates) {
 			winston.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking to participate' );
 		} else {
-			if (tweet.twitter_lang == 'id'){
-				sendReplyTweet(tweet.actor.preferredUsername, config.twitter.invite_text_in, function(){
-					insertInvitee(tweet);
-				});
-			} else {
-				sendReplyTweet(tweet.actor.preferredUsername, config.twitter.invite_text_en, function(){
-					insertInvitee(tweet);
-				});
-			}	
+			sendReplyTweet(tweet.actor.preferredUsername, getMessage('invite_text', tweet.twitter_lang), function(){
+				insertInvitee(tweet);
+			});
 		}
 		
 	} else {
