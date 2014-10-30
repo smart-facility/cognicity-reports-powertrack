@@ -7,7 +7,7 @@ config.instance = 'cognicity-reports-powertrack';
 
 //Logging configuration
 config.logger = {}
-config.logger.level = "info"; // What level to log at; info or debug are most useful
+config.logger.level = "info"; // What level to log at; info, verbose or debug are most useful
 config.logger.maxFileSize = 1024 * 1024 * 100; // Max file size in bytes of each log file; default 100MB
 config.logger.maxFiles = 10; // Max number of log files kept
 
@@ -26,12 +26,16 @@ config.gnip.username = 'username';
 config.gnip.password = 'password';
 config.gnip.steamUrl = 'https://stream.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod.json';
 config.gnip.rulesUrl = 'https://api.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod/rules.json';
+config.gnip.rules = [
+    "geo_1":"(flood OR banjir) bounding_box:[106.5894 -6.4354 106.799999999 -6.2]",
+    "geo_2":"(flood OR banjir) bounding_box:[106.8 -6.4354 107.0782 -6.2]",
+    "geo_3":"(flood OR banjir) bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029]",
+    "geo_4":"(flood OR banjir) bounding_box:[106.8 -6.199999999 107.0782 -5.9029]",
+    "addressed":"(flood OR banjir) @petajkt",
+    "location":"(flood OR banjir) (bio_location_contains:jakarta OR place_contains:jakarta)"
+];
 
-//Twitter stream parameters
-config.twitter.bbox = '106.5894, -6.4354, 107.0782, -5.9029'; // Jakarta appx.
-config.twitter.track = 'flood, banjir'; //Twitter track keywords
-config.twitter.city = 'jakarta'; //User profile location keyword
-config.twitter.users = '@petajkt'; //Verification twitter account
+//Twitter parameters
 config.twitter.send_enabled = false; //send verfication requests?
 
 //Twitter message texts

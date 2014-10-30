@@ -31,10 +31,6 @@ if (process.argv[2]){
 // TODO Verify DB connection is up
 // TODO Handle DB conenction errors in DB functions (as well as query errors)
 
-// Create a list of keywords and usernames from config
-config.twitter.keywords = config.twitter.track.split(',');
-config.twitter.usernames = config.twitter.users.split(',');
-
 // Gnip vars
 var stream;
 var streamReconnectTimeout = 1;
@@ -50,9 +46,7 @@ winston
 		level: config.logger.level // Level of log messages
 	})
 	// Console transport is no use to us when running as a daemon
-	.remove(winston.transports.Console)
-	// Ask Winston to format plain text messages nicely
-	.cli();
+	.remove(winston.transports.Console);
 
 //Twitter
 var twit = new twitter({
@@ -119,7 +113,7 @@ function sendReplyTweet(user, message, callback){
 
 function insertConfirmedUser(tweet){
 	pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "SELECT upsert_tweet_users(md5('"+tweet.user.screen_name+"'));";
+		var sql = "SELECT upsert_tweet_users(md5('"+tweet.actor.preferredUsername+"'));";
 		client.query(sql, function(err, result){
 			if (err){
 				winston.error(err + ", " + sql);
@@ -137,8 +131,8 @@ function insertConfirmed(tweet){
 	//insertUser with count -> upsert
 	
 	pg.connect(config.pg.conString, function(err, client, done){
-		var geomString = "'POINT("+tweet.coordinates.coordinates[0]+" "+tweet.coordinates.coordinates[1]+")',4326";
-		var sql = "INSERT INTO "+config.pg.table_tweets+" (created_at, text, hashtags, urls, user_mentions, lang, the_geom) VALUES (to_timestamp('"+new Date(Date.parse(tweet.created_at)).toLocaleString()+"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), $$"+tweet.text+"$$, '"+JSON.stringify(tweet.entities.hashtags)+"', '"+JSON.stringify(tweet.entities.urls)+"', '"+JSON.stringify(tweet.entities.user_mentions)+"', '"+tweet.lang+"', ST_GeomFromText("+geomString+"));"
+		var geomString = "'POINT("+tweet.geo.coordinates[0]+" "+tweet.geo.coordinates[1]+")',4326";
+		var sql = "INSERT INTO "+config.pg.table_tweets+" (created_at, text, hashtags, urls, user_mentions, lang, the_geom) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), $$"+tweet.body+"$$, '"+JSON.stringify(tweet.twitter_entities.hashtags)+"', '"+JSON.stringify(tweet.twitter_entities.urls)+"', '"+JSON.stringify(tweet.twitter_entities.user_mentions)+"', '"+tweet.twitter_lang+"', ST_GeomFromText("+geomString+"));"
 		
 		client.query(sql, function(err, result){
 			if (err){
@@ -158,7 +152,7 @@ function insertConfirmed(tweet){
 	
 function insertInvitee(tweet){
 	pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "INSERT INTO "+config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweet.user.screen_name+"'));"
+		var sql = "INSERT INTO "+config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
 		
 		client.query(sql, function(err, result){
 			if (err){
@@ -180,8 +174,8 @@ function insertInvitee(tweet){
 function insertUnConfirmed(tweet){
 
 	pg.connect(config.pg.conString, function(err, client, done){
-		var geomString = "'POINT("+tweet.coordinates.coordinates[0]+" "+tweet.coordinates.coordinates[1]+")',4326";
-		var sql = "INSERT INTO "+config.pg.table_unconfirmed+" (created_at, the_geom) VALUES (to_timestamp('"+new Date(Date.parse(tweet.created_at)).toLocaleString()+"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText("+geomString+"));"
+		var geomString = "'POINT("+tweet.geo.coordinates[0]+" "+tweet.geo.coordinates[1]+")',4326";
+		var sql = "INSERT INTO "+config.pg.table_unconfirmed+" (created_at, the_geom) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText("+geomString+"));"
 		client.query(sql, function(err, result){
 			if (err){
 				winston.error(err + ", " + sql);
@@ -189,7 +183,7 @@ function insertUnConfirmed(tweet){
 			}
 			else {
 				done();
-				log('Logged unconfirmed tweet report');
+				winston.info('Logged unconfirmed tweet report');
 			}
 		});
 		if (err){
@@ -201,7 +195,7 @@ function insertUnConfirmed(tweet){
 
 function insertNonSpatialUser(tweet){
 	pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweet.user.screen_name+"'));"
+		var sql = "INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
 		
 		client.query(sql, function(err, result){
 			if (err) winston.error("insertNonSpatialUser: " + err.message + ", " + err.stack + ", " + sql);
@@ -214,7 +208,7 @@ function insertNonSpatialUser(tweet){
 function insertNonSpatial(tweet){
 	
 	pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "INSERT INTO "+config.pg.table_nonspatial_tweet_reports+" (created_at, text, hashtags, urls, user_mentions, lang) VALUES (to_timestamp('"+new Date(Date.parse(tweet.created_at)).toLocaleString()+"'::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), $$"+tweet.text+"$$, '"+JSON.stringify(tweet.entities.hashtags)+"','"+JSON.stringify(tweet.entities.urls)+"','"+JSON.stringify(tweet.entities.user_mentions)+"','"+tweet.lang+"');"	
+		var sql = "INSERT INTO "+config.pg.table_nonspatial_tweet_reports+" (created_at, text, hashtags, urls, user_mentions, lang) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), $$"+tweet.body+"$$, '"+JSON.stringify(tweet.twitter_entities.hashtags)+"','"+JSON.stringify(tweet.twitter_entities.urls)+"','"+JSON.stringify(tweet.twitter_entities.user_mentions)+"','"+tweet.twitter_lang+"');"	
 	
 		client.query(sql, function(err, result){
 			if (err){
@@ -233,91 +227,78 @@ function insertNonSpatial(tweet){
 };
 	
 function filter(tweet){
-	// TODO Optimize filter method, precompile regexes
-
-	winston.debug( 'filter: Received tweet: screen_name="' + tweet.user.screen_name + '", text="' + tweet.text.replace("\n", "") + '", coordinates="' + tweet.coordinates + '"' );
+	winston.verbose( 'filter: Received tweet: screen_name="' + tweet.actor.preferredUsername + '", text="' + tweet.body.replace("\n", "") + '", coordinates="' + (tweet.geo && tweet.geo.coordinates ? tweet.geo.coordinates[0]+", "+tweet.geo.coordinates[1] : 'N/A') + '"' );
 	
-	//Keyword check
-	for (var i=0; i<config.twitter.keywords.length; i++){
-		var re = new RegExp(config.twitter.keywords[i], "gi");
-		if (tweet.text.match(re)){
-			
-			//Username check
-			// TODO Should we cope with 0 usernames?
-			for (var j=0; j<config.twitter.usernames.length; j++){
-				var re = new RegExp(config.twitter.usernames[j], "gi");
-				if (tweet.text.match(re)){
-										
-					// TODO Do real bounding box check here to cope with tweets with geo not in target location
-					if (tweet.coordinates != null){
-						//Geo check
-						winston.debug( 'filter: Tweet matched username, confirmed' );
-						insertConfirmed(tweet); //user + geo = confirmed report!
-					} else {
-						// Keyword, username, no geo
-						winston.debug( 'filter: Tweet matched username, no coordinates, asking for geo' );
-						
-						if (tweet.lang == 'id'){
-							insertNonSpatial(tweet); //User sent us a message but no geo, log as such
-							sendReplyTweet(tweet.user.screen_name, config.twitter.thanks_text_in); //send geo reminder
-						}
-						else {
-							insertNonSpatial(tweet); //User sent us a message but no geo, log as such
-							sendReplyTweet(tweet.user.screen_name, config.twitter.thanks_text_en) //send geo reminder
-						}	
-					}
-					return;
-				}
-				
-				//End of usernames list, no match so message is unconfirmed
-				else if(j == config.twitter.usernames.length-1){
-					
-					//Geo check
-					// TODO Do real bounding box check here to cope with tweets with geo not in target location
-					if (tweet.coordinates != null){
-						winston.debug( 'filter: Tweet has geo but unconfirmed, sending invite' );
-
-						insertUnConfirmed(tweet) //insert unconfirmed report, then invite the user to participate
-						if (tweet.lang == 'id'){
-							sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_in, function(){
-								insertInvitee(tweet);
-							});	
-						} else {
-							sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_en, function(){
-								insertInvitee(tweet);			
-							});
-						}
-					}
-					
-					//keyword, no geo, no user - send invite if location match
-					else {
-						
-						//regexp for city
-						var re = new RegExp(config.twitter.city, "gi");
-
-						if ( ( tweet.place && tweet.place.full_name && tweet.place.full_name.match(re) ) || ( tweet.user.location != null && tweet.user.location.match(re) ) ) {
-							winston.debug( 'filter: Tweet no geo and unconfirmed, location match, sending invite' );
-							
-							if (tweet.lang == 'id'){
-								sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_in, function(){
-									insertInvitee(tweet);
-								});
-							} else {
-								sendReplyTweet(tweet.user.screen_name, config.twitter.invite_text_en, function(){
-									insertInvitee(tweet);
-								});
-							}							
-						} else {
-							winston.debug( 'filter: Tweet no geo and unconfirmed, no location match, no-op' );							
-						}
-					}
-					return;
-				}	
-			}
+	// Everything incoming has a keyword already, so we now try and categorize it
+	// using the Gnip tags
+	var hasGeo = false;
+	var addressed = false;
+	var locationMatch = false;
+	
+	tweet.gnip.matching_rules.forEach( function(rule){
+		if (rule.tag) {
+			if (rule.tag.indexOf("geo")===0) hasGeo = true;
+			if (rule.tag.indexOf("addressed")===0) addressed = true;
+			if (rule.tag.indexOf("location")===0) locationMatch = true;
 		}
-	}
+	});
+	winston.verbose("filter: Categorized tweet via Gnip tags as " + (hasGeo?'+':'-') + "GEO " + (addressed?'+':'-') + "ADDRESSED " + (locationMatch?'+':'-') + "LOCATION");
 	
-	winston.debug( 'filter: Tweet did not match any keywords' );
+	// Perform the actions for the categorization of the tween
+	if ( hasGeo && addressed ) {
+		winston.verbose( 'filter: +GEO +ADDRESSED = confirmed report' );
+		insertConfirmed(tweet); //user + geo = confirmed report!	
+		
+	} else if ( !hasGeo && addressed ) {
+		// Keyword, username, no geo
+		winston.verbose( 'filter: -GEO +ADDRESSED = ask user for geo' );
+		
+		if (tweet.geo && tweet.geo.coordinates) {
+			winston.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking for geo' );
+		} else {
+			if (tweet.twitter_lang == 'id'){
+				insertNonSpatial(tweet); //User sent us a message but no geo, log as such
+				sendReplyTweet(tweet.actor.preferredUsername, config.twitter.thanks_text_in); //send geo reminder
+			} else {
+				insertNonSpatial(tweet); //User sent us a message but no geo, log as such
+				sendReplyTweet(tweet.actor.preferredUsername, config.twitter.thanks_text_en) //send geo reminder
+			}	
+		}
+		
+	} else if ( hasGeo && !addressed ) {
+		winston.verbose( 'filter: +GEO -ADDRESSED = unconfirmed report, ask user to participate' );
+
+		insertUnConfirmed(tweet) //insert unconfirmed report, then invite the user to participate
+		if (tweet.twitter_lang == 'id'){
+			sendReplyTweet(tweet.actor.preferredUsername, config.twitter.invite_text_in, function(){
+				insertInvitee(tweet);
+			});	
+		} else {
+			sendReplyTweet(tweet.actor.preferredUsername, config.twitter.invite_text_en, function(){
+				insertInvitee(tweet);			
+			});
+		}		
+		
+	} else if ( !hasGeo && !addressed && locationMatch ) {
+		winston.verbose( 'filter: -GEO -ADDRESSED +LOCATION = ask user to participate' );
+		
+		if (tweet.geo && tweet.geo.coordinates) {
+			winston.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking to participate' );
+		} else {
+			if (tweet.twitter_lang == 'id'){
+				sendReplyTweet(tweet.actor.preferredUsername, config.twitter.invite_text_in, function(){
+					insertInvitee(tweet);
+				});
+			} else {
+				sendReplyTweet(tweet.actor.preferredUsername, config.twitter.invite_text_en, function(){
+					insertInvitee(tweet);
+				});
+			}	
+		}
+		
+	} else {
+		winston.warn( 'filter: Tweet did not match category actions' );
+	}
 }
 
 //Stream
@@ -352,6 +333,7 @@ function connectStream(){
 	    user : config.gnip.username,
 	    password : config.gnip.password
 	});
+	
 	stream.on('ready', function() {
 		winston.info('connectStream: Stream ready!');
 	    streamReconnectTimeout = 1;
@@ -362,18 +344,22 @@ function connectStream(){
 			reconnectStream();
 		});
 	});
-	stream.on('object', function(tweet) {
+
+	stream.on('tweet', function(tweet) {
 		// Catch errors here, otherwise error in filter method is presented as stream error
+		winston.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweet));
 		try {
 		    filter(tweet);
 		} catch (err) {
-			winston.error("connectStream: Error on object handler:" + err.message + ", " + err.stack);
+			winston.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);
 		}
 	});
+	
 	stream.on('error', function(err) {
 		winston.error("connectStream: Error connecting stream:" + err);
 		reconnectStream();
 	});
+	
 	// TODO Do we need to catch the 'end' event?
 	stream.on('end', function() {
 		winston.error("connectStream: Stream ended");
@@ -385,24 +371,24 @@ function connectStream(){
 	    user : config.gnip.username,
 	    password : config.gnip.password
 	});
-	// TODO Create rules programatically from config
-	/*
-	var newRules = [
-	    '#hashtag', 
-	    'keyword', 
-	    '@user',
-	    {value: 'keyword as object'},
-	    {value: '@demianr85', tag: 'rule tag'}
-	];
 	
+	// Create rules programatically from config
+	var newRules = [];
+	for (var tag in config.gnip.rules) {
+		newRules.push({
+			tag: tag,
+			value: config.gnip.rules[tag]
+		});
+	}
+	winston.debug('connectStream: Rules = ' + JSON.stringify(newRules));
+	
+	winston.info('connectStream: Updating rules...');
 	rules.update(newRules, function(err) {
 	    if (err) throw err;
-	    stream.start();
+		winston.info('connectStream: Connecting stream...');
+		stream.start();
 	});
-	*/
 	
-	winston.info('connectStream: Connecting stream...');
-	stream.start();
 }
 
 // Catch unhandled exceptions and log

@@ -39,6 +39,7 @@ App configuration parameters are stored in a configuration file which is parsed 
 * password - Gnip password
 * steamUrl - URL to fetch JSON stream from Gnip PowerTrack
 * rulesUrl - URL to fetch JSON rules from Gnip PowerTrack
+* rules - List of objects to configure Gnip PowerTrack rules. Objects contain a series of key-value properties, where the key is the Gnip PowerTrack tag for the rule, and the value is the rule as a string.
 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
