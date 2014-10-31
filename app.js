@@ -1,24 +1,26 @@
-//app.js - cognicity-reports modules
+//app.js - cognicity-reports-powertrack modules
 
-/*
-Collect unconfirmed reports from Twitter & send report verification tweets
-
-(c) Tomas Holderness & SMART Infrastructure Facility January 2014
-Released under GNU GPLv3 License (see LICENSE.txt).
-
-Usage:	node daemon.js cognicity-reports-config.js start
-		node daemon.js cognicity-reports-config.js status
-		node daemon.js cognicity-reports-config.js stop
-*/
+/**
+ * @file Collect unconfirmed reports from Twitter & send report verification tweets
+ * @copyright (c) Tomas Holderness & SMART Infrastructure Facility January 2014
+ * @license Released under GNU GPLv3 License (see LICENSE.txt).
+ * @example
+ * Usage:	
+ *     node daemon.js cognicity-reports-config.js start
+ *     node daemon.js cognicity-reports-config.js status
+ *     node daemon.js cognicity-reports-config.js stop
+ */
 
 // TODO jsdoc methods
 
-//Modules
-var sys = require('util');
-var fs = require('fs');
-var twitter = require('ntwitter'); //twitter streaming API
+// Modules
+/** ntwitter twitter interface module */
+var twitter = require('ntwitter');
+/** Gnip PowerTrack interface module */
 var Gnip = require('gnip');
-var pg = require('pg'); //Postgres
+/** Postgres interface module */
+var pg = require('pg');
+/** Winston logger module */
 var logger = require('winston');
 
 // Verify expected arguments
@@ -30,10 +32,6 @@ if (process.argv[2]){
 
 // TODO Verify DB connection is up
 // TODO Handle DB conenction errors in DB functions (as well as query errors)
-
-// Gnip vars
-var stream;
-var streamReconnectTimeout = 1;
 
 // Logging configuration
 logger
@@ -48,7 +46,8 @@ logger
 	// Console transport is no use to us when running as a daemon
 	.remove(logger.transports.Console);
 
-//Twitter
+// Configure new instance of the ntwitter interface
+/** ntwitter interface instance */
 var twit = new twitter({
 	consumer_key: config.twitter.consumer_key,
 	consumer_secret: config.twitter.consumer_secret,
@@ -56,6 +55,7 @@ var twit = new twitter({
 	access_token_secret: config.twitter.access_token_secret
 });
 
+// Verify that the twitter connection was successful, fail if not
 twit.verifyCredentials(function (err, data) {
 	if (err) {
 		logger.error("twit.verifyCredentials: Error verifying credentials: " + err);
@@ -82,9 +82,13 @@ function getMessage(code, lang) {
 	return null;
 }
 
-// Send @reply Twitter message
+/**
+ * Send @reply Twitter message
+ * @param {string} user The twitter screen name to send to
+ * @param {string} message The tweet text to send
+ * @param {function} callback Callback function called on success
+ */
 function sendReplyTweet(user, message, callback){
-
 		//check if user in database already
 		pg.connect(config.pg.conString, function(err, client, done){
 		var sql = "SELECT a.user_hash FROM "+config.pg.table_all_users+" a WHERE a.user_hash = md5('"+user+"');"
@@ -101,7 +105,7 @@ function sendReplyTweet(user, message, callback){
 						twit.updateStatus('@'+user+' '+message, function(err, data){
 							if (err) {
 								logger.error('Tweeting failed: ' + err);
-								}
+							}
 							else {
 								if (callback){
 									callback();
@@ -159,13 +163,13 @@ function insertConfirmed(tweet){
 			done();
 			logger.info('Logged confirmed tweet report');
 			insertConfirmedUser(tweet);
-			});
+		});
 		if (err){
 			logger.error(err + ", " + sql);
 			done();	
-			}	
-		});
-	}
+		}	
+	});
+}
 	
 function insertInvitee(tweet){
 	pg.connect(config.pg.conString, function(err, client, done){
@@ -189,7 +193,6 @@ function insertInvitee(tweet){
 };
 	
 function insertUnConfirmed(tweet){
-
 	pg.connect(config.pg.conString, function(err, client, done){
 		var geomString = "'POINT("+tweet.geo.coordinates[0]+" "+tweet.geo.coordinates[1]+")',4326";
 		var sql = "INSERT INTO "+config.pg.table_unconfirmed+" (created_at, the_geom) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText("+geomString+"));"
@@ -223,7 +226,6 @@ function insertNonSpatialUser(tweet){
 }
 	
 function insertNonSpatial(tweet){
-	
 	pg.connect(config.pg.conString, function(err, client, done){
 		var sql = "INSERT INTO "+config.pg.table_nonspatial_tweet_reports+" (created_at, text, hashtags, urls, user_mentions, lang) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), $$"+tweet.body+"$$, '"+JSON.stringify(tweet.twitter_entities.hashtags)+"','"+JSON.stringify(tweet.twitter_entities.urls)+"','"+JSON.stringify(tweet.twitter_entities.user_mentions)+"','"+tweet.twitter_lang+"');"	
 	
@@ -243,11 +245,18 @@ function insertNonSpatial(tweet){
 	});
 };
 	
+/**
+ * Main stream tweet filtering logic.
+ * Filter the incoming tweet and decide what action needs to be taken:
+ * confirmed report, ask for geo, ask user to participate, or nothing
+ * @param tweet The tweet activity from Gnip
+ */
 function filter(tweet){
+	// TODO Rename tweet to tweetActivity as it's Gnip data not twitter
 	logger.verbose( 'filter: Received tweet: screen_name="' + tweet.actor.preferredUsername + '", text="' + tweet.body.replace("\n", "") + '", coordinates="' + (tweet.geo && tweet.geo.coordinates ? tweet.geo.coordinates[0]+", "+tweet.geo.coordinates[1] : 'N/A') + '"' );
 	
-	// Everything incoming has a keyword already, so we now try and categorize it
-	// using the Gnip tags
+	// TODO Rename hasGeo to geoInBoundingBox to be clearer; we may have geo coords but not match the BB
+	// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
 	var hasGeo = false;
 	var addressed = false;
 	var locationMatch = false;
@@ -267,7 +276,6 @@ function filter(tweet){
 		insertConfirmed(tweet); //user + geo = confirmed report!	
 		
 	} else if ( !hasGeo && addressed ) {
-		// Keyword, username, no geo
 		logger.verbose( 'filter: -GEO +ADDRESSED = ask user for geo' );
 		
 		if (tweet.geo && tweet.geo.coordinates) {
@@ -301,13 +309,25 @@ function filter(tweet){
 	}
 }
 
-//Stream
+/**
+ * Connect the Gnip stream.
+ * Establish the network connection, push rules to Gnip.
+ * Setup error handlers and timeout handler.
+ * Handle events from the stream on incoming data.
+ */
 function connectStream(){
+	// Gnip stream
+	var stream;
+	// Timeout reconnection delay, used for exponential backoff
+	var streamReconnectTimeout = 1;
 	// Connect Gnip stream and setup event handlers
 	var reconnectTimeoutHandle;
 
 	// TODO Get backfill data on reconnect?
 	// TODO Get replay data on reconnect?
+	
+	// Attempt to reconnect the socket. 
+	// If we fail, wait an increasing amount of time before we try again.
 	function reconnectSocket() {
 		// Try and destroy the existing socket, if it exists
 		logger.warn( 'connectStream: Connection lost, destroying socket' );
@@ -322,18 +342,23 @@ function connectStream(){
 	// TODO We get called twice for disconnect, once from error once from end
 	// Is this normal? Can we only use one event? Or is it possible to get only
 	// one of those handlers called under some error situations.
+	
+	// Attempt to reconnect the Gnip stream.
+	// This function handles us getting called multiple times from different error handlers.
 	function reconnectStream() {				
 		if (reconnectTimeoutHandle) clearTimeout(reconnectTimeoutHandle);
 		logger.info( 'connectStream: queing reconnect for ' + streamReconnectTimeout );
 		reconnectTimeoutHandle = setTimeout( reconnectSocket, streamReconnectTimeout*1000 );
 	}
 	
+	// Configure a Gnip stream with connection details
 	stream = new Gnip.Stream({
 	    url : config.gnip.steamUrl,
 	    user : config.gnip.username,
 	    password : config.gnip.password
 	});
 	
+	// When stream is connected, setup the stream timeout handler
 	stream.on('ready', function() {
 		logger.info('connectStream: Stream ready!');
 	    streamReconnectTimeout = 1;
@@ -345,9 +370,11 @@ function connectStream(){
 		});
 	});
 
+	// When we receive a tweet from the Gnip stream this event handler will be called
 	stream.on('tweet', function(tweet) {
-		// Catch errors here, otherwise error in filter method is presented as stream error
 		logger.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweet));
+		
+		// Catch errors here, otherwise error in filter method is caught as stream error
 		try {
 		    filter(tweet);
 		} catch (err) {
@@ -355,17 +382,20 @@ function connectStream(){
 		}
 	});
 	
+	// Handle an error from the stream
 	stream.on('error', function(err) {
 		logger.error("connectStream: Error connecting stream:" + err);
 		reconnectStream();
 	});
 	
 	// TODO Do we need to catch the 'end' event?
+	// Handle a socket 'end' event from the stream
 	stream.on('end', function() {
 		logger.error("connectStream: Stream ended");
 		reconnectStream();
 	});
 
+	// Construct a Gnip rules connection
 	var rules = new Gnip.Rules({
 	    url : config.gnip.rulesUrl,
 	    user : config.gnip.username,
@@ -373,6 +403,7 @@ function connectStream(){
 	});
 	
 	// Create rules programatically from config
+	// Use key of rule entry as the tag, and value as the rule string
 	var newRules = [];
 	for (var tag in config.gnip.rules) {
 		newRules.push({
@@ -382,25 +413,28 @@ function connectStream(){
 	}
 	logger.debug('connectStream: Rules = ' + JSON.stringify(newRules));
 	
+	// Push the parsed rules to Gnip
 	logger.info('connectStream: Updating rules...');
 	rules.update(newRules, function(err) {
 	    if (err) throw err;
 		logger.info('connectStream: Connecting stream...');
+		// If we pushed the rules successfully, now try and connect the stream
 		stream.start();
 	});
 	
 }
 
-// Catch unhandled exceptions and log
+// Catch unhandled exceptions, log, and exit with error status
 process.on('uncaughtException', function (err) {
 	logger.error('uncaughtException: ' + err.message + ", " + err.stack);
 	process.exit(1);
 });
 
+// Catch kill signal and log a clean exit status
 process.on('SIGTERM', function() {
 	logger.info('SIGTERM: Application shutting down');
 	process.exit(0);
 });
 
-// Start up - connect the Gnip stream
+// Start up the twitter feed - connect the Gnip stream
 if ( config.gnip.stream ) connectStream();
