@@ -1,19 +1,19 @@
 {
-	"name": "cognicity-reports",
-	"description": "CogniCity reports module",
+	"name": "cognicity-reports-powertrack",
+	"description": "CogniCity reports Gnip PowerTrack module",
 	"version": "0.0.1",
 	"author": "Tomas Holderness <tomas@uow.edu.au>",
-	"preferGlobal":false,
+	"preferGlobal": false,
 	"private": true,
 	"dependencies": {
-		"express": ">=3.2.6",
-		"daemonize2": ">=0.4.2",
-		"ntwitter": ">=0.5.0",
-		"pg": ">=2.0.0",
-		"gnip": ">=0.2.1",
-		"winston": ">=0.8.1"
+		"express": "3.2.x",
+		"daemonize2": "0.4.x",
+		"ntwitter": "0.5.x",
+		"pg": "2.0.x",
+		"gnip": "0.2.x",
+		"winston": "0.8.x"
 	},
 	"engines":{
 		"node":">=0.10.12"
-		}
+	}
 }
