@@ -83,166 +83,134 @@ function getMessage(code, lang) {
 }
 
 /**
+ * DB query success callback
+ * @callback dbQuerySuccess
+ * @param {object} result The 'pg' module result object on a successful query
+ */
+
+/**
+ * Execute the SQL against the database connection. Run the success callback on success if supplied.
+ * @param {string} sql SQL script to execute in the DB. 
+ * @param {dbQuerySuccess} success Callback function to execute on success.
+ * @returns boolean True if successful, false on error
+ */
+function dbQuery(sql, success){
+	logger.debug( "dbQuery: executing SQL: " + sql );
+	pg.connect(config.pg.conString, function(err, client, done){
+		client.query(sql, function(err, result){
+			if (err){
+				logger.error("dbQuery: " + sql + ", " + err);
+				done();
+				return false;
+			}
+			done();
+			logger.debug( "dbQuery: success" );
+			if (success) success(result);
+			return true;
+		});
+		if (err){
+			logger.error("dbQuery: " + sql + ", " + err);
+			done();
+			return false;
+		}	
+	});
+};
+
+/**
  * Send @reply Twitter message
  * @param {string} user The twitter screen name to send to
  * @param {string} message The tweet text to send
  * @param {function} callback Callback function called on success
  */
 function sendReplyTweet(user, message, callback){
-		//check if user in database already
-		pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "SELECT a.user_hash FROM "+config.pg.table_all_users+" a WHERE a.user_hash = md5('"+user+"');"
-		
-		client.query(sql, function(err, result){
-			if (err){
-				logger.error(err + ", " + sql);
-				done(); // release database connection on error.
-			}
-
-			if (result && result.rows){
-				if (result.rows.length == 0){
-					if (config.twitter.send_enabled == true){
-						twit.updateStatus('@'+user+' '+message, function(err, data){
-							if (err) {
-								logger.error('Tweeting failed: ' + err);
-							}
-							else {
-								if (callback){
-									callback();
-								}
-								
-							}
-						});	
-				
-					}
-					
-					else { // for testing
-						logger.info('sendReplyTweet is in test mode - no message will be sent. Callback will still run.');
-						logger.info('@'+user+' '+message);
-						if (callback){
-							callback();
+	dbQuery(
+		"SELECT a.user_hash FROM "+config.pg.table_all_users+" a WHERE a.user_hash = md5('"+user+"');",
+		function(result) {
+			if (result && result.rows && result.rows.length == 0){
+				if (config.twitter.send_enabled == true){
+					twit.updateStatus('@'+user+' '+message, function(err, data){
+						if (err) {
+							logger.error('Tweeting failed: ' + err);
+						} else {
+							if (callback) callback();
 						}
-					}
+					});	
+				} else { // for testing
+					logger.info('sendReplyTweet is in test mode - no message will be sent. Callback will still run.');
+					logger.info('@'+user+' '+message);
+					if (callback) callback();
 				}
 			}
-			done();
-		});
-	});
+		}	
+	);
 }
 
-//Insert Statements
-
-function insertConfirmedUser(tweet){
-	pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "SELECT upsert_tweet_users(md5('"+tweet.actor.preferredUsername+"'));";
-		client.query(sql, function(err, result){
-			if (err){
-				logger.error(err + ", " + sql);
-				done();
-			}
-		});
-		if (err){
-			logger.error(err + ", " + sql);
-			done();
-		}
-	});
-}
-
+/**
+ * Insert a confirmed report - i.e. has geo coordinates and is addressed.
+ * Store both the tweet information and the user hash.
+ * @param tweet Gnip PowerTrack tweet activity object
+ */
 function insertConfirmed(tweet){
-	//insertUser with count -> upsert
-	
-	pg.connect(config.pg.conString, function(err, client, done){
-		var geomString = "'POINT("+tweet.geo.coordinates[0]+" "+tweet.geo.coordinates[1]+")',4326";
-		var sql = "INSERT INTO "+config.pg.table_tweets+" (created_at, text, hashtags, urls, user_mentions, lang, the_geom) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), $$"+tweet.body+"$$, '"+JSON.stringify(tweet.twitter_entities.hashtags)+"', '"+JSON.stringify(tweet.twitter_entities.urls)+"', '"+JSON.stringify(tweet.twitter_entities.user_mentions)+"', '"+tweet.twitter_lang+"', ST_GeomFromText("+geomString+"));"
-		
-		client.query(sql, function(err, result){
-			if (err){
-				logger.error(err + ", " + sql);
-				done();
-			}
-			done();
-			logger.info('Logged confirmed tweet report');
-			insertConfirmedUser(tweet);
-		});
-		if (err){
-			logger.error(err + ", " + sql);
-			done();	
-		}	
-	});
+	//insertUser with count -> upsert	
+	var status = dbQuery(
+		"INSERT INTO " + config.pg.table_tweets + " (created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
+		"VALUES (to_timestamp('" + new Date(Date.parse(tweet.postedTime)).toLocaleString() + 
+		"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), $$" + tweet.body + "$$, '" +
+		JSON.stringify(tweet.twitter_entities.hashtags) + "', '" + 
+		JSON.stringify(tweet.twitter_entities.urls) + "', '" +
+		JSON.stringify(tweet.twitter_entities.user_mentions) + "', '" +
+		tweet.twitter_lang + "', ST_GeomFromText('POINT(" + tweet.geo.coordinates[0] + " " + tweet.geo.coordinates[1] + ")',4326));"
+	);
+	if (status) logger.info('Logged confirmed tweet report');
+	if (status) status = dbQuery( "SELECT upsert_tweet_users(md5('"+tweet.actor.preferredUsername+"'));" );
+	if (status) logger.info('Logged confirmed tweet user');
 }
-	
-function insertInvitee(tweet){
-	pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "INSERT INTO "+config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
-		
-		client.query(sql, function(err, result){
-			if (err){
-				logger.error(err + ", " + sql);
-				done();
-			}
-			else {
-				done();
-				logger.info('Logged new invitee');	
-			}
-		});
-		if (err){
-			logger.error(err + ", " + sql);
-			done();
-		}
-	});
-};
-	
-function insertUnConfirmed(tweet){
-	pg.connect(config.pg.conString, function(err, client, done){
-		var geomString = "'POINT("+tweet.geo.coordinates[0]+" "+tweet.geo.coordinates[1]+")',4326";
-		var sql = "INSERT INTO "+config.pg.table_unconfirmed+" (created_at, the_geom) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText("+geomString+"));"
-		client.query(sql, function(err, result){
-			if (err){
-				logger.error(err + ", " + sql);
-				done();
-			}
-			else {
-				done();
-				logger.info('Logged unconfirmed tweet report');
-			}
-		});
-		if (err){
-			logger.error(err + ", " + sql);
-			done();
-		}
-	});
-};
 
-function insertNonSpatialUser(tweet){
-	pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
-		
-		client.query(sql, function(err, result){
-			if (err) logger.error("insertNonSpatialUser: " + err.message + ", " + err.stack + ", " + sql);
-			else logger.info("insertNonSpatialUser: Inserted non-spatial user");
-			done();
-		});	
-	});
-}
+/**
+ * Insert an invitee - i.e. a user we've invited to participate.
+ * @param tweet Gnip PowerTrack tweet activity object
+ */
+function insertInvitee(tweet){
+	var status = dbQuery( 
+		"INSERT INTO "+config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
+	);
+	if (status) logger.info('Logged new invitee');
+};
 	
+/**
+ * Insert an unconfirmed report - i.e. has geo coordinates but is not addressed.
+ * @param tweet Gnip PowerTrack tweet activity object
+ */
+function insertUnConfirmed(tweet){
+	var status = dbQuery(
+		"INSERT INTO " + config.pg.table_unconfirmed + " (created_at, the_geom) VALUES (to_timestamp('" + 
+		new Date(Date.parse(tweet.postedTime)).toLocaleString() + 
+		"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText('POINT(" + 
+		tweet.geo.coordinates[0] + " " + tweet.geo.coordinates[1] + ")',4326));"
+	);
+	if (status) logger.info('Logged unconfirmed tweet report');
+};
+	
+/**
+ * Insert a non-spatial tweet report - i.e. we got an addressed tweet without geo coordinates.
+ * @param tweet Gnip PowerTrack tweet activity object
+ */
 function insertNonSpatial(tweet){
-	pg.connect(config.pg.conString, function(err, client, done){
-		var sql = "INSERT INTO "+config.pg.table_nonspatial_tweet_reports+" (created_at, text, hashtags, urls, user_mentions, lang) VALUES (to_timestamp('"+new Date(Date.parse(tweet.postedTime)).toLocaleString()+"'::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), $$"+tweet.body+"$$, '"+JSON.stringify(tweet.twitter_entities.hashtags)+"','"+JSON.stringify(tweet.twitter_entities.urls)+"','"+JSON.stringify(tweet.twitter_entities.user_mentions)+"','"+tweet.twitter_lang+"');"	
-	
-		client.query(sql, function(err, result){
-			if (err){
-				logger.error(err + ", " + sql);
-				done();
-			}
-			done();
-			insertNonSpatialUser(tweet);
-			logger.info('Inserted non-spatial tweet');
-		});
-		if (err){
-			logger.error(err + ", " + sql);
-			done();
-		}	
-	});
+	var status = dbQuery(
+		"INSERT INTO " + config.pg.table_nonspatial_tweet_reports + 
+		" (created_at, text, hashtags, urls, user_mentions, lang) VALUES (to_timestamp('" + 
+		new Date(Date.parse(tweet.postedTime)).toLocaleString() + 
+		"'::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), $$" + tweet.body +	"$$, '" + 
+		JSON.stringify(tweet.twitter_entities.hashtags) + "','" +
+		JSON.stringify(tweet.twitter_entities.urls) + "','" + 
+		JSON.stringify(tweet.twitter_entities.user_mentions) + "','" + 
+		tweet.twitter_lang + "');"
+	);
+	if (status) logger.info('Inserted non-spatial tweet');
+	if (status) status = dbQuery( 
+		"INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
+	);
+	if (status) logger.info("Inserted non-spatial user");
 };
 	
 /**
