@@ -11,8 +11,6 @@
  *     node daemon.js cognicity-reports-config.js stop
  */
 
-// TODO jsdoc methods
-
 // Modules
 /** ntwitter twitter interface module */
 var twitter = require('ntwitter');
@@ -148,67 +146,67 @@ function sendReplyTweet(user, message, callback){
 /**
  * Insert a confirmed report - i.e. has geo coordinates and is addressed.
  * Store both the tweet information and the user hash.
- * @param tweet Gnip PowerTrack tweet activity object
+ * @param tweetActivity Gnip PowerTrack tweet activity object
  */
-function insertConfirmed(tweet){
+function insertConfirmed(tweetActivity){
 	//insertUser with count -> upsert	
 	var status = dbQuery(
 		"INSERT INTO " + config.pg.table_tweets + " (created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
-		"VALUES (to_timestamp('" + new Date(Date.parse(tweet.postedTime)).toLocaleString() + 
-		"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), $$" + tweet.body + "$$, '" +
-		JSON.stringify(tweet.twitter_entities.hashtags) + "', '" + 
-		JSON.stringify(tweet.twitter_entities.urls) + "', '" +
-		JSON.stringify(tweet.twitter_entities.user_mentions) + "', '" +
-		tweet.twitter_lang + "', ST_GeomFromText('POINT(" + tweet.geo.coordinates[0] + " " + tweet.geo.coordinates[1] + ")',4326));"
+		"VALUES (to_timestamp('" + new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
+		"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), $$" + tweetActivity.body + "$$, '" +
+		JSON.stringify(tweetActivity.twitter_entities.hashtags) + "', '" + 
+		JSON.stringify(tweetActivity.twitter_entities.urls) + "', '" +
+		JSON.stringify(tweetActivity.twitter_entities.user_mentions) + "', '" +
+		tweetActivity.twitter_lang + "', ST_GeomFromText('POINT(" + tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1] + ")',4326));"
 	);
 	if (status) logger.info('Logged confirmed tweet report');
-	if (status) status = dbQuery( "SELECT upsert_tweet_users(md5('"+tweet.actor.preferredUsername+"'));" );
+	if (status) status = dbQuery( "SELECT upsert_tweet_users(md5('"+tweetActivity.actor.preferredUsername+"'));" );
 	if (status) logger.info('Logged confirmed tweet user');
 }
 
 /**
  * Insert an invitee - i.e. a user we've invited to participate.
- * @param tweet Gnip PowerTrack tweet activity object
+ * @param tweetActivity Gnip PowerTrack tweet activity object
  */
-function insertInvitee(tweet){
+function insertInvitee(tweetActivity){
 	var status = dbQuery( 
-		"INSERT INTO "+config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
+		"INSERT INTO "+config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));"
 	);
 	if (status) logger.info('Logged new invitee');
 };
 	
 /**
  * Insert an unconfirmed report - i.e. has geo coordinates but is not addressed.
- * @param tweet Gnip PowerTrack tweet activity object
+ * @param tweetActivity Gnip PowerTrack tweet activity object
  */
-function insertUnConfirmed(tweet){
+function insertUnConfirmed(tweetActivity){
 	var status = dbQuery(
 		"INSERT INTO " + config.pg.table_unconfirmed + " (created_at, the_geom) VALUES (to_timestamp('" + 
-		new Date(Date.parse(tweet.postedTime)).toLocaleString() + 
+		new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
 		"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText('POINT(" + 
-		tweet.geo.coordinates[0] + " " + tweet.geo.coordinates[1] + ")',4326));"
+		tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1] + ")',4326));"
 	);
 	if (status) logger.info('Logged unconfirmed tweet report');
 };
 	
 /**
  * Insert a non-spatial tweet report - i.e. we got an addressed tweet without geo coordinates.
- * @param tweet Gnip PowerTrack tweet activity object
+ * @param tweetActivity Gnip PowerTrack tweet activity object
  */
-function insertNonSpatial(tweet){
+function insertNonSpatial(tweetActivity){
 	var status = dbQuery(
 		"INSERT INTO " + config.pg.table_nonspatial_tweet_reports + 
 		" (created_at, text, hashtags, urls, user_mentions, lang) VALUES (to_timestamp('" + 
-		new Date(Date.parse(tweet.postedTime)).toLocaleString() + 
-		"'::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), $$" + tweet.body +	"$$, '" + 
-		JSON.stringify(tweet.twitter_entities.hashtags) + "','" +
-		JSON.stringify(tweet.twitter_entities.urls) + "','" + 
-		JSON.stringify(tweet.twitter_entities.user_mentions) + "','" + 
-		tweet.twitter_lang + "');"
+		new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
+		"'::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), $$" + tweetActivity.body +	"$$, '" + 
+		JSON.stringify(tweetActivity.twitter_entities.hashtags) + "','" +
+		JSON.stringify(tweetActivity.twitter_entities.urls) + "','" + 
+		JSON.stringify(tweetActivity.twitter_entities.user_mentions) + "','" + 
+		tweetActivity.twitter_lang + "');"
 	);
 	if (status) logger.info('Inserted non-spatial tweet');
 	if (status) status = dbQuery( 
-		"INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweet.actor.preferredUsername+"'));"
+		"INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));"
 	);
 	if (status) logger.info("Inserted non-spatial user");
 };
@@ -217,58 +215,57 @@ function insertNonSpatial(tweet){
  * Main stream tweet filtering logic.
  * Filter the incoming tweet and decide what action needs to be taken:
  * confirmed report, ask for geo, ask user to participate, or nothing
- * @param tweet The tweet activity from Gnip
+ * @param tweetActivity The tweet activity from Gnip
  */
-function filter(tweet){
-	// TODO Rename tweet to tweetActivity as it's Gnip data not twitter
-	logger.verbose( 'filter: Received tweet: screen_name="' + tweet.actor.preferredUsername + '", text="' + tweet.body.replace("\n", "") + '", coordinates="' + (tweet.geo && tweet.geo.coordinates ? tweet.geo.coordinates[0]+", "+tweet.geo.coordinates[1] : 'N/A') + '"' );
+function filter(tweetActivity){
+	logger.verbose( 'filter: Received tweetActivity: screen_name="' + tweetActivity.actor.preferredUsername + '", text="' + tweetActivity.body.replace("\n", "") + '", coordinates="' + (tweetActivity.geo && tweetActivity.geo.coordinates ? tweetActivity.geo.coordinates[0]+", "+tweetActivity.geo.coordinates[1] : 'N/A') + '"' );
 	
-	// TODO Rename hasGeo to geoInBoundingBox to be clearer; we may have geo coords but not match the BB
 	// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
-	var hasGeo = false;
+	var hasGeo = (tweetActivity.geo && tweetActivity.geo.coordinates);
+	var geoInBoundingBox = false;
 	var addressed = false;
 	var locationMatch = false;
 	
-	tweet.gnip.matching_rules.forEach( function(rule){
+	tweetActivity.gnip.matching_rules.forEach( function(rule){
 		if (rule.tag) {
-			if (rule.tag.indexOf("geo")===0) hasGeo = true;
+			if (rule.tag.indexOf("geo")===0) geoInBoundingBox = true;
 			if (rule.tag.indexOf("addressed")===0) addressed = true;
 			if (rule.tag.indexOf("location")===0) locationMatch = true;
 		}
 	});
-	logger.verbose("filter: Categorized tweet via Gnip tags as " + (hasGeo?'+':'-') + "GEO " + (addressed?'+':'-') + "ADDRESSED " + (locationMatch?'+':'-') + "LOCATION");
+	logger.verbose("filter: Categorized tweetActivity via Gnip tags as " + (geoInBoundingBox?'+':'-') + "GEO " + (addressed?'+':'-') + "ADDRESSED " + (locationMatch?'+':'-') + "LOCATION");
 	
 	// Perform the actions for the categorization of the tween
-	if ( hasGeo && addressed ) {
+	if ( geoInBoundingBox && addressed ) {
 		logger.verbose( 'filter: +GEO +ADDRESSED = confirmed report' );
-		insertConfirmed(tweet); //user + geo = confirmed report!	
+		insertConfirmed(tweetActivity); //user + geo = confirmed report!	
 		
-	} else if ( !hasGeo && addressed ) {
+	} else if ( !geoInBoundingBox && addressed ) {
 		logger.verbose( 'filter: -GEO +ADDRESSED = ask user for geo' );
 		
-		if (tweet.geo && tweet.geo.coordinates) {
+		if (hasGeo) {
 			logger.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking for geo' );
 		} else {
-			insertNonSpatial(tweet); //User sent us a message but no geo, log as such
-			sendReplyTweet( tweet.actor.preferredUsername, getMessage('thanks_text', tweet.twitter_lang) ) //send geo reminder
+			insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
+			sendReplyTweet( tweetActivity.actor.preferredUsername, getMessage('thanks_text', tweetActivity.twitter_lang) ) //send geo reminder
 		}
 		
-	} else if ( hasGeo && !addressed ) {
+	} else if ( geoInBoundingBox && !addressed ) {
 		logger.verbose( 'filter: +GEO -ADDRESSED = unconfirmed report, ask user to participate' );
 
-		insertUnConfirmed(tweet) //insert unconfirmed report, then invite the user to participate
-		sendReplyTweet(tweet.actor.preferredUsername, getMessage('invite_text', tweet.twitter_lang), function(){
-			insertInvitee(tweet);
+		insertUnConfirmed(tweetActivity) //insert unconfirmed report, then invite the user to participate
+		sendReplyTweet(tweetActivity.actor.preferredUsername, getMessage('invite_text', tweetActivity.twitter_lang), function(){
+			insertInvitee(tweetActivity);
 		});	
 		
-	} else if ( !hasGeo && !addressed && locationMatch ) {
+	} else if ( !geoInBoundingBox && !addressed && locationMatch ) {
 		logger.verbose( 'filter: -GEO -ADDRESSED +LOCATION = ask user to participate' );
 		
-		if (tweet.geo && tweet.geo.coordinates) {
+		if (hasGeo) {
 			logger.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking to participate' );
 		} else {
-			sendReplyTweet(tweet.actor.preferredUsername, getMessage('invite_text', tweet.twitter_lang), function(){
-				insertInvitee(tweet);
+			sendReplyTweet(tweetActivity.actor.preferredUsername, getMessage('invite_text', tweetActivity.twitter_lang), function(){
+				insertInvitee(tweetActivity);
 			});
 		}
 		
@@ -338,13 +335,13 @@ function connectStream(){
 		});
 	});
 
-	// When we receive a tweet from the Gnip stream this event handler will be called
-	stream.on('tweet', function(tweet) {
-		logger.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweet));
+	// When we receive a tweetActivity from the Gnip stream this event handler will be called
+	stream.on('tweet', function(tweetActivity) {
+		logger.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweetActivity));
 		
 		// Catch errors here, otherwise error in filter method is caught as stream error
 		try {
-		    filter(tweet);
+		    filter(tweetActivity);
 		} catch (err) {
 			logger.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);
 		}
