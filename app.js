@@ -90,7 +90,7 @@ function getMessage(code, lang) {
  * Execute the SQL against the database connection. Run the success callback on success if supplied.
  * @param {string} sql SQL script to execute in the DB. 
  * @param {dbQuerySuccess} success Callback function to execute on success.
- * @returns boolean True if successful, false on error
+ * @returns {boolean} True if successful, false on error
  */
 function dbQuery(sql, success){
 	logger.debug( "dbQuery: executing SQL: " + sql );
@@ -115,32 +115,42 @@ function dbQuery(sql, success){
 };
 
 /**
+ * Does a user already exist in the all users table?
+ * @param {string} user The twitter screen name to check if exists
+ * @return {boolean} True if the user exists, false if not
+ */
+function doesUserExist(user){
+	dbQuery(
+		"SELECT a.user_hash FROM "+config.pg.table_all_users+" a WHERE a.user_hash = md5('"+user+"');",
+		function(result) {
+			if (result && result.rows && result.rows.length == 1) return true;
+		}	
+	);
+	return false;
+}
+
+/**
  * Send @reply Twitter message
  * @param {string} user The twitter screen name to send to
  * @param {string} message The tweet text to send
  * @param {function} callback Callback function called on success
  */
 function sendReplyTweet(user, message, callback){
-	dbQuery(
-		"SELECT a.user_hash FROM "+config.pg.table_all_users+" a WHERE a.user_hash = md5('"+user+"');",
-		function(result) {
-			if (result && result.rows && result.rows.length == 0){
-				if (config.twitter.send_enabled == true){
-					twit.updateStatus('@'+user+' '+message, function(err, data){
-						if (err) {
-							logger.error('Tweeting failed: ' + err);
-						} else {
-							if (callback) callback();
-						}
-					});	
-				} else { // for testing
-					logger.info('sendReplyTweet is in test mode - no message will be sent. Callback will still run.');
-					logger.info('@'+user+' '+message);
+	if (!doesUserExist(user)) {
+		if (config.twitter.send_enabled == true){
+			twit.updateStatus('@'+user+' '+message, function(err, data){
+				if (err) {
+					logger.error('Tweeting failed: ' + err);
+				} else {
 					if (callback) callback();
 				}
-			}
-		}	
-	);
+			});	
+		} else { // for testing
+			logger.info('sendReplyTweet is in test mode - no message will be sent. Callback will still run.');
+			logger.info('@'+user+' '+message);
+			if (callback) callback();
+		}
+	}
 }
 
 /**
@@ -205,10 +215,13 @@ function insertNonSpatial(tweetActivity){
 		tweetActivity.twitter_lang + "');"
 	);
 	if (status) logger.info('Inserted non-spatial tweet');
-	if (status) status = dbQuery( 
-		"INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));"
-	);
-	if (status) logger.info("Inserted non-spatial user");
+	
+	if (!doesUserExist(user)) {
+		if (status) status = dbQuery( 
+			"INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));"
+		);
+		if (status) logger.info("Inserted non-spatial user");
+	}
 };
 	
 /**
