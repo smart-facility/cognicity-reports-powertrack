@@ -12,12 +12,11 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 * NodeJS version 0.10.12 or later
 
 #### Node Modules
-* Express version 3.2.6 or later
-* Node-Daemonize 2 version 0.4.2 or later
-* Node-Postgres version 2.0.0 or later
-* ntwitter version 0.5.0 or later
-* gnip version 0.2.1 or later
-* winston version 0.8.1 or later
+* Node-Daemonize 2 version 0.4.2 or compatible
+* Node-Postgres version 2.0.0 or compatible
+* ntwitter version 0.5.0 or compatible
+* gnip version 0.2.1 or compatible
+* winston version 0.8.1 or compatible
 
 ### Installation
 Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](http://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
