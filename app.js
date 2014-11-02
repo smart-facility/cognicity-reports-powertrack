@@ -29,7 +29,6 @@ if (process.argv[2]){
 }
 
 // TODO Verify DB connection is up
-// TODO Error handling from within DB callback functions, exceptions are not caught?
 
 // Logging configuration
 logger
@@ -107,7 +106,13 @@ function dbQuery(sql, success){
 			}
 			done();
 			logger.debug( "dbQuery: success: " + sql );
-			if (success) success(result);
+			if (success) {
+				try {
+					success(result);
+				} catch(err) {
+					logger.error("dbQuery: Error in success callback: " + err.message + ", " + err.stack);
+				}
+			}
 		});
 	});
 };
