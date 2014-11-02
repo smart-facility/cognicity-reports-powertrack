@@ -29,7 +29,7 @@ if (process.argv[2]){
 }
 
 // TODO Verify DB connection is up
-// TODO Handle DB conenction errors in DB functions (as well as query errors)
+// TODO Error handling from within DB callback functions, exceptions are not caught?
 
 // Logging configuration
 logger
@@ -90,43 +90,41 @@ function getMessage(code, lang) {
  * Execute the SQL against the database connection. Run the success callback on success if supplied.
  * @param {string} sql SQL script to execute in the DB. 
  * @param {dbQuerySuccess} success Callback function to execute on success.
- * @returns {boolean} True if successful, false on error
  */
 function dbQuery(sql, success){
 	logger.debug( "dbQuery: executing SQL: " + sql );
 	pg.connect(config.pg.conString, function(err, client, done){
+		if (err){
+			logger.error("dbQuery: " + sql + ", " + err);
+			done();
+			return;
+		}	
 		client.query(sql, function(err, result){
 			if (err){
 				logger.error("dbQuery: " + sql + ", " + err);
 				done();
-				return false;
+				return;
 			}
 			done();
-			logger.debug( "dbQuery: success" );
+			logger.debug( "dbQuery: success: " + sql );
 			if (success) success(result);
-			return true;
 		});
-		if (err){
-			logger.error("dbQuery: " + sql + ", " + err);
-			done();
-			return false;
-		}	
 	});
 };
 
 /**
- * Does a user already exist in the all users table?
+ * Only execute the success callback if the user is not currently in the all users table.
  * @param {string} user The twitter screen name to check if exists
- * @return {boolean} True if the user exists, false if not
+ * @param {dbQuerySuccess} callback Callback to execute if the user doesn't exist
  */
-function doesUserExist(user){
+function ifNewUser(user, success){
 	dbQuery(
 		"SELECT a.user_hash FROM "+config.pg.table_all_users+" a WHERE a.user_hash = md5('"+user+"');",
 		function(result) {
-			if (result && result.rows && result.rows.length == 1) return true;
+			if (result && result.rows && result.rows.length == 0) success(result);
+			else logger.debug("Not performing callback as user already exists");
 		}	
 	);
-	return false;
 }
 
 /**
@@ -136,7 +134,7 @@ function doesUserExist(user){
  * @param {function} callback Callback function called on success
  */
 function sendReplyTweet(user, message, callback){
-	if (!doesUserExist(user)) {
+	ifNewUser( user, function(result) {
 		if (config.twitter.send_enabled == true){
 			twit.updateStatus('@'+user+' '+message, function(err, data){
 				if (err) {
@@ -150,7 +148,7 @@ function sendReplyTweet(user, message, callback){
 			logger.info('@'+user+' '+message);
 			if (callback) callback();
 		}
-	}
+	});
 }
 
 /**
@@ -160,18 +158,24 @@ function sendReplyTweet(user, message, callback){
  */
 function insertConfirmed(tweetActivity){
 	//insertUser with count -> upsert	
-	var status = dbQuery(
+	dbQuery(
 		"INSERT INTO " + config.pg.table_tweets + " (created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
 		"VALUES (to_timestamp('" + new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
 		"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), $$" + tweetActivity.body + "$$, '" +
 		JSON.stringify(tweetActivity.twitter_entities.hashtags) + "', '" + 
 		JSON.stringify(tweetActivity.twitter_entities.urls) + "', '" +
 		JSON.stringify(tweetActivity.twitter_entities.user_mentions) + "', '" +
-		tweetActivity.twitter_lang + "', ST_GeomFromText('POINT(" + tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1] + ")',4326));"
+		tweetActivity.twitter_lang + "', ST_GeomFromText('POINT(" + tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1] + ")',4326));",
+		function(result) {
+			logger.info('Logged confirmed tweet report');
+			dbQuery( 
+				"SELECT upsert_tweet_users(md5('"+tweetActivity.actor.preferredUsername+"'));",
+				function(result) {
+					logger.info('Logged confirmed tweet user');
+				}
+			);
+		}
 	);
-	if (status) logger.info('Logged confirmed tweet report');
-	if (status) status = dbQuery( "SELECT upsert_tweet_users(md5('"+tweetActivity.actor.preferredUsername+"'));" );
-	if (status) logger.info('Logged confirmed tweet user');
 }
 
 /**
@@ -179,10 +183,12 @@ function insertConfirmed(tweetActivity){
  * @param tweetActivity Gnip PowerTrack tweet activity object
  */
 function insertInvitee(tweetActivity){
-	var status = dbQuery( 
-		"INSERT INTO "+config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));"
+	dbQuery( 
+		"INSERT INTO "+config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));",
+		function(result) {
+			logger.info('Logged new invitee');
+		}
 	);
-	if (status) logger.info('Logged new invitee');
 };
 	
 /**
@@ -190,13 +196,15 @@ function insertInvitee(tweetActivity){
  * @param tweetActivity Gnip PowerTrack tweet activity object
  */
 function insertUnConfirmed(tweetActivity){
-	var status = dbQuery(
+	dbQuery(
 		"INSERT INTO " + config.pg.table_unconfirmed + " (created_at, the_geom) VALUES (to_timestamp('" + 
 		new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
 		"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText('POINT(" + 
-		tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1] + ")',4326));"
+		tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1] + ")',4326));",
+		function(result) {
+			logger.info('Logged unconfirmed tweet report');
+		}
 	);
-	if (status) logger.info('Logged unconfirmed tweet report');
 };
 	
 /**
@@ -204,7 +212,7 @@ function insertUnConfirmed(tweetActivity){
  * @param tweetActivity Gnip PowerTrack tweet activity object
  */
 function insertNonSpatial(tweetActivity){
-	var status = dbQuery(
+	dbQuery(
 		"INSERT INTO " + config.pg.table_nonspatial_tweet_reports + 
 		" (created_at, text, hashtags, urls, user_mentions, lang) VALUES (to_timestamp('" + 
 		new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
@@ -212,16 +220,20 @@ function insertNonSpatial(tweetActivity){
 		JSON.stringify(tweetActivity.twitter_entities.hashtags) + "','" +
 		JSON.stringify(tweetActivity.twitter_entities.urls) + "','" + 
 		JSON.stringify(tweetActivity.twitter_entities.user_mentions) + "','" + 
-		tweetActivity.twitter_lang + "');"
+		tweetActivity.twitter_lang + "');",
+		function(result) {
+			logger.info('Inserted non-spatial tweet');
+		}
 	);
-	if (status) logger.info('Inserted non-spatial tweet');
 	
-	if (!doesUserExist(user)) {
-		if (status) status = dbQuery( 
-			"INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));"
+	ifNewUser( user, function(result) {
+		dbQuery( 
+			"INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));",
+			function(result) {
+				logger.info("Inserted non-spatial user");
+			}
 		);
-		if (status) logger.info("Inserted non-spatial user");
-	}
+	});
 };
 	
 /**
