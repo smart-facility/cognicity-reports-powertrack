@@ -163,6 +163,8 @@ function sendReplyTweet(user, message, callback){
 	});
 }
 
+// TODO Dollar strings; if we get a tweet with $$ in the middle, exception? Can we use parameterized queries?
+
 /**
  * Insert a confirmed report - i.e. has geo coordinates and is addressed.
  * Store both the tweet information and the user hash.
@@ -440,3 +442,5 @@ process.on('SIGTERM', function() {
 
 // Start up the twitter feed - connect the Gnip stream
 if ( config.gnip.stream ) connectStream();
+
+dbQuery( "SELECT $$" + "z$$ as b, $$foo" + "$$ as a;", function(result){logger.info(result.rows[0].a)} );
