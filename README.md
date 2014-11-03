@@ -9,7 +9,8 @@ CogniCity
 Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity framework, responsible for collecting relevant tweets via Gnip PowerTrack, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
 
 ### Dependencies
-* NodeJS version 0.10.12 or later
+* [NodeJS](http://nodejs.org) version 0.10.12 or later
+* [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or later.
 
 #### Node Modules
 * Node-Daemonize 2 version 0.4.2 or compatible
@@ -22,6 +23,18 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](http://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
 
 Install the node dependencies in package.json using NPM: `npm install`
+
+#### Platform-specific notes ####
+To build on OS X we recommend using [homebrew](http://brew.sh) to install node, npm, and required node modules as follows:
+```shell
+brew install node
+npm install
+```
+
+To build on Windows we recommend installing all dependencies (making sure to use all 32 bit or all 64 bit, depending on your architecture) plus following the instructions (for Windows 7 follow the Windows 7/8 instructions) for [node-gyp](https://github.com/TooTallNate/node-gyp) and then:
+* You need to add *C:\Program Files\PostgreSQL\9.3\bin* (modifying that location if necessary to point to the installed version of PostgreSQL) to path so the build script finds `pg_config`, and
+* You need to create the *%APPDATA%\npm* folder and run cmd (and hence npm) as administrator. *%APPDATA%* is usually under *C:\Users\your_username\AppData\Remote*.
+Then you can run `npm install`.
 
 ### Configuration
 App configuration parameters are stored in a configuration file which is parsed by app.js. See sample-reports-config.js for an example configuration.
@@ -68,7 +81,7 @@ $ node daemon.js sample-config.js start
 project-name daemon started. PID 1000
 
 $node daemon.js sample-config.js status
-project-name running 
+project-name running
 
 $node daemon.js sample-config.js stop
 project-name daemon stopped
@@ -79,4 +92,3 @@ Winston writes to project-name.log (and project-name#.log if configured for mult
 
 ### License
 This software is released under the GPLv3 License. See License.txt for details.
-
