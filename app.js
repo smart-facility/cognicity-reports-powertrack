@@ -28,8 +28,6 @@ if (process.argv[2]){
 	throw new Error('No config file. Usage: node app.js config.js')
 }
 
-// TODO Verify DB connection is up
-
 // Logging configuration
 logger
 	// Configure custom File transport to write plain text messages
@@ -42,6 +40,15 @@ logger
 	})
 	// Console transport is no use to us when running as a daemon
 	.remove(logger.transports.Console);
+
+// Verify DB connection is up
+pg.connect(config.pg.conString, function(err, client, done){
+	if (err){
+		logger.error("DB Connection error: " + err);
+		done();
+		process.exit(1);
+	}
+});
 
 // Configure new instance of the ntwitter interface
 /** ntwitter interface instance */
