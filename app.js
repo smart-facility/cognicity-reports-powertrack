@@ -1,3 +1,9 @@
+'use strict';
+
+/* jshint node:true */
+/* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
+/* jshint curly:false */ // Don't require curly brackets around one-line statements
+
 //app.js - cognicity-reports-powertrack modules
 
 /**
@@ -25,7 +31,7 @@ var logger = require('winston');
 if (process.argv[2]){
 	var config = require(__dirname+'/'+process.argv[2]); 
 } else {
-	throw new Error('No config file. Usage: node app.js config.js')
+	throw new Error('No config file. Usage: node app.js config.js');
 }
 
 // Logging configuration
@@ -116,13 +122,13 @@ function dbQuery(sql, success){
 			if (success) {
 				try {
 					success(result);
-				} catch(err) {
-					logger.error("dbQuery: Error in success callback: " + err.message + ", " + err.stack);
+				} catch(error) {
+					logger.error("dbQuery: Error in success callback: " + error.message + ", " + error.stack);
 				}
 			}
 		});
 	});
-};
+}
 
 /**
  * Only execute the success callback if the user is not currently in the all users table.
@@ -133,8 +139,11 @@ function ifNewUser(user, success){
 	dbQuery(
 		"SELECT a.user_hash FROM "+config.pg.table_all_users+" a WHERE a.user_hash = md5('"+user+"');",
 		function(result) {
-			if (result && result.rows && result.rows.length == 0) success(result);
-			else logger.debug("Not performing callback as user already exists");
+			if (result && result.rows && result.rows.length === 0) {
+				success(result);
+			} else {
+				logger.debug("Not performing callback as user already exists");
+			}
 		}	
 	);
 }
@@ -147,7 +156,7 @@ function ifNewUser(user, success){
  */
 function sendReplyTweet(user, message, callback){
 	ifNewUser( user, function(result) {
-		if (config.twitter.send_enabled == true){
+		if (config.twitter.send_enabled === true){
 			twit.updateStatus('@'+user+' '+message, function(err, data){
 				if (err) {
 					logger.error('Tweeting failed: ' + err);
@@ -203,7 +212,7 @@ function insertInvitee(tweetActivity){
 			logger.info('Logged new invitee');
 		}
 	);
-};
+}
 	
 /**
  * Insert an unconfirmed report - i.e. has geo coordinates but is not addressed.
@@ -219,7 +228,7 @@ function insertUnConfirmed(tweetActivity){
 			logger.info('Logged unconfirmed tweet report');
 		}
 	);
-};
+}
 	
 /**
  * Insert a non-spatial tweet report - i.e. we got an addressed tweet without geo coordinates.
@@ -240,7 +249,7 @@ function insertNonSpatial(tweetActivity){
 		}
 	);
 	
-	ifNewUser( user, function(result) {
+	ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
 		dbQuery( 
 			"INSERT INTO "+config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));",
 			function(result) {
@@ -248,7 +257,7 @@ function insertNonSpatial(tweetActivity){
 			}
 		);
 	});
-};
+}
 	
 /**
  * Main stream tweet filtering logic.
@@ -286,13 +295,13 @@ function filter(tweetActivity){
 			logger.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking for geo' );
 		} else {
 			insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
-			sendReplyTweet( tweetActivity.actor.preferredUsername, getMessage('thanks_text', tweetActivity.twitter_lang) ) //send geo reminder
+			sendReplyTweet( tweetActivity.actor.preferredUsername, getMessage('thanks_text', tweetActivity.twitter_lang) ); //send geo reminder
 		}
 		
 	} else if ( geoInBoundingBox && !addressed ) {
 		logger.verbose( 'filter: +GEO -ADDRESSED = unconfirmed report, ask user to participate' );
 
-		insertUnConfirmed(tweetActivity) //insert unconfirmed report, then invite the user to participate
+		insertUnConfirmed(tweetActivity); //insert unconfirmed report, then invite the user to participate
 		sendReplyTweet(tweetActivity.actor.preferredUsername, getMessage('invite_text', tweetActivity.twitter_lang), function(){
 			insertInvitee(tweetActivity);
 		});	
@@ -410,10 +419,12 @@ function connectStream(){
 	// Use key of rule entry as the tag, and value as the rule string
 	var newRules = [];
 	for (var tag in config.gnip.rules) {
-		newRules.push({
-			tag: tag,
-			value: config.gnip.rules[tag]
-		});
+		if ( config.gnip.rules.hasOwnProperty(tag) ) {
+			newRules.push({
+				tag: tag,
+				value: config.gnip.rules[tag]
+			});
+		}
 	}
 	logger.debug('connectStream: Rules = ' + JSON.stringify(newRules));
 	
@@ -442,5 +453,3 @@ process.on('SIGTERM', function() {
 
 // Start up the twitter feed - connect the Gnip stream
 if ( config.gnip.stream ) connectStream();
-
-dbQuery( "SELECT $$" + "z$$ as b, $$foo" + "$$ as a;", function(result){logger.info(result.rows[0].a)} );

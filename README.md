@@ -19,6 +19,9 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 * gnip version 0.2.1 or compatible
 * winston version 0.8.1 or compatible
 
+#### Dev Modules
+* jshint version 2.5.8 or compatible
+
 ### Installation
 Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](http://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
 

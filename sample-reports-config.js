@@ -1,3 +1,8 @@
+'use strict';
+
+/* jshint node:true */
+/* global module */
+
 //sample-config.js - sample configuration file for cognicity-reports module
 
 var config = {};
@@ -6,7 +11,7 @@ var config = {};
 config.instance = 'cognicity-reports-powertrack';
 
 //Logging configuration
-config.logger = {}
+config.logger = {};
 config.logger.level = "info"; // What level to log at; info, verbose or debug are most useful
 config.logger.maxFileSize = 1024 * 1024 * 100; // Max file size in bytes of each log file; default 100MB
 config.logger.maxFiles = 10; // Max number of log files kept
@@ -26,11 +31,11 @@ config.gnip.username = 'username';
 config.gnip.password = 'password';
 config.gnip.steamUrl = 'https://stream.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod.json';
 config.gnip.rulesUrl = 'https://api.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod/rules.json';
-config.gnip.rules = [
+config.gnip.rules = {
     "geo":"( flood OR banjir ) ( bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR bounding_box:[106.8 -6.4354 107.0782 -6.2] OR bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )",
     "addressed":"( flood OR banjir ) @petajkt",
     "location":"( flood OR banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta )"
-];
+};
 
 //Twitter parameters
 config.twitter.send_enabled = false; //send verfication requests?
@@ -49,7 +54,7 @@ config.twitter.thanks_text = {
 
 //Postgres database connection
 config.pg = {};
-config.pg.conString = "postgres://postgres:password@localhost:5432/cognicity"
+config.pg.conString = "postgres://postgres:password@localhost:5432/cognicity";
 config.pg.table_tweets = 'tweet_reports';
 config.pg.table_users = 'tweet_users';
 config.pg.table_invitees = 'tweet_invitees';
