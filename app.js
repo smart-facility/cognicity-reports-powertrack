@@ -47,6 +47,8 @@ logger
 	// Console transport is no use to us when running as a daemon
 	.remove(logger.transports.Console);
 
+logger.info("Application starting...");
+
 // Verify DB connection is up
 pg.connect(config.pg.conString, function(err, client, done){
 	if (err){
@@ -445,9 +447,13 @@ process.on('uncaughtException', function (err) {
 	process.exit(1);
 });
 
-// Catch kill signal and log a clean exit status
+// Catch kill and interrupt signals and log a clean exit status
 process.on('SIGTERM', function() {
 	logger.info('SIGTERM: Application shutting down');
+	process.exit(0);
+});
+process.on('SIGINT', function() {
+	logger.info('SIGINT: Application shutting down');
 	process.exit(0);
 });
 
