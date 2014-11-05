@@ -7,7 +7,7 @@
 /* jshint -W079 */
 var test = require('unit.js');
 /* jshint +W079 */
-var CognicityReportsPowertrack = require('../cognicityReportsPowertrack.js');
+var CognicityReportsPowertrack = require('../CognicityReportsPowertrack.js');
 
 // Create server and mock functions as required
 var server = new CognicityReportsPowertrack(
