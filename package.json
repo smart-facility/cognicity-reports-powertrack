@@ -1,27 +1,30 @@
 {
-	"name": "cognicity-reports-powertrack",
-	"description": "CogniCity reports Gnip PowerTrack module",
-	"version": "0.0.1",
-	"author": "Tomas Holderness <tomas@uow.edu.au>",
-	"preferGlobal": false,
-	"private": true,
-	"dependencies": {
-		"daemonize2": "^0.4.2",
-		"ntwitter": "^0.5.0",
-		"pg": "^2.0.0",
-		"gnip": "^0.2.1",
-		"winston": "^0.8.1"
-	},
-	"devDependencies": {
-        "jshint": "^2.5.8",
-        "jsdoc": "^3.3.0"
-    },
-	"engines":{
-		"node":">=0.10.12"
-	},
-	"scripts": {
-        "test": "npm run-script jshint",
-        "jshint": "jshint app.js sample-reports-config.js",
-        "build-docs": "jsdoc app.js"
-    }
+  "name": "cognicity-reports-powertrack",
+  "description": "CogniCity reports Gnip PowerTrack module",
+  "version": "0.0.1",
+  "author": "Tomas Holderness <tomas@uow.edu.au>",
+  "preferGlobal": false,
+  "private": true,
+  "dependencies": {
+    "daemonize2": "^0.4.2",
+    "ntwitter": "^0.5.0",
+    "pg": "^2.0.0",
+    "gnip": "^0.2.1",
+    "winston": "^0.8.1"
+  },
+  "devDependencies": {
+    "jsdoc": "^3.3.0",
+    "jshint": "^2.5.8",
+    "mocha": "^2.0.1",
+    "unit.js": "^1.0.2"
+  },
+  "engines": {
+    "node": ">=0.10.12"
+  },
+  "scripts": {
+    "test": "npm run-script jshint && npm run-script mocha",
+    "jshint": "jshint *.js test/*.js",
+    "mocha": "mocha test",
+    "build-docs": "jsdoc -d docs *.js"
+  }
 }

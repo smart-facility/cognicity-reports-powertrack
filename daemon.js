@@ -1,12 +1,17 @@
+'use strict';
+
 //daemon.js - Daemon script for cognicity-reports module
+
+/* jshint node:true */
+/* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
+/* jshint curly:false */ // Don't require curly brackets around one-line statements
 
 //Load configuration file
 if (process.argv[2] && process.argv[3]){
 	var config = require(__dirname+'/'+process.argv[2]); 
-	}
-else{
-	throw new Error('Missing parameters. Usage: node daemon.js config.js [start|stop|status]')
-	}
+} else {
+	throw new Error('Missing parameters. Usage: node daemon.js config.js [start|stop|status]');
+}
 
 //Daemon setup
 var daemon = require("daemonize2").setup({
@@ -21,18 +26,17 @@ switch (process.argv[3]){
 		daemon.start();
 		daemon.on("started", function(){
 			console.log(config.instance+' running');
-			})
+		});
 		break;
 	case "stop":
 		daemon.stop();
 		break;
 	case "status":
-		if (daemon.status() == 0){
+		if (daemon.status() === 0){
 			console.log(config.instance+' not running.');
-			}
-		else{
+		} else{
 			console.log(config.instance+' running');
-			}
+		}
 		break;
 	default:
 		console.log("Usage:node daemon.js config.js [start|stop|status]");

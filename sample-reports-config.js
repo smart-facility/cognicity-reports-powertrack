@@ -1,9 +1,9 @@
 'use strict';
 
+//sample-config.js - sample configuration file for cognicity-reports module
+
 /* jshint node:true */
 /* global module */
-
-//sample-config.js - sample configuration file for cognicity-reports module
 
 var config = {};
 
@@ -13,6 +13,7 @@ config.instance = 'cognicity-reports-powertrack';
 //Logging configuration
 config.logger = {};
 config.logger.level = "info"; // What level to log at; info, verbose or debug are most useful
+// TODO Refer to available levels
 config.logger.maxFileSize = 1024 * 1024 * 100; // Max file size in bytes of each log file; default 100MB
 config.logger.maxFiles = 10; // Max number of log files kept
 

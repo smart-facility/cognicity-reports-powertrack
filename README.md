@@ -22,6 +22,8 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 
 #### Dev Modules
 * jshint version 2.5.8 or compatible
+* unit.js version 1.0.2 or compatible
+* mocha version 2.0.1 or compatible
 
 If you're going to commit changes to the JavaScript, be sure to run a 'npm test' first - and fix any issues that it complains about, otherwise the build will fail when you push the commit.
 
