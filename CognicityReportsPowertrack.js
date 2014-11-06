@@ -324,7 +324,7 @@ CognicityReportsPowertrack.prototype = {
 		
 		tweetActivity.gnip.matching_rules.forEach( function(rule){
 			if (rule.tag) {
-				if (rule.tag.indexOf("geo")===0) geoInBoundingBox = true;
+				if (rule.tag.indexOf("boundingbox")===0) geoInBoundingBox = true;
 				if (rule.tag.indexOf("addressed")===0) addressed = true;
 				if (rule.tag.indexOf("location")===0) locationMatch = true;
 			}
