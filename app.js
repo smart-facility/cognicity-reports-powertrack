@@ -1,6 +1,6 @@
 'use strict';
 
-// app.js - cognicity-reports-powertrack modules
+// app.js - cognicity-reports-powertrack application setup
 
 /* jshint node:true */
 /* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
