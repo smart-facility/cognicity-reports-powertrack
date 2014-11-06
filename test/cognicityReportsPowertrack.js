@@ -9,22 +9,14 @@ var test = require('unit.js');
 /* jshint +W079 */
 var CognicityReportsPowertrack = require('../CognicityReportsPowertrack.js');
 
-// Create server and mock functions as required
+// Create server with empty objects
+// We will mock these objects as required for each test suite
 var server = new CognicityReportsPowertrack(
 	{},
 	{},
 	{},
-	{ // Logger
-		error:function(msg){ lastLog = msg; },
-		warn:function(msg){ lastLog = msg; },
-		info:function(msg){ lastLog = msg; },
-		verbose:function(msg){ lastLog = msg; },
-		debug:function(msg){ lastLog = msg; }
-	}
+	{}
 );
-
-// Store the last message we logged; this lets us do some neat testing of code paths
-var lastLog = "";
 
 // Test harness for CognicityReportsPowertrack object
 describe( 'CognicityReportsPowertrack', function() {
@@ -42,6 +34,10 @@ describe( 'CognicityReportsPowertrack', function() {
 					'defaultLanguage' : 'en'
 				}
 			};
+			// Mock logging calls to do nothing
+			server.logger = {
+				warn:function(){}
+			};
 		});
 		
 		it( 'Should resolve a string for specified language', function() {
@@ -52,6 +48,11 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 		it( 'Should return null if code cannot be resolved', function() {
 			test.value( server.getMessage('does-not-exist', 'en') ).is( null );
+		});
+		
+		// Restore/erase mocked functions
+		after( function() {
+			server.logger = {};
 		});
 	});
 	
@@ -94,8 +95,20 @@ describe( 'CognicityReportsPowertrack', function() {
 		var oldinsertInvitee;
 		var oldSendReplyTweet;
 		var oldGetMessage;
+		
+		// Store the last message we logged; this lets us do some neat testing of code paths
+		var lastLog = "";
 
 		before( function() {
+			// Mock logging functions to store the log message so we can inspect it
+			server.logger = {
+				error:function(msg){ lastLog = msg; },
+				warn:function(msg){ lastLog = msg; },
+				info:function(msg){ lastLog = msg; },
+				verbose:function(msg){ lastLog = msg; },
+				debug:function(msg){ lastLog = msg; }
+			};
+			
 			// Retain functions we're going to mock out
 			oldInsertConfirmed = server.insertConfirmed;
 			oldInsertNonSpatial = server.insertNonSpatial;
@@ -104,7 +117,7 @@ describe( 'CognicityReportsPowertrack', function() {
 			oldSendReplyTweet = server.sendReplyTweet;
 			oldGetMessage = server.getMessage;
 			
-			// Mock these methods so they do nothing (and don't crash during the test!)
+			// Mock these methods as we will look at the log message to check the code path
 			server.insertConfirmed = function(){};
 			server.insertNonSpatial = function(){};
 			server.insertUnConfirmed = function(){};
@@ -187,18 +200,86 @@ describe( 'CognicityReportsPowertrack', function() {
 			test.value( lastLog ).contains( noMatchString );
 		});
 		
+		// Restore/erase mocked functions
 		after( function() {
-			// Reconnect the methods we mocked out
 			server.insertConfirmed = oldInsertConfirmed;
 			server.insertNonSpatial = oldInsertNonSpatial;
 			server.insertUnConfirmed = oldinsertUnConfirmed;
 			server.insertInvitee = oldinsertInvitee;
 			server.sendReplyTweet = oldSendReplyTweet;
 			server.getMessage = oldGetMessage;
+			
+			server.logger = {};
 		});
 	});
 	
-	// TODO Add tests for dbQuery function
+	// Test suite for dbQuery function
+	describe( 'dbQuery', function() {
+		before( function() {
+			// Mock required parts of the PG config
+			server.config = {
+				'pg' : {
+					'conString' : ''
+				}
+			};
+			// Mock log methods
+			server.logger = {
+				debug:function(){},
+				error:function(){}
+			};
+		});
+		
+		// Setup a success handler which just flags whether it was run or not
+		var successful = false;
+		var successHandler = function(result) {
+			successful = true;
+		};
+		
+		beforeEach( function(){
+			// Reset our success handler state
+			successful = false;
+			
+			// Mock the PG object to let us set error states
+			// Mock the connect and query methods to just pass through their arguments
+			server.pg = {
+				connectionErr: null,
+				connectionClient: {
+					query: function(config, handler) {
+						handler(server.pg.queryErr, server.pg.queryResult);
+					}
+				},
+				connectionDone: function(){},
+				queryErr: null,
+				queryResult: null,
+				connect : function(config, success) {
+					success(server.pg.connectionErr, server.pg.connectionClient, server.pg.connectionDone);
+				}
+			};
+		});
+
+		it( 'Connection error does not run success handler', function() {
+			server.pg.connectionErr = true;
+			server.dbQuery("", successHandler);
+			test.value( successful ).isFalse();
+		});
+		it( 'Query error does not run success handler', function() {
+			server.pg.queryErr = true;
+			server.dbQuery("", successHandler);
+			test.value( successful ).isFalse();
+		});
+		it( 'No error does run success handler', function() {
+			server.dbQuery("", successHandler);
+			test.value( successful ).isTrue();
+		});
+		
+		// Restore/erase mocked functions
+		after( function(){
+			server.logger = {};
+			server.config = {};
+			server.pg = {};
+		});
+	});
+	
 	// TODO Add test for connectStream function
 	
 });
