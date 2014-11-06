@@ -100,14 +100,67 @@ Winston writes to project-name.log (and project-name#.log if configured for mult
 
 ### Development
 
+#### Testing
+
+To run the full set of tests, run:
+
+```shell
+npm test
+```
+
+This will run the following tests:
+
+##### JSHint
+
+JSHint will run on all JavaScript files in the root folder and test folders.
+
+Running the script:
+
+```shell
+npm run-script jshint
+```
+
+Will execute the command:
+
+```shell
+jshint *.js test/*.js
+```
+
+##### Mocha
+
+Mocha will run all unit tests in the test folder and can be run with the following script:
+
+```shell
+npm run-script mocha
+```
+
+This will run the command:
+
+```shell
+mocha test
+```
+
 #### Git Hooks
 There is a git pre-commit hook which will run the 'npm test' command before your commit and will fail the commit if testing fails.
 
 To use this hook, copy the file from 'git-hooks/pre-commit' to '.git/hooks/pre-commit' in your project folder.
 
 ```shell
-cd cognicity-reports-powertrack
 cp git-hooks/pre-commit .git/hooks/
+```
+
+#### Documentation
+
+To build the JSDoc documentation into the folder 'docs', run the following npm script:
+
+```shell
+npm run-script build-docs
+```
+
+This runs JSHint using the configuration options in .jshintrc and the command:
+
+```shell
+jsdoc -d docs *.js
 ```
 
 ### License
