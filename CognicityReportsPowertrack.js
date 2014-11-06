@@ -84,27 +84,27 @@ CognicityReportsPowertrack.prototype = {
 	
 	/**
 	 * Execute the SQL against the database connection. Run the success callback on success if supplied.
-	 * @param {string} sql SQL script to execute in the DB. 
+	 * @param {Object} config The pg config object for a parameterized query, e.g. {text:"select * from foo where a=$1", values:['bar']} 
 	 * @param {dbQuerySuccess} success Callback function to execute on success.
 	 */
-	dbQuery: function(sql, success){
+	dbQuery: function(config, success){
 		var self = this;
 
-		self.logger.debug( "dbQuery: executing SQL: " + sql );
+		self.logger.debug( "dbQuery: executing query: " + JSON.stringify(config) );
 		self.pg.connect(self.config.pg.conString, function(err, client, done){
 			if (err){
-				self.logger.error("dbQuery: " + sql + ", " + err);
+				self.logger.error("dbQuery: " + JSON.stringify(config) + ", " + err);
 				done();
 				return;
 			}	
-			client.query(sql, function(err, result){
+			client.query(config, function(err, result){
 				if (err){
-					self.logger.error("dbQuery: " + sql + ", " + err);
+					self.logger.error("dbQuery: " + JSON.stringify(config) + ", " + err);
 					done();
 					return;
 				}
 				done();
-				self.logger.debug( "dbQuery: success: " + sql );
+				self.logger.debug( "dbQuery: success: " + JSON.stringify(config) );
 				if (success) {
 					try {
 						success(result);
@@ -125,7 +125,10 @@ CognicityReportsPowertrack.prototype = {
 		var self = this;
 
 		self.dbQuery(
-			"SELECT a.user_hash FROM "+self.config.pg.table_all_users+" a WHERE a.user_hash = md5('"+user+"');",
+			{
+				text: "SELECT user_hash FROM " + self.config.pg.table_all_users + " WHERE user_hash = md5($1);",
+				values: [ user ]
+			},
 			function(result) {
 				if (result && result.rows && result.rows.length === 0) {
 					success(result);
@@ -174,17 +177,37 @@ CognicityReportsPowertrack.prototype = {
 
 		//insertUser with count -> upsert	
 		self.dbQuery(
-			"INSERT INTO " + self.config.pg.table_tweets + " (created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
-			"VALUES (to_timestamp('" + new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
-			"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), $$" + tweetActivity.body + "$$, '" +
-			JSON.stringify(tweetActivity.twitter_entities.hashtags) + "', '" + 
-			JSON.stringify(tweetActivity.twitter_entities.urls) + "', '" +
-			JSON.stringify(tweetActivity.twitter_entities.user_mentions) + "', '" +
-			tweetActivity.twitter_lang + "', ST_GeomFromText('POINT(" + tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1] + ")',4326));",
+			{
+				text : "INSERT INTO " + self.config.pg.table_tweets + " " +
+					"(created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
+					"VALUES (" +
+					"to_timestamp($1::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), " +
+					"$2, " +
+					"$3, " + 
+					"$4, " + 
+					"$5, " + 
+					"$6, " + 
+					"ST_GeomFromText('POINT($7)',4326)" +
+					");",
+				values : [
+				    new Date(Date.parse(tweetActivity.postedTime)).toLocaleString(),
+				    tweetActivity.body,
+				    JSON.stringify(tweetActivity.twitter_entities.hashtags),
+				    JSON.stringify(tweetActivity.twitter_entities.urls),
+				    JSON.stringify(tweetActivity.twitter_entities.user_mentions),
+				    tweetActivity.twitter_lang,
+				    tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1]
+				]
+			},
 			function(result) {
 				self.logger.info('Logged confirmed tweet report');
 				self.dbQuery( 
-					"SELECT upsert_tweet_users(md5('"+tweetActivity.actor.preferredUsername+"'));",
+					{
+						text : "SELECT upsert_tweet_users(md5($1));",
+						values : [
+						    tweetActivity.actor.preferredUsername
+						]
+					},
 					function(result) {
 						self.logger.info('Logged confirmed tweet user');
 					}
@@ -201,7 +224,10 @@ CognicityReportsPowertrack.prototype = {
 		var self = this;
 
 		self.dbQuery( 
-			"INSERT INTO "+self.config.pg.table_invitees+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));",
+			{
+				text : "INSERT INTO " + self.config.pg.table_invitees + " (user_hash) VALUES (md5($1));",
+				values : [ tweetActivity.actor.preferredUsername ]
+			},
 			function(result) {
 				self.logger.info('Logged new invitee');
 			}
@@ -216,10 +242,18 @@ CognicityReportsPowertrack.prototype = {
 		var self = this;
 
 		self.dbQuery(
-			"INSERT INTO " + self.config.pg.table_unconfirmed + " (created_at, the_geom) VALUES (to_timestamp('" + 
-			new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
-			"'::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), ST_GeomFromText('POINT(" + 
-			tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1] + ")',4326));",
+			{
+				text : "INSERT INTO " + self.config.pg.table_unconfirmed + " " +
+					"(created_at, the_geom) " +
+					"VALUES ( " +
+					"to_timestamp($1::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), " +
+					"ST_GeomFromText('POINT($2)',4326)" +
+					");",
+				values : [
+				    new Date(Date.parse(tweetActivity.postedTime)).toLocaleString(),
+				    tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1]
+				]
+			},
 			function(result) {
 				self.logger.info('Logged unconfirmed tweet report');
 			}
@@ -234,14 +268,27 @@ CognicityReportsPowertrack.prototype = {
 		var self = this;
 
 		self.dbQuery(
-			"INSERT INTO " + self.config.pg.table_nonspatial_tweet_reports + 
-			" (created_at, text, hashtags, urls, user_mentions, lang) VALUES (to_timestamp('" + 
-			new Date(Date.parse(tweetActivity.postedTime)).toLocaleString() + 
-			"'::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), $$" + tweetActivity.body +	"$$, '" + 
-			JSON.stringify(tweetActivity.twitter_entities.hashtags) + "','" +
-			JSON.stringify(tweetActivity.twitter_entities.urls) + "','" + 
-			JSON.stringify(tweetActivity.twitter_entities.user_mentions) + "','" + 
-			tweetActivity.twitter_lang + "');",
+			{
+				text : "INSERT INTO " + self.config.pg.table_nonspatial_tweet_reports + " " +
+					"(created_at, text, hashtags, urls, user_mentions, lang) " +
+					"VALUES (" +
+					"to_timestamp($1::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), " +
+					"$2, " + 
+					"$3, " + 
+					"$4, " + 
+					"$5, " + 
+					"$6" +
+					");",
+				values : [
+					new Date(Date.parse(tweetActivity.postedTime)).toLocaleString(),
+					tweetActivity.body,
+					JSON.stringify(tweetActivity.twitter_entities.hashtags),
+					JSON.stringify(tweetActivity.twitter_entities.urls),
+					JSON.stringify(tweetActivity.twitter_entities.user_mentions),
+					tweetActivity.twitter_lang
+				]
+			},
+			
 			function(result) {
 				self.logger.info('Inserted non-spatial tweet');
 			}
@@ -249,7 +296,10 @@ CognicityReportsPowertrack.prototype = {
 		
 		self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
 			self.dbQuery( 
-				"INSERT INTO "+self.config.pg.table_nonspatial_users+" (user_hash) VALUES (md5('"+tweetActivity.actor.preferredUsername+"'));",
+				{
+					text : "INSERT INTO " + self.config.pg.table_nonspatial_users + " (user_hash) VALUES (md5($1));",
+					values : [ tweetActivity.actor.preferredUsername ]
+				},
 				function(result) {
 					self.logger.info("Inserted non-spatial user");
 				}
