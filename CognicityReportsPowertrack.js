@@ -164,9 +164,7 @@ CognicityReportsPowertrack.prototype = {
 			}
 		});
 	},
-	
-	// TODO Dollar strings; if we get a tweet with $$ in the middle, exception? Can we use parameterized queries?
-	
+		
 	/**
 	 * Insert a confirmed report - i.e. has geo coordinates and is addressed.
 	 * Store both the tweet information and the user hash.
@@ -331,45 +329,42 @@ CognicityReportsPowertrack.prototype = {
 				if (rule.tag.indexOf("location")===0) locationMatch = true;
 			}
 		});
-		self.logger.verbose("filter: Categorized tweetActivity via Gnip tags as " + (geoInBoundingBox?'+':'-') + "GEO " + (addressed?'+':'-') + "ADDRESSED " + (locationMatch?'+':'-') + "LOCATION");
+		var tweetCategorizations = (geoInBoundingBox?'+':'-') + "BOUNDINGBOX " +
+			(hasGeo?'+':'-') + "GEO " +
+			(addressed?'+':'-') + "ADDRESSED " + 
+			(locationMatch?'+':'-') + "LOCATION";
+		
+		self.logger.verbose("filter: Categorized tweetActivity via Gnip tags as " + tweetCategorizations);
 		
 		// Perform the actions for the categorization of the tween
 		if ( geoInBoundingBox && addressed ) {
-			self.logger.verbose( 'filter: +GEO +ADDRESSED = confirmed report' );
+			self.logger.verbose( 'filter: +BOUNDINGBOX +ADDRESSED = confirmed report' );
+			
 			self.insertConfirmed(tweetActivity); //user + geo = confirmed report!	
 			
-		} else if ( !geoInBoundingBox && addressed ) {
-			self.logger.verbose( 'filter: -GEO +ADDRESSED = ask user for geo' );
+		} else if ( !geoInBoundingBox && !hasGeo && addressed && locationMatch ) {
+			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask user for geo' );
 			
-			if (hasGeo) {
-				self.logger.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking for geo' );
-			} else {
-				// TODO do location check before sending
-				self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
-				self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity.twitter_lang) ); //send geo reminder
-			}
+			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
+			self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity.twitter_lang) ); //send geo reminder
 			
 		} else if ( geoInBoundingBox && !addressed ) {
-			self.logger.verbose( 'filter: +GEO -ADDRESSED = unconfirmed report, ask user to participate' );
+			self.logger.verbose( 'filter: +BOUNDINGBOX -ADDRESSED = unconfirmed report, ask user to participate' );
 	
 			self.insertUnConfirmed(tweetActivity); //insert unconfirmed report, then invite the user to participate
 			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity.twitter_lang), function(){
 				self.insertInvitee(tweetActivity);
 			});	
 			
-		} else if ( !geoInBoundingBox && !addressed && locationMatch ) {
-			self.logger.verbose( 'filter: -GEO -ADDRESSED +LOCATION = ask user to participate' );
+		} else if ( !geoInBoundingBox && !hasGeo && !addressed && locationMatch ) {
+			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
 			
-			if (hasGeo) {
-				self.logger.verbose( 'filter: Tweet has geo coordinates but did not match bounding box, not asking to participate' );
-			} else {
-				self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity.twitter_lang), function(){
-					self.insertInvitee(tweetActivity);
-				});
-			}
+			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity.twitter_lang), function(){
+				self.insertInvitee(tweetActivity);
+			});
 			
 		} else {
-			self.logger.warn( 'filter: Tweet did not match category actions' );
+			self.logger.warn( 'filter: Tweet did not match category actions: ' + tweetCategorizations );
 		}
 	},
 	
