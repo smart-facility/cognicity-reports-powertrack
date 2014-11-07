@@ -396,7 +396,6 @@ CognicityReportsPowertrack.prototype = {
 		// Send a notification on an extended disconnection
 		var disconnectionNotificationSent = false;
 	
-		// TODO Get backfill data on reconnect?
 		// TODO Get replay data on reconnect?
 		
 		// Attempt to reconnect the socket. 
@@ -465,7 +464,13 @@ CognicityReportsPowertrack.prototype = {
 			
 			// Catch errors here, otherwise error in filter method is caught as stream error
 			try {
-				self.filter(tweetActivity);
+				if (tweetActivity.actor) {
+					// This looks like a tweet in Gnip activity format
+					self.filter(tweetActivity);
+				} else {
+					// This looks like a system message
+					self.log.info("connectStream: Received system message: " + JSON.stringify(tweetActivity));
+				}
 			} catch (err) {
 				self.logger.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);
 			}
