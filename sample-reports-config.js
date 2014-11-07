@@ -36,7 +36,7 @@ config.gnip.rules = {
     "addressed":"( flood OR banjir ) @petajkt",
     "location":"( flood OR banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta )"
 };
-config.gnip.maxReconnectTimeout = 60 * 10; // in seconds; 10 minutes for max reconnection timeout
+config.gnip.maxReconnectTimeout = 60 * 5; // in seconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
 config.gnip.sendTweetOnMaxTimeoutTo = null; // Enter a twitter username here (without @) to send a notification tweet if the max reconnection timeout is reached
 
 //Twitter parameters
