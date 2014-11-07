@@ -393,6 +393,8 @@ CognicityReportsPowertrack.prototype = {
 		var streamReconnectTimeout = 1;
 		// Connect Gnip stream and setup event handlers
 		var reconnectTimeoutHandle;
+		// Send a notification on an extended disconnection
+		var disconnectionNotificationSent = false;
 	
 		// TODO Get backfill data on reconnect?
 		// TODO Get replay data on reconnect?
@@ -406,8 +408,23 @@ CognicityReportsPowertrack.prototype = {
 			// Attempt to reconnect
 			self.logger.info( 'connectStream: Attempting to reconnect stream' );
 			stream.start();
-			streamReconnectTimeout *= 2;
-			// TODO Set max timeout and notify if we hit it?
+			
+			// If our timeout is above the max threshold, cap it and send a notification tweet
+			if (streamReconnectTimeout >= self.config.gnip.maxReconnectTimeout) {
+				// Only send the notification once per disconnection
+				if (!disconnectionNotificationSent) {
+					// Send notification tweet if we have a configured username
+					if (self.config.gnip.sendTweetOnMaxTimeoutTo) {
+						self.twit.updateStatus('@'+self.config.gnip.sendTweetOnMaxTimeoutTo+' '+"Cognicity Reports PowerTrack Gnip connection has been offline for "+self.config.gnip.maxReconnectTimeout+" seconds", function(err, data){
+							if (err) self.logger.error('connectStream: Tweeting failed: ' + err);
+						});	
+					}
+					disconnectionNotificationSent = true;
+				}
+			} else {
+				streamReconnectTimeout *= 2;
+				if (streamReconnectTimeout >= self.config.gnip.maxReconnectTimeout) streamReconnectTimeout = self.config.gnip.maxReconnectTimeout; 
+			}
 		}
 	
 		// TODO We get called twice for disconnect, once from error once from end
@@ -433,6 +450,7 @@ CognicityReportsPowertrack.prototype = {
 		stream.on('ready', function() {
 			self.logger.info('connectStream: Stream ready!');
 		    streamReconnectTimeout = 1;
+		    disconnectionNotificationSent = false;
 			// Augment Gnip.Stream._req (Socket) object with a timeout handler.
 			// We are accessing a private member here so updates to gnip could break this,
 		    // but gnip module does not expose the socket or methods to handle timeout.
