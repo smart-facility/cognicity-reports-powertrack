@@ -60,6 +60,8 @@ App configuration parameters are stored in a configuration file which is parsed 
 * steamUrl - URL to fetch JSON stream from Gnip PowerTrack
 * rulesUrl - URL to fetch JSON rules from Gnip PowerTrack
 * rules - List of objects to configure Gnip PowerTrack rules. Objects contain a series of key-value properties, where the key is the Gnip PowerTrack tag for the rule, and the value is the rule as a string.
+* maxReconnectTimeout - Time in seconds that is the longest delay between reconnection attempts for the stream
+* sendTweetOnMaxTimeoutTo - If the maximum reconnection time is reached, try and send a notification tweet to this user (without @)
 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
