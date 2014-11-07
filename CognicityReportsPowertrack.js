@@ -58,21 +58,31 @@ CognicityReportsPowertrack.prototype = {
 	logger: null,
 		
 	/**
-	 * Resolve message code from config.twitter.
+	 * Resolve message code from config.twitter using passed language codes.
 	 * Will fall back to trying to resolve message using default language set in configuration.
 	 * @param {string} code Code to lookup in config.twitter 
-	 * @param {string} lang Language to lookup in config.twitter[code]
-	 * @returns {string} Message code, or null if not resolved.
+	 * @param {Object} tweetActivity Gnip twitter activity object; check twitter language code and Gnip language codes for a match
+	 * @returns {string} Message text, or null if not resolved.
 	 */
-	getMessage: function(code, lang) {
+	getMessage: function(code, tweetActivity) {
 		var self = this;
 		
+		// Fetch the language codes from both twitter and Gnip data, if present
+		var langs = [];
+		if (tweetActivity.twitter_lang) langs.push(tweetActivity.twitter_lang);
+		if (tweetActivity.gnip && tweetActivity.gnip.language && tweetActivity.gnip.language.value) langs.push(tweetActivity.gnip.language.value);
+		
+		// Find a matching code if we can
 		if (self.config.twitter[code]) {
-			if (self.config.twitter[code][lang]) return self.config.twitter[code][lang];
+			for (var i=0; i<langs.length; i++) {
+				var lang = langs[i];
+				if (self.config.twitter[code][lang]) return self.config.twitter[code][lang];
+			}
+			// If we haven't found a code, try the default language
 			if (self.config.twitter[code][self.config.twitter.defaultLanguage]) return self.config.twitter[code][self.config.twitter.defaultLanguage];
 		}
 		
-		self.logger.warn( "getMessage: Code could not be resolved for '" + code + "' and lang '" + lang +"'" );
+		self.logger.warn( "getMessage: Code could not be resolved for '" + code + "' and langs '" + langs +"'" );
 		return null;
 	},
 	
@@ -346,20 +356,20 @@ CognicityReportsPowertrack.prototype = {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask user for geo' );
 			
 			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
-			self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity.twitter_lang) ); //send geo reminder
+			self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity) ); //send geo reminder
 			
 		} else if ( geoInBoundingBox && !addressed ) {
 			self.logger.verbose( 'filter: +BOUNDINGBOX -ADDRESSED = unconfirmed report, ask user to participate' );
 	
 			self.insertUnConfirmed(tweetActivity); //insert unconfirmed report, then invite the user to participate
-			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity.twitter_lang), function(){
+			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
 				self.insertInvitee(tweetActivity);
 			});	
 			
 		} else if ( !geoInBoundingBox && !hasGeo && !addressed && locationMatch ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
 			
-			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity.twitter_lang), function(){
+			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
 				self.insertInvitee(tweetActivity);
 			});
 			

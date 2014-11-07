@@ -41,14 +41,16 @@ config.gnip.rules = {
 config.twitter.send_enabled = false; //send verfication requests?
 
 //Twitter message texts
-// Note we use IN here not ID because that's what twitter returns
+// Note we use IN and ID because twitter and Gnip return different language codes for Indonesian
 config.twitter.defaultLanguage = 'en';
 config.twitter.invite_text = {
 	'in' : 'Invite/Verification Tweet Text [IN]',
+	'id' : 'Invite/Verification Tweet Text [ID]',
 	'en' : 'Invite/Verification Tweet Text [EN]'
 };
 config.twitter.thanks_text = {
 	'in' : 'Thanks/location-enabled reminder Tweet Text [IN]',
+	'id' : 'Thanks/location-enabled reminder Tweet Text [ID]',
 	'en' : 'Thanks/location-enabled reminder Tweet Text [EN]'
 };
 

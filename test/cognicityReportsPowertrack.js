@@ -27,11 +27,11 @@ describe( 'CognicityReportsPowertrack', function() {
 		before( function() {
 			server.config = {
 				'twitter' : {
-					'foo' : {
-						'az' : 'bar',
-						'en' : 'gum'
+					'greeting' : {
+						'human' : 'hi',
+						'monkey' : 'eek'
 					},
-					'defaultLanguage' : 'en'
+					'defaultLanguage' : 'human'
 				}
 			};
 			// Mock logging calls to do nothing
@@ -40,14 +40,31 @@ describe( 'CognicityReportsPowertrack', function() {
 			};
 		});
 		
-		it( 'Should resolve a string for specified language', function() {
-			test.string( server.getMessage('foo', 'az') ).is( 'bar' );
+		function createTweetActivity(lang1, lang2) {
+			var tweetActivity = {};
+			if (lang1) tweetActivity.twitter_lang = lang1;
+			if (lang2) tweetActivity.gnip = {
+				language: {
+					value: lang2	
+				}
+			};
+			return tweetActivity;
+		}
+		
+		it( 'Should resolve a string for twitter language code', function() {
+			test.string( server.getMessage( 'greeting', createTweetActivity('human') ) ).is( 'hi' );
+		});
+		it( 'Should resolve a string for Gnip language code', function() {
+			test.string( server.getMessage( 'greeting', createTweetActivity(null,'monkey') ) ).is( 'eek' );
+		});
+		it( 'Should resolve twitter code if both twitter and Gnip codes present', function() {
+			test.string( server.getMessage( 'greeting', createTweetActivity('monkey','human') ) ).is( 'eek' );
 		});
 		it( 'Should resolve a string for default language', function() {
-			test.string( server.getMessage('foo', 'does-not-exist') ).is( 'gum' );
+			test.string( server.getMessage( 'greeting', createTweetActivity('cat') ) ).is( 'hi' );
 		});
 		it( 'Should return null if code cannot be resolved', function() {
-			test.value( server.getMessage('does-not-exist', 'en') ).is( null );
+			test.value( server.getMessage( 'farewell', createTweetActivity('human') ) ).is( null );
 		});
 		
 		// Restore/erase mocked functions
