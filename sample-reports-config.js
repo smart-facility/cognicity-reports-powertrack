@@ -26,7 +26,7 @@ config.twitter.access_token_secret = '';
 //Gnip Powertrack API
 config.gnip = {};
 config.gnip.stream = true; //connect to stream and log reports?
-config.gnip.streamTimeout = 60000; // Must be >30s as a keep-alive is sent at least every 30s
+config.gnip.streamTimeout = 1000 * 60; // In milliseconds. Must be >30s as a keep-alive is sent at least every 30s
 config.gnip.username = 'username';
 config.gnip.password = 'password';
 config.gnip.steamUrl = 'https://stream.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod.json?client=1'; // Append ?client=1 to use backfill
@@ -36,7 +36,7 @@ config.gnip.rules = {
     "addressed":"( flood OR banjir ) @petajkt",
     "location":"( flood OR banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta )"
 };
-config.gnip.maxReconnectTimeout = 60 * 5; // in seconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
+config.gnip.maxReconnectTimeout = 60 * 5; // In seconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
 config.gnip.sendTweetOnMaxTimeoutTo = null; // Enter a twitter username here (without @) to send a notification tweet if the max reconnection timeout is reached
 
 //Twitter parameters

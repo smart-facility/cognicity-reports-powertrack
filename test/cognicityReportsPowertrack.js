@@ -15,6 +15,7 @@ var server = new CognicityReportsPowertrack(
 	{},
 	{},
 	{},
+	{},
 	{}
 );
 
@@ -297,6 +298,131 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 	});
 	
-	// TODO Add test for connectStream function
+	// Test suite for connectStream
+	describe( 'connectStream', function() {
+		var streamStarted; // Counter for number of times Gnip.Stream.start was called
+		var lastDelay; // The last delay passed to setTimeout
+		var reconnectTimes; // Number of times to attempt to reconnect (so the test does not go on forever)
+		var streamErrorHandler; // Capture the error handler so we can call it with no delay
+		var streamReadyHandler; // Capture the ready handler so we can call it explicitly during test
+		var notifiedTimes; // Number of times twitter notification was sent
+		
+		var oldSetTimeout; // Capture global setTimeout so we can mock it 
+		
+		before( function() {
+			// Mock logging functions with no-ops
+			server.logger = {
+				error:function(){},
+				warn:function(){},
+				info:function(){},
+				debug:function(){}
+			};
+			server.Gnip = {
+				Stream: function() { 
+					return {
+						start: function(){
+							// For the specified number of times, increment the counter and call the error handler immediately
+							if (streamStarted<reconnectTimes) {
+								streamStarted++;
+								streamErrorHandler();
+							}
+						},
+						// Mock the Socket object with no-ops
+						_req: {
+							setTimeout: function(){},
+							destroy: function(){}
+						},
+						// Capture the error handler so we can call it immediately
+						on: function( event, callback ) {
+							if (event==='error') streamErrorHandler = callback;
+							else if (event==='ready') streamReadyHandler = callback;
+						}
+					};
+				},
+				// Mock the rules object and just call the callback immediately
+				Rules: function() { 
+					return {
+						update: function(rules, success){ success(); }
+					};
+				}
+			};
+			// Capture the number of times we send a message via twitter
+			server.twit = {
+				updateStatus: function() { notifiedTimes++; }	
+			};
+			// Store the global setTimeout
+			oldSetTimeout = setTimeout;
+			// Mock setTimeout with one which captures the delay and calls the callback immediately
+			/* jshint -W020 */ // We want to mock out a global function here
+			setTimeout = function( callback, delay ) {
+				lastDelay = delay;
+				callback();
+			};
+			/* jshint +W020 */
+			
+		});
+		
+		beforeEach( function() {
+			// Reset the config which the tests may change
+			server.config = {
+				gnip: {
+					sendTweetOnMaxTimeoutTo: 'astro'
+				}	
+			};
+
+			// Reset the counters and handler references
+			streamStarted = 0;
+			lastDelay = 0;
+			streamErrorHandler = null;
+			notifiedTimes = 0;
+		});
+		
+		it( 'Reconnection time increases exponentially', function() {
+			server.config.gnip.initialStreamReconnectTimeout = 1;
+			server.config.gnip.maxReconnectTimeout = 10;
+			reconnectTimes = 3;
+			server.connectStream(); // Will get connection errors only
+			test.value( streamStarted ).is( 3 ); // Expect stream tried to conenct 3 times
+			test.value( lastDelay ).is( 4 * 1000 ); // So 4 second reconnect; delays of 1, 2, 4
+		});
+
+		it( 'Reconnection time is capped at maximum setting', function() {
+			server.config.gnip.initialStreamReconnectTimeout = 1;
+			server.config.gnip.maxReconnectTimeout = 3;
+			reconnectTimes = 4;
+			server.connectStream(); // Will get connection errors only
+			test.value( streamStarted ).is( 4 ); // Expect stream tried to connect 4 times
+			test.value( lastDelay ).is( 3 * 1000 ); // Expect 3 second reconnect, delays of 1, 2, 3, 3
+		});
+
+		it( 'Reconnection notification tweet is only sent once', function() {
+			server.config.gnip.initialStreamReconnectTimeout = 1;
+			server.config.gnip.maxReconnectTimeout = 1;
+			reconnectTimes = 3;
+			server.connectStream(); // Will get connection errors only
+			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
+			test.value( notifiedTimes ).is( 1 ); // Expect that we only notified the user once
+		});
+
+		it( 'Reconnection notification tweet is sent again if reconnected between disconnections', function() {
+			server.config.gnip.initialStreamReconnectTimeout = 1;
+			server.config.gnip.maxReconnectTimeout = 1;
+			reconnectTimes = 2;
+			server.connectStream(); // Will get connection errors only
+			streamReadyHandler(); // We reconnected to the stream
+			streamErrorHandler(); // And we were disconnected again
+			test.value( notifiedTimes ).is( 2 ); // Expect that we notified the user twice
+		});
+
+		after( function() {
+			server.logger = {};
+			/* jshint -W020 */ // We want to mock out a global function here
+			setTimeout = oldSetTimeout;
+			/* jshint +W020 */
+			server.Gnip = {};
+			server.twit = {};
+		});
+
+	});
 	
 });
