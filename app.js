@@ -24,6 +24,9 @@ var twitter = require('ntwitter');
 var pg = require('pg');
 /** Winston logger module */
 var logger = require('winston');
+/** Gnip PowerTrack interface module */
+var Gnip = require('gnip');
+
 /** 
  * CognicityReportsPowertrack interface module
  * @type {CognicityReportsPowertrack}
@@ -87,7 +90,8 @@ var server = new cognicityReportsPowertrack(
 	config,
 	twit,
 	pg,
-	logger
+	logger,
+	Gnip
 );
 
 // Catch unhandled exceptions, log, and exit with error status

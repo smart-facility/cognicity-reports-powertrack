@@ -6,9 +6,6 @@
 /* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
 /* jshint curly:false */ // Don't require curly brackets around one-line statements
 
-/** Gnip PowerTrack interface module */
-var Gnip = require('gnip');
-
 /**
  * A CognicityReportsPowertrack object:
  * - connects to a powertrack stream
@@ -21,18 +18,21 @@ var Gnip = require('gnip');
  * @param {Object} twit Configured instance of twitter object from ntwitter module
  * @param {Object} pg Configured instance of pg object from pg module
  * @param {Object} logger Configured instance of logger object from Winston module 
+ * @param {Object} Gnip Instance of Gnip object from Gnip module 
  */
 var CognicityReportsPowertrack = function(
 	config,
 	twit,
 	pg,
-	logger
+	logger,
+	Gnip
 		){
 	
 	this.config = config;
 	this.twit = twit;
 	this.pg = pg;
 	this.logger = logger;
+	this.Gnip = Gnip;
 };
 
 CognicityReportsPowertrack.prototype = {
@@ -56,6 +56,11 @@ CognicityReportsPowertrack.prototype = {
 	 * @type {Object} 
 	 */
 	logger: null,
+	/** 
+	 * Gnip Instance of Gnip object from Gnip module
+	 * @type {Object} 
+	 */
+	Gnip: null,
 		
 	/**
 	 * Resolve message code from config.twitter using passed language codes.
@@ -404,9 +409,6 @@ CognicityReportsPowertrack.prototype = {
 			// Try and destroy the existing socket, if it exists
 			self.logger.warn( 'connectStream: Connection lost, destroying socket' );
 			if ( stream._req ) stream._req.destroy();
-			// Attempt to reconnect
-			self.logger.info( 'connectStream: Attempting to reconnect stream' );
-			stream.start();
 			
 			// If our timeout is above the max threshold, cap it and send a notification tweet
 			if (streamReconnectTimeout >= self.config.gnip.maxReconnectTimeout) {
@@ -424,6 +426,10 @@ CognicityReportsPowertrack.prototype = {
 				streamReconnectTimeout *= 2;
 				if (streamReconnectTimeout >= self.config.gnip.maxReconnectTimeout) streamReconnectTimeout = self.config.gnip.maxReconnectTimeout; 
 			}
+			
+			// Attempt to reconnect
+			self.logger.info( 'connectStream: Attempting to reconnect stream' );
+			stream.start();
 		}
 	
 		// TODO We get called twice for disconnect, once from error once from end
@@ -435,11 +441,11 @@ CognicityReportsPowertrack.prototype = {
 		function reconnectStream() {				
 			if (reconnectTimeoutHandle) clearTimeout(reconnectTimeoutHandle);
 			self.logger.info( 'connectStream: queing reconnect for ' + streamReconnectTimeout );
-			reconnectTimeoutHandle = setTimeout( reconnectSocket, streamReconnectTimeout*1000 );
+			reconnectTimeoutHandle = setTimeout( reconnectSocket, streamReconnectTimeout * 1000 );
 		}
 		
 		// Configure a Gnip stream with connection details
-		stream = new Gnip.Stream({
+		stream = new self.Gnip.Stream({
 		    url : self.config.gnip.steamUrl,
 		    user : self.config.gnip.username,
 		    password : self.config.gnip.password
@@ -490,7 +496,7 @@ CognicityReportsPowertrack.prototype = {
 		});
 	
 		// Construct a Gnip rules connection
-		var rules = new Gnip.Rules({
+		var rules = new self.Gnip.Rules({
 		    url : self.config.gnip.rulesUrl,
 		    user : self.config.gnip.username,
 		    password : self.config.gnip.password
