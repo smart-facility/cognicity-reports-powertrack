@@ -200,7 +200,7 @@ CognicityReportsPowertrack.prototype = {
 					"$4, " + 
 					"$5, " + 
 					"$6, " + 
-					"ST_GeomFromText('POINT($7)',4326)" +
+					"ST_GeomFromText('POINT(' || $7 || ')',4326)" +
 					");",
 				values : [
 				    new Date(Date.parse(tweetActivity.postedTime)).toLocaleString(),
@@ -260,7 +260,7 @@ CognicityReportsPowertrack.prototype = {
 					"(created_at, the_geom) " +
 					"VALUES ( " +
 					"to_timestamp($1::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), " +
-					"ST_GeomFromText('POINT($2)',4326)" +
+					"ST_GeomFromText('POINT(' || $2 || ')',4326)" +
 					");",
 				values : [
 				    new Date(Date.parse(tweetActivity.postedTime)).toLocaleString(),
@@ -365,7 +365,7 @@ CognicityReportsPowertrack.prototype = {
 			
 		} else if ( geoInBoundingBox && !addressed ) {
 			self.logger.verbose( 'filter: +BOUNDINGBOX -ADDRESSED = unconfirmed report, ask user to participate' );
-	
+
 			self.insertUnConfirmed(tweetActivity); //insert unconfirmed report, then invite the user to participate
 			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
 				self.insertInvitee(tweetActivity);
