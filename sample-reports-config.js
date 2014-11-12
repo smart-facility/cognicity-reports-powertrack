@@ -34,7 +34,7 @@ config.gnip.rulesUrl = 'https://api.gnip.com:443/accounts/ACCOUNT_NAME/publisher
 config.gnip.rules = {
     "boundingbox":"( contains:flood OR contains:banjir ) ( bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR bounding_box:[106.8 -6.4354 107.0782 -6.2] OR bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )",
     "addressed":"( contains:flood OR contains:banjir ) @petajkt",
-    "location":"( contains:flood OR contains:banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta )"
+    "location":"( contains:flood OR contains:banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta OR profile_bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR profile_bounding_box:[106.8 -6.4354 107.0782 -6.2] OR profile_bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR profile_bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )"
 };
 config.gnip.maxReconnectTimeout = 60 * 5; // In seconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
 config.gnip.sendTweetOnMaxTimeoutTo = null; // Enter a twitter username here (without @) to send a notification tweet if the max reconnection timeout is reached
