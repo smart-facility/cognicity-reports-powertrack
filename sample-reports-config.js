@@ -32,9 +32,9 @@ config.gnip.password = 'password';
 config.gnip.steamUrl = 'https://stream.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod.json?client=1'; // Append ?client=1 to use backfill
 config.gnip.rulesUrl = 'https://api.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod/rules.json';
 config.gnip.rules = {
-    "boundingbox":"( flood OR banjir ) ( bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR bounding_box:[106.8 -6.4354 107.0782 -6.2] OR bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )",
-    "addressed":"( flood OR banjir ) @petajkt",
-    "location":"( flood OR banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta )"
+    "boundingbox":"( contains:flood OR contains:banjir ) ( bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR bounding_box:[106.8 -6.4354 107.0782 -6.2] OR bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )",
+    "addressed":"( contains:flood OR contains:banjir ) @petajkt",
+    "location":"( contains:flood OR contains:banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta )"
 };
 config.gnip.maxReconnectTimeout = 60 * 5; // In seconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
 config.gnip.sendTweetOnMaxTimeoutTo = null; // Enter a twitter username here (without @) to send a notification tweet if the max reconnection timeout is reached
