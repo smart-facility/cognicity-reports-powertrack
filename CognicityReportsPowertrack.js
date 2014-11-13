@@ -333,13 +333,15 @@ CognicityReportsPowertrack.prototype = {
 		
 		// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
 		var hasGeo = (tweetActivity.geo && tweetActivity.geo.coordinates);
-		var geoInBoundingBox = false; // This can be true if the place coordinates match so should be tested in combination with hasGeo
+		var geoInBoundingBox = false;
 		var addressed = false;
 		var locationMatch = false;
 		
 		tweetActivity.gnip.matching_rules.forEach( function(rule){
 			if (rule.tag) {
-				if (rule.tag.indexOf("boundingbox")===0) geoInBoundingBox = true; // TODO Check the coordinates are really in the bounding box
+				// Only set geoInBoundingBox to true if the user has tweet coordinates as well as matching the rule,
+				// as the rule can match on 'place' being within the bounding box
+				if (rule.tag.indexOf("boundingbox")===0 && hasGeo) geoInBoundingBox = true; 
 				if (rule.tag.indexOf("addressed")===0) addressed = true;
 				if (rule.tag.indexOf("location")===0) locationMatch = true;
 			}

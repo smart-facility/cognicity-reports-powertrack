@@ -168,21 +168,24 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 		
 		// Geo F + above
-		it( '+BOUNDINGBOX -GEO +ADDRESSED +LOCATION = confirmed', function() {
+		// Note that +BOUNDINGBOX -GEO means that BOUNDINGBOX is set to false in our
+		// filter code, as a BOUNDINGBOX hit without explicit tweet GEO is not enough
+		// - so these actually fall in to filter cases like '-BOUNDINGBOX -GEO ...'
+		it( '+BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask for geo', function() {
 			server.filter( createTweetActivity(true, false, true, true) );
-			test.value( lastLog ).contains( confirmedString );
+			test.value( lastLog ).contains( askForGeoString );
 		});
-		it( '+BOUNDINGBOX -GEO +ADDRESSED -LOCATION = confirmed', function() {
+		it( '+BOUNDINGBOX -GEO +ADDRESSED -LOCATION = no match', function() {
 			server.filter( createTweetActivity(true, false, true, false) );
-			test.value( lastLog ).contains( confirmedString );
+			test.value( lastLog ).contains( noMatchString );
 		});
-		it( '+BOUNDINGBOX -GEO -ADDRESSED +LOCATION = unconfirmed', function() {
+		it( '+BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask to participate', function() {
 			server.filter( createTweetActivity(true, false, false, true) );
-			test.value( lastLog ).contains( unconfirmedString );
+			test.value( lastLog ).contains( askToParticipateString );
 		});
-		it( '+BOUNDINGBOX -GEO -ADDRESSED -LOCATION = unconfirmed', function() {
+		it( '+BOUNDINGBOX -GEO -ADDRESSED -LOCATION = no match', function() {
 			server.filter( createTweetActivity(true, false, false, false) );
-			test.value( lastLog ).contains( unconfirmedString );
+			test.value( lastLog ).contains( noMatchString );
 		});
 		
 		// Boundingbox F + above
