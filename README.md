@@ -70,9 +70,19 @@ Set the app authentication parameters as provided by Twitter. See the [ntwitter-
 * send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
 
 #### Twitter message text
-* defaultLanguage - Default language if we can't resolve a message in the user's language
-* invite_text.in/en - Text for confrmation request tweets [Bahasa Indonesian/English]
-* thanks_text.in/en - Text for geolocation reminders [Bahasa Indonesian/English]
+The messages are stored in objects, where the object name is the name of the message.
+Within the object, the property name (key) is the language, and the value is the message text.
+There is also a top-level 'defaultLanguage' property which is used if the language code from the tweet cannot be resolved.
+
+##### Languages
+* in - Bahasa Indonesian (language code from Gnip)
+* id - Bahasa Indonesian (language code from Twitter)
+* en - English
+
+##### Messages
+* invite_text - Text for confirmation request tweets
+* askforgeo_text - Text for geolocation reminders
+* thanks_text - Thank-you message for confirmed tweet
 
 #### Postgres connection
 * connection string - PostgreSQL connection details (see node-postgres module documenation)[https://github.com/brianc/node-postgres]
