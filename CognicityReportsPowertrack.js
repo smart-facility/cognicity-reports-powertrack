@@ -333,13 +333,13 @@ CognicityReportsPowertrack.prototype = {
 		
 		// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
 		var hasGeo = (tweetActivity.geo && tweetActivity.geo.coordinates);
-		var geoInBoundingBox = false;
+		var geoInBoundingBox = false; // This can be true if the place coordinates match so should be tested in combination with hasGeo
 		var addressed = false;
 		var locationMatch = false;
 		
 		tweetActivity.gnip.matching_rules.forEach( function(rule){
 			if (rule.tag) {
-				if (rule.tag.indexOf("boundingbox")===0) geoInBoundingBox = true;
+				if (rule.tag.indexOf("boundingbox")===0) geoInBoundingBox = true; // TODO Check the coordinates are really in the bounding box
 				if (rule.tag.indexOf("addressed")===0) addressed = true;
 				if (rule.tag.indexOf("location")===0) locationMatch = true;
 			}
@@ -357,12 +357,6 @@ CognicityReportsPowertrack.prototype = {
 			
 			self.insertConfirmed(tweetActivity); //user + geo = confirmed report!	
 			
-		} else if ( !geoInBoundingBox && !hasGeo && addressed && locationMatch ) {
-			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask user for geo' );
-			
-			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
-			self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity) ); //send geo reminder
-			
 		} else if ( geoInBoundingBox && !addressed ) {
 			self.logger.verbose( 'filter: +BOUNDINGBOX -ADDRESSED = unconfirmed report, ask user to participate' );
 
@@ -371,7 +365,14 @@ CognicityReportsPowertrack.prototype = {
 				self.insertInvitee(tweetActivity);
 			});	
 			
-		} else if ( !geoInBoundingBox && !hasGeo && !addressed && locationMatch ) {
+		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && addressed ) {
+			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask user for geo' );
+			
+			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
+			self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity) ); //send geo reminder
+			
+			
+		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && !addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
 			
 			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
@@ -379,8 +380,10 @@ CognicityReportsPowertrack.prototype = {
 			});
 			
 		} else {
+			// Not in bounding box but has geocoordinates or no location match
 			self.logger.warn( 'filter: Tweet did not match category actions: ' + tweetCategorizations );
 		}
+
 	},
 	
 	/**
@@ -517,7 +520,8 @@ CognicityReportsPowertrack.prototype = {
 		
 		// Push the parsed rules to Gnip
 		self.logger.info('connectStream: Updating rules...');
-		rules.update(newRules, function(err) {
+		// Bypass the cache, remove all the rules and send them all again
+		rules.live.update(newRules, function(err) {
 		    if (err) throw err;
 			self.logger.info('connectStream: Connecting stream...');
 			// If we pushed the rules successfully, now try and connect the stream

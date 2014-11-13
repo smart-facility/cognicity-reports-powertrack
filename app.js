@@ -59,6 +59,7 @@ logger.info("Application starting...");
 pg.connect(config.pg.conString, function(err, client, done){
 	if (err){
 		logger.error("DB Connection error: " + err);
+		logger.error("Fatal error: Application shutting down");
 		done();
 		process.exit(1);
 	}
@@ -77,6 +78,7 @@ var twit = new twitter({
 twit.verifyCredentials(function (err, data) {
 	if (err) {
 		logger.error("twit.verifyCredentials: Error verifying credentials: " + err);
+		logger.error("Fatal error: Application shutting down");
 		process.exit(1);
 	} else {
 		logger.info("twit.verifyCredentials: Twitter credentials succesfully verified");
@@ -97,6 +99,7 @@ var server = new cognicityReportsPowertrack(
 // Catch unhandled exceptions, log, and exit with error status
 process.on('uncaughtException', function (err) {
 	logger.error('uncaughtException: ' + err.message + ", " + err.stack);
+	logger.error("Fatal error: Application shutting down");
 	process.exit(1);
 });
 

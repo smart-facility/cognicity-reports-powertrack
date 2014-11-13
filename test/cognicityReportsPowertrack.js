@@ -41,6 +41,7 @@ describe( 'CognicityReportsPowertrack', function() {
 			};
 		});
 		
+		// Create a dummy tweet activity object based on the language codes passed in
 		function createTweetActivity(lang1, lang2) {
 			var tweetActivity = {};
 			if (lang1) tweetActivity.twitter_lang = lang1;
@@ -342,7 +343,9 @@ describe( 'CognicityReportsPowertrack', function() {
 				// Mock the rules object and just call the callback immediately
 				Rules: function() { 
 					return {
-						update: function(rules, success){ success(); }
+						live: {
+							update: function(rules, success){ success(); }
+						}
 					};
 				}
 			};
