@@ -42,8 +42,9 @@ config.gnip.sendTweetOnMaxTimeoutTo = null; // Enter a twitter username here (wi
 //Twitter parameters
 config.twitter.send_enabled = false; //send verfication requests?
 
-//Twitter message texts
+// Twitter message texts
 // Note we use IN and ID because twitter and Gnip return different language codes for Indonesian
+// The messages should be no longer than 109 characters if timestamps are enabled, or 123 characters if timestamps are disabled
 config.twitter.defaultLanguage = 'en';
 config.twitter.invite_text = {
 	'in' : 'Invite/Verification Tweet Text [IN]',
