@@ -21,7 +21,7 @@ describe( 'app.js', function() {
 		this.timeout(10000); 
 		
 		// Launch 'node app.js sample-reports-config.js'
-		var child = fork('app.js',['sample-reports-config.js']);
+		var child = fork('app.js',['sample-reports-config.js', 'start', 'test']);
 	  
 		// Wait for the child process to exit
 		function waitForChild() {

@@ -40,6 +40,10 @@ if (process.argv[2]){
 	throw new Error('No config file. Usage: node app.js config.js');
 }
 
+// Let the instance name be overridden from the command line, used so that
+// tests log to a different file
+if (process.argv[4]) config.instance = process.argv[4];
+
 // Logging configuration
 logger
 	// Configure custom File transport to write plain text messages
