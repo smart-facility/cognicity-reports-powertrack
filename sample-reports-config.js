@@ -51,10 +51,15 @@ config.twitter.invite_text = {
 	'id' : 'Invite/Verification Tweet Text [ID]',
 	'en' : 'Invite/Verification Tweet Text [EN]'
 };
+config.twitter.askforgeo_text = {
+	'in' : 'Location-enabled reminder Tweet Text [IN]',
+	'id' : 'Location-enabled reminder Tweet Text [ID]',
+	'en' : 'Location-enabled reminder Tweet Text [EN]'
+};
 config.twitter.thanks_text = {
-	'in' : 'Thanks/location-enabled reminder Tweet Text [IN]',
-	'id' : 'Thanks/location-enabled reminder Tweet Text [ID]',
-	'en' : 'Thanks/location-enabled reminder Tweet Text [EN]'
+	'in' : 'Thank-you Tweet Text [IN]',
+	'id' : 'Thank-you Tweet Text [ID]',
+	'en' : 'Thank-you Tweet Text [EN]'
 };
 
 //Postgres database connection

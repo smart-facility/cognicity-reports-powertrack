@@ -114,6 +114,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		var oldinsertInvitee;
 		var oldSendReplyTweet;
 		var oldGetMessage;
+		var oldIfNewUser;
 		
 		// Store the last message we logged; this lets us do some neat testing of code paths
 		var lastLog = "";
@@ -135,6 +136,7 @@ describe( 'CognicityReportsPowertrack', function() {
 			oldinsertInvitee = server.insertInvitee;
 			oldSendReplyTweet = server.sendReplyTweet;
 			oldGetMessage = server.getMessage;
+			oldIfNewUser = server.ifNewUser;
 			
 			// Mock these methods as we will look at the log message to check the code path
 			server.insertConfirmed = function(){};
@@ -143,6 +145,7 @@ describe( 'CognicityReportsPowertrack', function() {
 			server.insertInvitee = function(){};
 			server.sendReplyTweet = function(){};
 			server.getMessage = function(){};
+			server.ifNewUser = function(){};
 		});
 		
 		// Test all the variants of the 4 true/false categorization switches
@@ -230,6 +233,7 @@ describe( 'CognicityReportsPowertrack', function() {
 			server.insertInvitee = oldinsertInvitee;
 			server.sendReplyTweet = oldSendReplyTweet;
 			server.getMessage = oldGetMessage;
+			server.ifNewUser = oldIfNewUser;
 			
 			server.logger = {};
 		});

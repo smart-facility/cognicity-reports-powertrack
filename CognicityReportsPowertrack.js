@@ -163,21 +163,20 @@ CognicityReportsPowertrack.prototype = {
 	sendReplyTweet: function(user, message, callback){
 		var self = this;
 
-		self.ifNewUser( user, function(result) {
-			if (self.config.twitter.send_enabled === true){
-				self.twit.updateStatus('@'+user+' '+message, function(err, data){
-					if (err) {
-						self.logger.error('Tweeting failed: ' + err);
-					} else {
-						if (callback) callback();
-					}
-				});	
-			} else { // for testing
-				self.logger.info('sendReplyTweet is in test mode - no message will be sent. Callback will still run.');
-				self.logger.info('@'+user+' '+message);
-				if (callback) callback();
-			}
-		});
+		if (self.config.twitter.send_enabled === true){
+			self.twit.updateStatus('@'+user+' '+message, function(err, data){
+				if (err) {
+					self.logger.error('Tweeting "' + '@' + user + ' ' + message + '" failed: ' + err);
+				} else {
+					self.logger.debug( 'Sent tweet: ' + '@' + user + ' ' + message );
+					if (callback) callback();
+				}
+			});	
+		} else { // for testing
+			self.logger.info('sendReplyTweet: In test mode - no message will be sent. Callback will still run.');
+			self.logger.info('sendReplyTweet: Would have tweeted: "@'+user+' '+message+'"');
+			if (callback) callback();
+		}
 	},
 		
 	/**
@@ -223,6 +222,8 @@ CognicityReportsPowertrack.prototype = {
 					},
 					function(result) {
 						self.logger.info('Logged confirmed tweet user');
+						// Send the user a thank-you tweet; send this for every confirmed report
+						self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity) );	
 					}
 				);
 			}
@@ -362,23 +363,34 @@ CognicityReportsPowertrack.prototype = {
 		} else if ( geoInBoundingBox && !addressed ) {
 			self.logger.verbose( 'filter: +BOUNDINGBOX -ADDRESSED = unconfirmed report, ask user to participate' );
 
-			self.insertUnConfirmed(tweetActivity); //insert unconfirmed report, then invite the user to participate
-			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
-				self.insertInvitee(tweetActivity);
-			});	
+			self.insertUnConfirmed(tweetActivity); //insert unconfirmed report
+			
+			// If we haven't contacted the user before, send them an invite tweet
+			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
+				self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
+					self.insertInvitee(tweetActivity);
+				});	
+			});
 			
 		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask user for geo' );
 			
 			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
-			self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity) ); //send geo reminder
+			
+			// If we haven't contacted the user before, ask them to enable geo-location
+			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
+				self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('askforgeo_text', tweetActivity) );
+			});
 			
 			
 		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && !addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
 			
-			self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
-				self.insertInvitee(tweetActivity);
+			// If we haven't contacted the user beforem, send them an invite tweet
+			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
+				self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
+					self.insertInvitee(tweetActivity);
+				});
 			});
 			
 		} else {
