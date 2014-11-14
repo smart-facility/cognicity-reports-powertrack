@@ -196,7 +196,7 @@ CognicityReportsPowertrack.prototype = {
 				text : "INSERT INTO " + self.config.pg.table_tweets + " " +
 					"(created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
 					"VALUES (" +
-					"to_timestamp($1::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), " +
+					"$1, " +
 					"$2, " +
 					"$3, " + 
 					"$4, " + 
@@ -205,7 +205,7 @@ CognicityReportsPowertrack.prototype = {
 					"ST_GeomFromText('POINT(' || $7 || ')',4326)" +
 					");",
 				values : [
-				    new Date(Date.parse(tweetActivity.postedTime)).toLocaleString(),
+				    tweetActivity.postedTime,
 				    tweetActivity.body,
 				    JSON.stringify(tweetActivity.twitter_entities.hashtags),
 				    JSON.stringify(tweetActivity.twitter_entities.urls),
@@ -263,11 +263,11 @@ CognicityReportsPowertrack.prototype = {
 				text : "INSERT INTO " + self.config.pg.table_unconfirmed + " " +
 					"(created_at, the_geom) " +
 					"VALUES ( " +
-					"to_timestamp($1::text, 'Dy Mon DD YYYY HH24:MI:SS +ZZZZ'), " +
+					"$1, " +
 					"ST_GeomFromText('POINT(' || $2 || ')',4326)" +
 					");",
 				values : [
-				    new Date(Date.parse(tweetActivity.postedTime)).toLocaleString(),
+				    tweetActivity.postedTime,
 				    tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1]
 				]
 			},
@@ -289,7 +289,7 @@ CognicityReportsPowertrack.prototype = {
 				text : "INSERT INTO " + self.config.pg.table_nonspatial_tweet_reports + " " +
 					"(created_at, text, hashtags, urls, user_mentions, lang) " +
 					"VALUES (" +
-					"to_timestamp($1::text, 'Dy Mon DD YYYY H24:MI:SS +ZZZZ'), " +
+					"$1, " +
 					"$2, " + 
 					"$3, " + 
 					"$4, " + 
@@ -297,7 +297,7 @@ CognicityReportsPowertrack.prototype = {
 					"$6" +
 					");",
 				values : [
-					new Date(Date.parse(tweetActivity.postedTime)).toLocaleString(),
+					tweetActivity.postedTime,
 					tweetActivity.body,
 					JSON.stringify(tweetActivity.twitter_entities.hashtags),
 					JSON.stringify(tweetActivity.twitter_entities.urls),
