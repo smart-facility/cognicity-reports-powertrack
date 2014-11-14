@@ -66,8 +66,9 @@ App configuration parameters are stored in a configuration file which is parsed 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
 
-#### Twitter stream parameters
+#### Twitter send parameters
 * send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
+* addTimestamp [true | false] - if true, append a timestamp to each sent tweet.
 
 #### Twitter message text
 The messages are stored in objects, where the object name is the name of the message.
@@ -80,6 +81,7 @@ There is also a top-level 'defaultLanguage' property which is used if the langua
 * en - English
 
 ##### Messages
+Messages can be at most 109 characters long if addTimestamp is enabled, or 123 characters long if addTimestamp is disabled.
 * invite_text - Text for confirmation request tweets
 * askforgeo_text - Text for geolocation reminders
 * thanks_text - Thank-you message for confirmed tweet

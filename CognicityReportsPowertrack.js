@@ -163,18 +163,21 @@ CognicityReportsPowertrack.prototype = {
 	sendReplyTweet: function(user, message, callback){
 		var self = this;
 
+		message = '@' + user + ' ' + message;
+		if ( self.config.twitter.addTimestamp ) message = message + " " + new Date().getTime();
+
 		if (self.config.twitter.send_enabled === true){
-			self.twit.updateStatus('@'+user+' '+message, function(err, data){
+			self.twit.updateStatus(message, function(err, data){
 				if (err) {
-					self.logger.error('Tweeting "' + '@' + user + ' ' + message + '" failed: ' + err);
+					self.logger.error( 'Tweeting "' + message + '" failed: ' + err );
 				} else {
-					self.logger.debug( 'Sent tweet: ' + '@' + user + ' ' + message );
+					self.logger.debug( 'Sent tweet: "' + message + '"' );
 					if (callback) callback();
 				}
 			});	
 		} else { // for testing
-			self.logger.info('sendReplyTweet: In test mode - no message will be sent. Callback will still run.');
-			self.logger.info('sendReplyTweet: Would have tweeted: "@'+user+' '+message+'"');
+			self.logger.info( 'sendReplyTweet: In test mode - no message will be sent. Callback will still run.' );
+			self.logger.info( 'sendReplyTweet: Would have tweeted: "' + message + '"' );
 			if (callback) callback();
 		}
 	},
@@ -412,7 +415,7 @@ CognicityReportsPowertrack.prototype = {
 		// Gnip stream
 		var stream;
 		// Timeout reconnection delay, used for exponential backoff
-		var streamReconnectTimeout = 1;
+		var streamReconnectTimeout = 1000;
 		// Connect Gnip stream and setup event handlers
 		var reconnectTimeoutHandle;
 		// Send a notification on an extended disconnection
@@ -433,7 +436,15 @@ CognicityReportsPowertrack.prototype = {
 				if (!disconnectionNotificationSent) {
 					// Send notification tweet if we have a configured username
 					if (self.config.gnip.sendTweetOnMaxTimeoutTo) {
-						self.twit.updateStatus('@'+self.config.gnip.sendTweetOnMaxTimeoutTo+' '+"Cognicity Reports PowerTrack Gnip connection has been offline for "+self.config.gnip.maxReconnectTimeout+" seconds", function(err, data){
+						// Construct the notification message. 
+						// Always timestamp this, otherwise they will always look the same and won't post.
+						var message = '@' + self.config.gnip.sendTweetOnMaxTimeoutTo + 
+							' ' + "Cognicity Reports PowerTrack Gnip connection has been offline for " + 
+							self.config.gnip.maxReconnectTimeout + " seconds" + 
+							" " + new Date().getTime();
+						
+						self.logger.warn( 'connectStream: Tweeting warning: "' + message + '"' );
+						self.twit.updateStatus(message, function(err, data){
 							if (err) self.logger.error('connectStream: Tweeting failed: ' + err);
 						});	
 					}
@@ -458,7 +469,7 @@ CognicityReportsPowertrack.prototype = {
 		function reconnectStream() {				
 			if (reconnectTimeoutHandle) clearTimeout(reconnectTimeoutHandle);
 			self.logger.info( 'connectStream: queing reconnect for ' + streamReconnectTimeout );
-			reconnectTimeoutHandle = setTimeout( reconnectSocket, streamReconnectTimeout * 1000 );
+			reconnectTimeoutHandle = setTimeout( reconnectSocket, streamReconnectTimeout );
 		}
 		
 		// Configure a Gnip stream with connection details
@@ -471,12 +482,13 @@ CognicityReportsPowertrack.prototype = {
 		// When stream is connected, setup the stream timeout handler
 		stream.on('ready', function() {
 			self.logger.info('connectStream: Stream ready!');
-		    streamReconnectTimeout = 1;
+		    streamReconnectTimeout = 1000;
 		    disconnectionNotificationSent = false;
 			// Augment Gnip.Stream._req (Socket) object with a timeout handler.
 			// We are accessing a private member here so updates to gnip could break this,
 		    // but gnip module does not expose the socket or methods to handle timeout.
 			stream._req.setTimeout( self.config.gnip.streamTimeout, function() {
+				self.logger.error('connectStream: Timeout error on Gnip stream');
 				reconnectStream();
 			});
 		});

@@ -388,8 +388,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 		
 		it( 'Reconnection time increases exponentially', function() {
-			server.config.gnip.initialStreamReconnectTimeout = 1;
-			server.config.gnip.maxReconnectTimeout = 10;
+			server.config.gnip.maxReconnectTimeout = 10000;
 			reconnectTimes = 3;
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to conenct 3 times
@@ -397,8 +396,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 
 		it( 'Reconnection time is capped at maximum setting', function() {
-			server.config.gnip.initialStreamReconnectTimeout = 1;
-			server.config.gnip.maxReconnectTimeout = 3;
+			server.config.gnip.maxReconnectTimeout = 3000;
 			reconnectTimes = 4;
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 4 ); // Expect stream tried to connect 4 times
@@ -406,8 +404,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 
 		it( 'Reconnection notification tweet is only sent once', function() {
-			server.config.gnip.initialStreamReconnectTimeout = 1;
-			server.config.gnip.maxReconnectTimeout = 1;
+			server.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 3;
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
@@ -415,8 +412,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 
 		it( 'Reconnection notification tweet is sent again if reconnected between disconnections', function() {
-			server.config.gnip.initialStreamReconnectTimeout = 1;
-			server.config.gnip.maxReconnectTimeout = 1;
+			server.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 2;
 			server.connectStream(); // Will get connection errors only
 			streamReadyHandler(); // We reconnected to the stream
