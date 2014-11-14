@@ -415,7 +415,8 @@ CognicityReportsPowertrack.prototype = {
 		// Gnip stream
 		var stream;
 		// Timeout reconnection delay, used for exponential backoff
-		var streamReconnectTimeout = 1000;
+		var _initialStreamReconnectTimeout = 1000;
+		var streamReconnectTimeout = _initialStreamReconnectTimeout;
 		// Connect Gnip stream and setup event handlers
 		var reconnectTimeoutHandle;
 		// Send a notification on an extended disconnection
@@ -482,7 +483,7 @@ CognicityReportsPowertrack.prototype = {
 		// When stream is connected, setup the stream timeout handler
 		stream.on('ready', function() {
 			self.logger.info('connectStream: Stream ready!');
-		    streamReconnectTimeout = 1000;
+		    streamReconnectTimeout = _initialStreamReconnectTimeout;
 		    disconnectionNotificationSent = false;
 			// Augment Gnip.Stream._req (Socket) object with a timeout handler.
 			// We are accessing a private member here so updates to gnip could break this,
