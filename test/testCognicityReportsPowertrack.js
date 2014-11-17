@@ -373,13 +373,9 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 		
 		beforeEach( function() {
-			// Reset the config which the tests may change
-			server.config = {
-				gnip: {
-					sendTweetOnMaxTimeoutTo: 'astro'
-				}	
-			};
-
+			// Setup object for Gnip configuration
+			server.config.gnip = {};
+			
 			// Reset the counters and handler references
 			streamStarted = 0;
 			lastDelay = 0;
@@ -390,6 +386,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection time increases exponentially', function() {
 			server.config.gnip.maxReconnectTimeout = 10000;
 			reconnectTimes = 3;
+			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro";
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to conenct 3 times
 			test.value( lastDelay ).is( 4 * 1000 ); // So 4 second reconnect; delays of 1, 2, 4
@@ -398,6 +395,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection time is capped at maximum setting', function() {
 			server.config.gnip.maxReconnectTimeout = 3000;
 			reconnectTimes = 4;
+			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro";
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 4 ); // Expect stream tried to connect 4 times
 			test.value( lastDelay ).is( 3 * 1000 ); // Expect 3 second reconnect, delays of 1, 2, 3, 3
@@ -406,6 +404,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection notification tweet is only sent once', function() {
 			server.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 3;
+			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro";
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
 			test.value( notifiedTimes ).is( 1 ); // Expect that we only notified the user once
@@ -414,10 +413,20 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection notification tweet is sent again if reconnected between disconnections', function() {
 			server.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 2;
+			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro";
 			server.connectStream(); // Will get connection errors only
 			streamReadyHandler(); // We reconnected to the stream
 			streamErrorHandler(); // And we were disconnected again
 			test.value( notifiedTimes ).is( 2 ); // Expect that we notified the user twice
+		});
+		
+		it( 'Reconnection notification tweet is sent to multiple users', function() {
+			server.config.gnip.maxReconnectTimeout = 1000;
+			reconnectTimes = 3;
+			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro,elroy";
+			server.connectStream(); // Will get connection errors only
+			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
+			test.value( notifiedTimes ).is( 2 ); // Expect that we only notified the user once
 		});
 
 		after( function() {

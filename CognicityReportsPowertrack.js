@@ -437,17 +437,19 @@ CognicityReportsPowertrack.prototype = {
 				if (!disconnectionNotificationSent) {
 					// Send notification tweet if we have a configured username
 					if (self.config.gnip.sendTweetOnMaxTimeoutTo) {
-						// Construct the notification message. 
-						// Always timestamp this, otherwise they will always look the same and won't post.
-						var message = '@' + self.config.gnip.sendTweetOnMaxTimeoutTo + 
-							' ' + "Cognicity Reports PowerTrack Gnip connection has been offline for " + 
-							self.config.gnip.maxReconnectTimeout + " seconds" + 
-							" " + new Date().getTime();
-						
-						self.logger.warn( 'connectStream: Tweeting warning: "' + message + '"' );
-						self.twit.updateStatus(message, function(err, data){
-							if (err) self.logger.error('connectStream: Tweeting failed: ' + err);
-						});	
+						// Construct the notification messages for each user.
+						self.config.gnip.sendTweetOnMaxTimeoutTo.split(",").forEach( function(username){
+							// Always timestamp this, otherwise they will always look the same and won't post.
+							var message = '@' + username + 
+								' ' + "Cognicity Reports PowerTrack Gnip connection has been offline for " + 
+								self.config.gnip.maxReconnectTimeout + " seconds" + 
+								" " + new Date().getTime();
+							
+							self.logger.warn( 'connectStream: Tweeting warning: "' + message + '"' );
+							self.twit.updateStatus(message, function(err, data){
+								if (err) self.logger.error('connectStream: Tweeting failed: ' + err);
+							});	
+						});
 					}
 					disconnectionNotificationSent = true;
 				}
