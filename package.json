@@ -19,7 +19,7 @@
     "unit.js": "^1.0.2"
   },
   "engines": {
-    "node": ">=0.10.12"
+    "node": "^0.10.16"
   },
   "scripts": {
     "test": "npm run-script jshint && npm run-script mocha",
