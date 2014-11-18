@@ -423,7 +423,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection notification tweet is sent to multiple users', function() {
 			server.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 3;
-			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro,elroy";
+			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro, elroy";
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
 			test.value( notifiedTimes ).is( 2 ); // Expect that we only notified the user once
