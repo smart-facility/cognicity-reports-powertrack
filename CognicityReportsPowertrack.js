@@ -439,8 +439,9 @@ CognicityReportsPowertrack.prototype = {
 					if (self.config.gnip.sendTweetOnMaxTimeoutTo) {
 						// Construct the notification messages for each user.
 						self.config.gnip.sendTweetOnMaxTimeoutTo.split(",").forEach( function(username){
+							var trimmedUsername = username.trim();
 							// Always timestamp this, otherwise they will always look the same and won't post.
-							var message = '@' + username + 
+							var message = '@' + trimmedUsername + 
 								' ' + "Cognicity Reports PowerTrack Gnip connection has been offline for " + 
 								self.config.gnip.maxReconnectTimeout + " seconds" + 
 								" " + new Date().getTime();
