@@ -211,7 +211,7 @@ CognicityReportsPowertrack.prototype = {
 				    JSON.stringify(tweetActivity.twitter_entities.urls),
 				    JSON.stringify(tweetActivity.twitter_entities.user_mentions),
 				    tweetActivity.twitter_lang,
-				    tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1]
+				    tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
 				]
 			},
 			function(result) {
@@ -268,7 +268,7 @@ CognicityReportsPowertrack.prototype = {
 					");",
 				values : [
 				    tweetActivity.postedTime,
-				    tweetActivity.geo.coordinates[0] + " " + tweetActivity.geo.coordinates[1]
+				    tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
 				]
 			},
 			function(result) {
@@ -333,7 +333,7 @@ CognicityReportsPowertrack.prototype = {
 	filter: function(tweetActivity){
 		var self = this;
 
-		self.logger.verbose( 'filter: Received tweetActivity: screen_name="' + tweetActivity.actor.preferredUsername + '", text="' + tweetActivity.body.replace("\n", "") + '", coordinates="' + (tweetActivity.geo && tweetActivity.geo.coordinates ? tweetActivity.geo.coordinates[0]+", "+tweetActivity.geo.coordinates[1] : 'N/A') + '"' );
+		self.logger.verbose( 'filter: Received tweetActivity: screen_name="' + tweetActivity.actor.preferredUsername + '", text="' + tweetActivity.body.replace("\n", "") + '", coordinates="' + (tweetActivity.geo && tweetActivity.geo.coordinates ? tweetActivity.geo.coordinates[1]+", "+tweetActivity.geo.coordinates[0] : 'N/A') + '"' );
 		
 		// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
 		var hasGeo = (tweetActivity.geo && tweetActivity.geo.coordinates);
@@ -556,7 +556,7 @@ CognicityReportsPowertrack.prototype = {
 			// If we pushed the rules successfully, now try and connect the stream
 			stream.start();
 		});
-		
+
 	}		
 };
 
