@@ -156,18 +156,25 @@ CognicityReportsPowertrack.prototype = {
 	
 	/**
 	 * Send @reply Twitter message
-	 * @param {string} user The twitter screen name to send to
+	 * @param {object} The Gnip tweet activity object this is a reply to
 	 * @param {string} message The tweet text to send
 	 * @param {function} callback Callback function called on success
 	 */
-	sendReplyTweet: function(user, message, callback){
+	sendReplyTweet: function(tweetActivity, message, callback){
 		var self = this;
+				
+		var originalTweetId = tweetActivity.id;
+		originalTweetId = originalTweetId.split(':');
+		originalTweetId = originalTweetId[originalTweetId.length-1];
+		
+		var params = {};
+		params.in_reply_to_status_id = originalTweetId; 
 
-		message = '@' + user + ' ' + message;
+		message = '@' + tweetActivity.actor.preferredUsername + ' ' + message;
 		if ( self.config.twitter.addTimestamp ) message = message + " " + new Date().getTime();
 
 		if (self.config.twitter.send_enabled === true){
-			self.twit.updateStatus(message, function(err, data){
+			self.twit.updateStatus(message, params, function(err, data){
 				if (err) {
 					self.logger.error( 'Tweeting "' + message + '" failed: ' + err );
 				} else {
@@ -177,7 +184,7 @@ CognicityReportsPowertrack.prototype = {
 			});	
 		} else { // for testing
 			self.logger.info( 'sendReplyTweet: In test mode - no message will be sent. Callback will still run.' );
-			self.logger.info( 'sendReplyTweet: Would have tweeted: "' + message + '"' );
+			self.logger.info( 'sendReplyTweet: Would have tweeted: "' + message + '" with params ' + JSON.stringify(params) );
 			if (callback) callback();
 		}
 	},
@@ -226,7 +233,7 @@ CognicityReportsPowertrack.prototype = {
 					function(result) {
 						self.logger.info('Logged confirmed tweet user');
 						// Send the user a thank-you tweet; send this for every confirmed report
-						self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('thanks_text', tweetActivity) );	
+						self.sendReplyTweet( tweetActivity, self.getMessage('thanks_text', tweetActivity) );	
 					}
 				);
 			}
@@ -370,7 +377,7 @@ CognicityReportsPowertrack.prototype = {
 			
 			// If we haven't contacted the user before, send them an invite tweet
 			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-				self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
+				self.sendReplyTweet(tweetActivity, self.getMessage('invite_text', tweetActivity), function(){
 					self.insertInvitee(tweetActivity);
 				});	
 			});
@@ -382,7 +389,7 @@ CognicityReportsPowertrack.prototype = {
 			
 			// If we haven't contacted the user before, ask them to enable geo-location
 			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-				self.sendReplyTweet( tweetActivity.actor.preferredUsername, self.getMessage('askforgeo_text', tweetActivity) );
+				self.sendReplyTweet( tweetActivity, self.getMessage('askforgeo_text', tweetActivity) );
 			});
 			
 			
@@ -391,7 +398,7 @@ CognicityReportsPowertrack.prototype = {
 			
 			// If we haven't contacted the user beforem, send them an invite tweet
 			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-				self.sendReplyTweet(tweetActivity.actor.preferredUsername, self.getMessage('invite_text', tweetActivity), function(){
+				self.sendReplyTweet(tweetActivity, self.getMessage('invite_text', tweetActivity), function(){
 					self.insertInvitee(tweetActivity);
 				});
 			});
