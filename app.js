@@ -60,6 +60,16 @@ logger
 	// Console transport is no use to us when running as a daemon
 	.remove(logger.transports.Console);
 
+// FIXME This is a workaround for https://github.com/flatiron/winston/issues/228
+// If we exit immediately winston does not get a chance to write the last log message.
+// So we wait a short time before exiting.
+function exitWithStatus(exitStatus) {
+	logger.info( "Exiting with status " + exitStatus );
+	setTimeout( function() {
+		process.exit(exitStatus);
+	}, 500 );
+}
+
 logger.info("Application starting...");
 
 // Verify DB connection is up
@@ -68,7 +78,7 @@ pg.connect(config.pg.conString, function(err, client, done){
 		logger.error("DB Connection error: " + err);
 		logger.error("Fatal error: Application shutting down");
 		done();
-		process.exit(1);
+		exitWithStatus(1);
 	}
 });
 
@@ -86,7 +96,7 @@ twit.verifyCredentials(function (err, data) {
 	if (err) {
 		logger.error("twit.verifyCredentials: Error verifying credentials: " + err);
 		logger.error("Fatal error: Application shutting down");
-		process.exit(1);
+		exitWithStatus(1);
 	} else {
 		logger.info("twit.verifyCredentials: Twitter credentials succesfully verified");
 	}
@@ -107,17 +117,17 @@ var server = new cognicityReportsPowertrack(
 process.on('uncaughtException', function (err) {
 	logger.error('uncaughtException: ' + err.message + ", " + err.stack);
 	logger.error("Fatal error: Application shutting down");
-	process.exit(1);
+	exitWithStatus(1);
 });
 
 // Catch kill and interrupt signals and log a clean exit status
 process.on('SIGTERM', function() {
 	logger.info('SIGTERM: Application shutting down');
-	process.exit(0);
+	exitWithStatus(0);
 });
 process.on('SIGINT', function() {
 	logger.info('SIGINT: Application shutting down');
-	process.exit(0);
+	exitWithStatus(0);
 });
 
 // Start up the twitter feed - connect the Gnip stream
