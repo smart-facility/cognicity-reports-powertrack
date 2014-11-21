@@ -51,6 +51,7 @@ App configuration parameters are stored in a configuration file which is parsed 
 * level - info or debug are most useful here, debug will give you more verbose logging output
 * maxFileSize - max size (in bytes) of each log file before a new one is created
 * maxFiles - number of log files to retain
+* logDirectory - Specify a full path to the log directory. If not specified, the application directory will be used.
 
 #### Gnip parameters
 * stream [true | false] - set to true to connect to Gnip stream.

@@ -17,6 +17,9 @@
  *     node daemon.js cognicity-reports-config.js stop
  */
 
+// Node dependencies
+var path = require('path');
+
 // Modules
 /** ntwitter twitter interface module */
 var twitter = require('ntwitter');
@@ -41,10 +44,14 @@ if (process.argv[2]){
 }
 
 // Logging configuration
+var logPath = ( config.logger.logDirectory ? config.logger.logDirectory : __dirname );
+logPath += path.sep;
+logPath += config.instance + ".log";
+
 logger
 	// Configure custom File transport to write plain text messages
 	.add(logger.transports.File, { 
-		filename: __dirname+"/"+config.instance+".log", // Write to projectname.log
+		filename: logPath, // Write to projectname.log
 		json: false, // Write in plain text, not JSON
 		maxsize: config.logger.maxFileSize, // Max size of each file
 		maxFiles: config.logger.maxFiles, // Max number of files
