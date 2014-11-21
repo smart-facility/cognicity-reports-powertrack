@@ -176,9 +176,9 @@ CognicityReportsPowertrack.prototype = {
 		if (self.config.twitter.send_enabled === true){
 			self.twit.updateStatus(message, params, function(err, data){
 				if (err) {
-					self.logger.error( 'Tweeting "' + message + '" failed: ' + err );
+					self.logger.error( 'Tweeting "' + message + '" with params "' + JSON.stringify(params) + '" failed: ' + err );
 				} else {
-					self.logger.debug( 'Sent tweet: "' + message + '"' );
+					self.logger.debug( 'Sent tweet: "' + message + '" with params ' + JSON.stringify(params) );
 					if (callback) callback();
 				}
 			});	
