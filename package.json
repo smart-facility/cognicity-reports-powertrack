@@ -23,7 +23,7 @@
   },
   "scripts": {
     "test": "npm run-script jshint && npm run-script mocha",
-    "jshint": "jshint app.js CognicityReportsPowertrack.js daemon.js sample-reports-config.js test-config.js test/testApp.js test/testCognicityReportsPowertrack.js twitter-send-test/twitter-send-test.js",
+    "jshint": "jshint app.js CognicityReportsPowertrack.js daemon.js sample-reports-config.js test-config.js test/testApp.js test/testCognicityReportsPowertrack.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js",
     "mocha": "mocha test",
     "build-docs": "jsdoc -d docs *.js",
     "build": "npm run-script test && npm run-script build-docs"

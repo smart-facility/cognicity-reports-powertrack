@@ -1,0 +1,12 @@
+{
+  "name": "twitter-reply-test",
+  "version": "0.0.1",
+  "preferGlobal": false,
+  "private": true,
+  "dependencies": {
+    "ntwitter": "^0.5.0"
+  },
+  "engines": {
+    "node": ">=0.10.12"
+  }
+}
