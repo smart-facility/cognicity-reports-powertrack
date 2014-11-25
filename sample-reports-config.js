@@ -2,9 +2,6 @@
 
 //sample-config.js - sample configuration file for cognicity-reports module
 
-/* jshint node:true */
-/* global module */
-
 var config = {};
 
 // Instance name - default name for this configuration (will be server process name)

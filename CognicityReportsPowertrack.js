@@ -2,10 +2,6 @@
 
 // CognicityReportsPowertrack.js - cognicity-reports-powertrack modules
 
-/* jshint node:true */
-/* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
-/* jshint curly:false */ // Don't require curly brackets around one-line statements
-
 /**
  * A CognicityReportsPowertrack object:
  * - connects to a powertrack stream

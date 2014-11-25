@@ -1,9 +1,5 @@
 'use strict';
 
-/* jshint node:true */
-/* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
-/* jshint curly:false */ // Don't require curly brackets around one-line statements
-
 /**
  * Test bulk sending of tweets via ntwitter module.
  * 

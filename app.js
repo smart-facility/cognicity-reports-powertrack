@@ -2,10 +2,6 @@
 
 // app.js - cognicity-reports-powertrack application setup
 
-/* jshint node:true */
-/* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
-/* jshint curly:false */ // Don't require curly brackets around one-line statements
-
 /**
  * @file Collect unconfirmed reports from Twitter & send report verification tweets
  * @copyright (c) Tomas Holderness & SMART Infrastructure Facility January 2014
@@ -37,8 +33,8 @@ var Gnip = require('gnip');
 var cognicityReportsPowertrack = require('./CognicityReportsPowertrack.js');
 
 // Verify expected arguments
-if (process.argv[2]){
-	var config = require(__dirname+'/'+process.argv[2]); 
+if (process.argv[2]) {
+	var config = require( __dirname + path.sep + process.argv[2] ); 
 } else {
 	throw new Error('No config file. Usage: node app.js config.js');
 }

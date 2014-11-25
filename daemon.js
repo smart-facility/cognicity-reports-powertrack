@@ -2,10 +2,6 @@
 
 //daemon.js - Daemon script for cognicity-reports module
 
-/* jshint node:true */
-/* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
-/* jshint curly:false */ // Don't require curly brackets around one-line statements
-
 //Load configuration file
 if (process.argv[2] && process.argv[3]){
 	var config = require(__dirname+'/'+process.argv[2]); 
