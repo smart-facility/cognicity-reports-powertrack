@@ -1,7 +1,7 @@
 {
   "name": "cognicity-reports-powertrack",
   "description": "CogniCity reports Gnip PowerTrack module",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "author": "Tomas Holderness <tomas@uow.edu.au>",
   "preferGlobal": false,
   "private": true,
