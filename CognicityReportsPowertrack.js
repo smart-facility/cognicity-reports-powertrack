@@ -383,11 +383,8 @@ CognicityReportsPowertrack.prototype = {
 			
 			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
 			
-			// If we haven't contacted the user before, ask them to enable geo-location
-			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-				self.sendReplyTweet( tweetActivity, self.getMessage('askforgeo_text', tweetActivity) );
-			});
-			
+			// Ask them to enable geo-location
+			self.sendReplyTweet( tweetActivity, self.getMessage('askforgeo_text', tweetActivity) );			
 			
 		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && !addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
