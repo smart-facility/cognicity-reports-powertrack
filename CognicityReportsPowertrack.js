@@ -384,7 +384,7 @@ CognicityReportsPowertrack.prototype = {
 			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
 
 			// Ask them to enable geo-location
-			if (tweetActivity.actor.preferredUsername != "petajkt") {
+			if (tweetActivity.actor.preferredUsername !== "petajkt") {
 				self.sendReplyTweet( tweetActivity, self.getMessage('askforgeo_text', tweetActivity) );
 			}
 
