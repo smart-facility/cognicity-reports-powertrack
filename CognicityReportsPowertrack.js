@@ -9,12 +9,12 @@
  * - sends messages to users via twitter
  * - stores data from tweets in database
  * @constructor
- * @this {CognicityReportsPowertrack} 
+ * @this {CognicityReportsPowertrack}
  * @param {Object} config Configuration object
  * @param {Object} twit Configured instance of twitter object from ntwitter module
  * @param {Object} pg Configured instance of pg object from pg module
- * @param {Object} logger Configured instance of logger object from Winston module 
- * @param {Object} Gnip Instance of Gnip object from Gnip module 
+ * @param {Object} logger Configured instance of logger object from Winston module
+ * @param {Object} Gnip Instance of Gnip object from Gnip module
  */
 var CognicityReportsPowertrack = function(
 	config,
@@ -23,7 +23,7 @@ var CognicityReportsPowertrack = function(
 	logger,
 	Gnip
 		){
-	
+
 	this.config = config;
 	this.twit = twit;
 	this.pg = pg;
@@ -32,47 +32,47 @@ var CognicityReportsPowertrack = function(
 };
 
 CognicityReportsPowertrack.prototype = {
-	/** 
+	/**
 	 * Configuration object
-	 * @type {Object} 
+	 * @type {Object}
 	 */
 	config: null,
-	/** 
+	/**
 	 * Configured instance of twitter object from ntwitter module
-	 * @type {Object} 
+	 * @type {Object}
 	 */
 	twit: null,
-	/** 
+	/**
 	 * Configured instance of pg object from pg module
-	 * @type {Object} 
+	 * @type {Object}
 	 */
 	pg: null,
-	/** 
+	/**
 	 * Configured instance of logger object from Winston module
-	 * @type {Object} 
+	 * @type {Object}
 	 */
 	logger: null,
-	/** 
+	/**
 	 * Gnip Instance of Gnip object from Gnip module
-	 * @type {Object} 
+	 * @type {Object}
 	 */
 	Gnip: null,
-		
+
 	/**
 	 * Resolve message code from config.twitter using passed language codes.
 	 * Will fall back to trying to resolve message using default language set in configuration.
-	 * @param {string} code Code to lookup in config.twitter 
+	 * @param {string} code Code to lookup in config.twitter
 	 * @param {Object} tweetActivity Gnip twitter activity object; check twitter language code and Gnip language codes for a match
 	 * @returns {string} Message text, or null if not resolved.
 	 */
 	getMessage: function(code, tweetActivity) {
 		var self = this;
-		
+
 		// Fetch the language codes from both twitter and Gnip data, if present
 		var langs = [];
 		if (tweetActivity.twitter_lang) langs.push(tweetActivity.twitter_lang);
 		if (tweetActivity.gnip && tweetActivity.gnip.language && tweetActivity.gnip.language.value) langs.push(tweetActivity.gnip.language.value);
-		
+
 		// Find a matching code if we can
 		if (self.config.twitter[code]) {
 			for (var i=0; i<langs.length; i++) {
@@ -82,20 +82,20 @@ CognicityReportsPowertrack.prototype = {
 			// If we haven't found a code, try the default language
 			if (self.config.twitter[code][self.config.twitter.defaultLanguage]) return self.config.twitter[code][self.config.twitter.defaultLanguage];
 		}
-		
+
 		self.logger.warn( "getMessage: Code could not be resolved for '" + code + "' and langs '" + langs +"'" );
 		return null;
 	},
-	
+
 	/**
 	 * DB query success callback
 	 * @callback dbQuerySuccess
 	 * @param {object} result The 'pg' module result object on a successful query
 	 */
-	
+
 	/**
 	 * Execute the SQL against the database connection. Run the success callback on success if supplied.
-	 * @param {Object} config The pg config object for a parameterized query, e.g. {text:"select * from foo where a=$1", values:['bar']} 
+	 * @param {Object} config The pg config object for a parameterized query, e.g. {text:"select * from foo where a=$1", values:['bar']}
 	 * @param {dbQuerySuccess} success Callback function to execute on success.
 	 */
 	dbQuery: function(config, success){
@@ -107,7 +107,7 @@ CognicityReportsPowertrack.prototype = {
 				self.logger.error("dbQuery: " + JSON.stringify(config) + ", " + err);
 				done();
 				return;
-			}	
+			}
 			client.query(config, function(err, result){
 				if (err){
 					self.logger.error("dbQuery: " + JSON.stringify(config) + ", " + err);
@@ -126,7 +126,7 @@ CognicityReportsPowertrack.prototype = {
 			});
 		});
 	},
-	
+
 	/**
 	 * Only execute the success callback if the user is not currently in the all users table.
 	 * @param {string} user The twitter screen name to check if exists
@@ -146,10 +146,10 @@ CognicityReportsPowertrack.prototype = {
 				} else {
 					self.logger.debug("Not performing callback as user already exists");
 				}
-			}	
+			}
 		);
 	},
-	
+
 	/**
 	 * Send @reply Twitter message
 	 * @param {object} The Gnip tweet activity object this is a reply to
@@ -158,13 +158,13 @@ CognicityReportsPowertrack.prototype = {
 	 */
 	sendReplyTweet: function(tweetActivity, message, callback){
 		var self = this;
-				
+
 		var originalTweetId = tweetActivity.id;
 		originalTweetId = originalTweetId.split(':');
 		originalTweetId = originalTweetId[originalTweetId.length-1];
-		
+
 		var params = {};
-		params.in_reply_to_status_id = originalTweetId; 
+		params.in_reply_to_status_id = originalTweetId;
 
 		message = '@' + tweetActivity.actor.preferredUsername + ' ' + message;
 		if ( self.config.twitter.addTimestamp ) message = message + " " + new Date().getTime();
@@ -177,14 +177,14 @@ CognicityReportsPowertrack.prototype = {
 					self.logger.debug( 'Sent tweet: "' + message + '" with params ' + JSON.stringify(params) );
 					if (callback) callback();
 				}
-			});	
+			});
 		} else { // for testing
 			self.logger.info( 'sendReplyTweet: In test mode - no message will be sent. Callback will still run.' );
 			self.logger.info( 'sendReplyTweet: Would have tweeted: "' + message + '" with params ' + JSON.stringify(params) );
 			if (callback) callback();
 		}
 	},
-		
+
 	/**
 	 * Insert a confirmed report - i.e. has geo coordinates and is addressed.
 	 * Store both the tweet information and the user hash.
@@ -193,7 +193,7 @@ CognicityReportsPowertrack.prototype = {
 	insertConfirmed: function(tweetActivity){
 		var self = this;
 
-		//insertUser with count -> upsert	
+		//insertUser with count -> upsert
 		self.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_tweets + " " +
@@ -201,10 +201,10 @@ CognicityReportsPowertrack.prototype = {
 					"VALUES (" +
 					"$1, " +
 					"$2, " +
-					"$3, " + 
-					"$4, " + 
-					"$5, " + 
-					"$6, " + 
+					"$3, " +
+					"$4, " +
+					"$5, " +
+					"$6, " +
 					"ST_GeomFromText('POINT(' || $7 || ')',4326)" +
 					");",
 				values : [
@@ -219,7 +219,7 @@ CognicityReportsPowertrack.prototype = {
 			},
 			function(result) {
 				self.logger.info('Logged confirmed tweet report');
-				self.dbQuery( 
+				self.dbQuery(
 					{
 						text : "SELECT upsert_tweet_users(md5($1));",
 						values : [
@@ -229,13 +229,13 @@ CognicityReportsPowertrack.prototype = {
 					function(result) {
 						self.logger.info('Logged confirmed tweet user');
 						// Send the user a thank-you tweet; send this for every confirmed report
-						self.sendReplyTweet( tweetActivity, self.getMessage('thanks_text', tweetActivity) );	
+						self.sendReplyTweet( tweetActivity, self.getMessage('thanks_text', tweetActivity) );
 					}
 				);
 			}
 		);
 	},
-	
+
 	/**
 	 * Insert an invitee - i.e. a user we've invited to participate.
 	 * @param tweetActivity Gnip PowerTrack tweet activity object
@@ -243,7 +243,7 @@ CognicityReportsPowertrack.prototype = {
 	insertInvitee: function(tweetActivity){
 		var self = this;
 
-		self.dbQuery( 
+		self.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_invitees + " (user_hash) VALUES (md5($1));",
 				values : [ tweetActivity.actor.preferredUsername ]
@@ -253,7 +253,7 @@ CognicityReportsPowertrack.prototype = {
 			}
 		);
 	},
-		
+
 	/**
 	 * Insert an unconfirmed report - i.e. has geo coordinates but is not addressed.
 	 * @param tweetActivity Gnip PowerTrack tweet activity object
@@ -279,7 +279,7 @@ CognicityReportsPowertrack.prototype = {
 			}
 		);
 	},
-		
+
 	/**
 	 * Insert a non-spatial tweet report - i.e. we got an addressed tweet without geo coordinates.
 	 * @param tweetActivity Gnip PowerTrack tweet activity object
@@ -293,10 +293,10 @@ CognicityReportsPowertrack.prototype = {
 					"(created_at, text, hashtags, urls, user_mentions, lang) " +
 					"VALUES (" +
 					"$1, " +
-					"$2, " + 
-					"$3, " + 
-					"$4, " + 
-					"$5, " + 
+					"$2, " +
+					"$3, " +
+					"$4, " +
+					"$5, " +
 					"$6" +
 					");",
 				values : [
@@ -308,14 +308,14 @@ CognicityReportsPowertrack.prototype = {
 					tweetActivity.twitter_lang
 				]
 			},
-			
+
 			function(result) {
 				self.logger.info('Inserted non-spatial tweet');
 			}
 		);
-		
+
 		self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-			self.dbQuery( 
+			self.dbQuery(
 				{
 					text : "INSERT INTO " + self.config.pg.table_nonspatial_users + " (user_hash) VALUES (md5($1));",
 					values : [ tweetActivity.actor.preferredUsername ]
@@ -326,7 +326,7 @@ CognicityReportsPowertrack.prototype = {
 			);
 		});
 	},
-		
+
 	/**
 	 * Main stream tweet filtering logic.
 	 * Filter the incoming tweet and decide what action needs to be taken:
@@ -337,72 +337,74 @@ CognicityReportsPowertrack.prototype = {
 		var self = this;
 
 		self.logger.verbose( 'filter: Received tweetActivity: screen_name="' + tweetActivity.actor.preferredUsername + '", text="' + tweetActivity.body.replace("\n", "") + '", coordinates="' + (tweetActivity.geo && tweetActivity.geo.coordinates ? tweetActivity.geo.coordinates[1]+", "+tweetActivity.geo.coordinates[0] : 'N/A') + '"' );
-		
+
 		// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
 		var hasGeo = (tweetActivity.geo && tweetActivity.geo.coordinates);
 		var geoInBoundingBox = false;
 		var addressed = false;
 		var locationMatch = false;
-		
+
 		tweetActivity.gnip.matching_rules.forEach( function(rule){
 			if (rule.tag) {
 				// Only set geoInBoundingBox to true if the user has tweet coordinates as well as matching the rule,
 				// as the rule can match on 'place' being within the bounding box
-				if (rule.tag.indexOf("boundingbox")===0 && hasGeo) geoInBoundingBox = true; 
+				if (rule.tag.indexOf("boundingbox")===0 && hasGeo) geoInBoundingBox = true;
 				if (rule.tag.indexOf("addressed")===0) addressed = true;
 				if (rule.tag.indexOf("location")===0) locationMatch = true;
 			}
 		});
 		var tweetCategorizations = (geoInBoundingBox?'+':'-') + "BOUNDINGBOX " +
 			(hasGeo?'+':'-') + "GEO " +
-			(addressed?'+':'-') + "ADDRESSED " + 
+			(addressed?'+':'-') + "ADDRESSED " +
 			(locationMatch?'+':'-') + "LOCATION";
-		
+
 		self.logger.verbose("filter: Categorized tweetActivity via Gnip tags as " + tweetCategorizations);
-		
+
 		// Perform the actions for the categorization of the tween
 		if ( geoInBoundingBox && addressed ) {
 			self.logger.verbose( 'filter: +BOUNDINGBOX +ADDRESSED = confirmed report' );
-			
-			self.insertConfirmed(tweetActivity); //user + geo = confirmed report!	
-			
+
+			self.insertConfirmed(tweetActivity); //user + geo = confirmed report!
+
 		} else if ( geoInBoundingBox && !addressed ) {
 			self.logger.verbose( 'filter: +BOUNDINGBOX -ADDRESSED = unconfirmed report, ask user to participate' );
 
 			self.insertUnConfirmed(tweetActivity); //insert unconfirmed report
-			
+
 			// If we haven't contacted the user before, send them an invite tweet
 			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
 				self.sendReplyTweet(tweetActivity, self.getMessage('invite_text', tweetActivity), function(){
 					self.insertInvitee(tweetActivity);
-				});	
+				});
 			});
-			
+
 		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask user for geo' );
-			
+
 			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
-			
+
 			// Ask them to enable geo-location
-			self.sendReplyTweet( tweetActivity, self.getMessage('askforgeo_text', tweetActivity) );			
-			
+			if (tweetActivity.actor.preferredUsername != "petajkt") {
+				self.sendReplyTweet( tweetActivity, self.getMessage('askforgeo_text', tweetActivity) );
+			}
+
 		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && !addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
-			
+
 			// If we haven't contacted the user beforem, send them an invite tweet
 			self.ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
 				self.sendReplyTweet(tweetActivity, self.getMessage('invite_text', tweetActivity), function(){
 					self.insertInvitee(tweetActivity);
 				});
 			});
-			
+
 		} else {
 			// Not in bounding box but has geocoordinates or no location match
 			self.logger.warn( 'filter: Tweet did not match category actions: ' + tweetCategorizations );
 		}
 
 	},
-	
+
 	/**
 	 * Connect the Gnip stream.
 	 * Establish the network connection, push rules to Gnip.
@@ -421,16 +423,16 @@ CognicityReportsPowertrack.prototype = {
 		var reconnectTimeoutHandle;
 		// Send a notification on an extended disconnection
 		var disconnectionNotificationSent = false;
-	
+
 		// TODO Get replay data on reconnect?
-		
-		// Attempt to reconnect the socket. 
+
+		// Attempt to reconnect the socket.
 		// If we fail, wait an increasing amount of time before we try again.
 		function reconnectSocket() {
 			// Try and destroy the existing socket, if it exists
 			self.logger.warn( 'connectStream: Connection lost, destroying socket' );
 			if ( stream._req ) stream._req.destroy();
-			
+
 			// If our timeout is above the max threshold, cap it and send a notification tweet
 			if (streamReconnectTimeout >= self.config.gnip.maxReconnectTimeout) {
 				// Only send the notification once per disconnection
@@ -441,48 +443,48 @@ CognicityReportsPowertrack.prototype = {
 						self.config.gnip.sendTweetOnMaxTimeoutTo.split(",").forEach( function(username){
 							var trimmedUsername = username.trim();
 							// Always timestamp this, otherwise they will always look the same and won't post.
-							var message = '@' + trimmedUsername + 
-								' ' + "Cognicity Reports PowerTrack Gnip connection has been offline for " + 
-								self.config.gnip.maxReconnectTimeout + " seconds" + 
+							var message = '@' + trimmedUsername +
+								' ' + "Cognicity Reports PowerTrack Gnip connection has been offline for " +
+								self.config.gnip.maxReconnectTimeout + " seconds" +
 								" " + new Date().getTime();
-							
+
 							self.logger.warn( 'connectStream: Tweeting warning: "' + message + '"' );
 							self.twit.updateStatus(message, function(err, data){
 								if (err) self.logger.error('connectStream: Tweeting failed: ' + err);
-							});	
+							});
 						});
 					}
 					disconnectionNotificationSent = true;
 				}
 			} else {
 				streamReconnectTimeout *= 2;
-				if (streamReconnectTimeout >= self.config.gnip.maxReconnectTimeout) streamReconnectTimeout = self.config.gnip.maxReconnectTimeout; 
+				if (streamReconnectTimeout >= self.config.gnip.maxReconnectTimeout) streamReconnectTimeout = self.config.gnip.maxReconnectTimeout;
 			}
-			
+
 			// Attempt to reconnect
 			self.logger.info( 'connectStream: Attempting to reconnect stream' );
 			stream.start();
 		}
-	
+
 		// TODO We get called twice for disconnect, once from error once from end
 		// Is this normal? Can we only use one event? Or is it possible to get only
 		// one of those handlers called under some error situations.
-		
+
 		// Attempt to reconnect the Gnip stream.
 		// This function handles us getting called multiple times from different error handlers.
-		function reconnectStream() {				
+		function reconnectStream() {
 			if (reconnectTimeoutHandle) clearTimeout(reconnectTimeoutHandle);
 			self.logger.info( 'connectStream: queing reconnect for ' + streamReconnectTimeout );
 			reconnectTimeoutHandle = setTimeout( reconnectSocket, streamReconnectTimeout );
 		}
-		
+
 		// Configure a Gnip stream with connection details
 		stream = new self.Gnip.Stream({
 		    url : self.config.gnip.steamUrl,
 		    user : self.config.gnip.username,
 		    password : self.config.gnip.password
 		});
-		
+
 		// When stream is connected, setup the stream timeout handler
 		stream.on('ready', function() {
 			self.logger.info('connectStream: Stream ready!');
@@ -496,11 +498,11 @@ CognicityReportsPowertrack.prototype = {
 				reconnectStream();
 			});
 		});
-	
+
 		// When we receive a tweetActivity from the Gnip stream this event handler will be called
 		stream.on('tweet', function(tweetActivity) {
 			self.logger.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweetActivity));
-			
+
 			// Catch errors here, otherwise error in filter method is caught as stream error
 			try {
 				if (tweetActivity.actor) {
@@ -514,27 +516,27 @@ CognicityReportsPowertrack.prototype = {
 				self.logger.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);
 			}
 		});
-		
+
 		// Handle an error from the stream
 		stream.on('error', function(err) {
 			self.logger.error("connectStream: Error connecting stream:" + err);
 			reconnectStream();
 		});
-		
+
 		// TODO Do we need to catch the 'end' event?
 		// Handle a socket 'end' event from the stream
 		stream.on('end', function() {
 			self.logger.error("connectStream: Stream ended");
 			reconnectStream();
 		});
-	
+
 		// Construct a Gnip rules connection
 		var rules = new self.Gnip.Rules({
 		    url : self.config.gnip.rulesUrl,
 		    user : self.config.gnip.username,
 		    password : self.config.gnip.password
 		});
-		
+
 		// Create rules programatically from config
 		// Use key of rule entry as the tag, and value as the rule string
 		var newRules = [];
@@ -547,7 +549,7 @@ CognicityReportsPowertrack.prototype = {
 			}
 		}
 		self.logger.debug('connectStream: Rules = ' + JSON.stringify(newRules));
-		
+
 		// Push the parsed rules to Gnip
 		self.logger.info('connectStream: Updating rules...');
 		// Bypass the cache, remove all the rules and send them all again
@@ -558,7 +560,7 @@ CognicityReportsPowertrack.prototype = {
 			stream.start();
 		});
 
-	}		
+	}
 };
 
 // Export our object constructor method from the module
