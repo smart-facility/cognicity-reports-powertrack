@@ -476,7 +476,7 @@ CognicityReportsPowertrack.prototype = {
 
 		// Configure a Gnip stream with connection details
 		stream = new self.Gnip.Stream({
-		    url : self.config.gnip.steamUrl,
+		    url : self.config.gnip.streamUrl,
 		    user : self.config.gnip.username,
 		    password : self.config.gnip.password
 		});
