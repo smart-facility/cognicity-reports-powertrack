@@ -28,7 +28,7 @@ server.logger = {
 describe( 'CognicityReportsPowertrack', function() {
 	
 	// Test suite for i18n getMessage function
-	describe( 'i18n', function() {
+	describe( 'getMessage', function() {
 		// Setup by adding some codes and a defaultLanguage to the config
 		before( function() {
 			server.config = {
@@ -413,7 +413,7 @@ describe( 'CognicityReportsPowertrack', function() {
 	});
 	
 	describe( "tweetAdmin", function() {
-		var message = 'test';
+		var message = 'princess is in another castle';
 		
 		var notifiedTimes; // Number of times twitter notification was sent
 
@@ -556,5 +556,103 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 		
 	});
+
+	describe( "sendReplyTweet", function() {
+		var successCallbackRan;
+		var updateStatusRan;
+		var updateStatusParams;
+		var tweetId = "5377776775";
+		
+		function createTweetActivity(username) {
+			return {
+				id : 'tag:search.twitter.com,2005:'+tweetId,
+				actor: {
+					preferredUsername: username
+				}
+			};
+		}
+		function success(){ 
+			successCallbackRan = true;
+		}
+		var message = 'pan galactic gargle blaster';
+		
+		before( function() {	
+			server.twit = {
+				updateStatus: function(message,params,callback) {
+					updateStatusRan = true;
+					updateStatusParams = params;
+					callback( server.twit.tweetSendWillError, {} );
+				}	
+			};
+			server.config = {
+				twitter: {
+					senderUsername : 'zaphod'
+				}	
+			};
+		});
+		
+		beforeEach( function() {
+			server.twit.tweetSendWillError = false;
+			server.config.twitter.send_enabled = true;
+			successCallbackRan = false;
+			updateStatusRan = false;
+			updateStatusParams = {};
+		});
+		
+		it( "sendReplyTweet calls updateStatus and executes callback", function() {
+			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			test.value( successCallbackRan ).is( true );
+			test.value( updateStatusRan ).is( true );
+		});
+
+		
+		it( "Tweet not sent to senderUsername", function() {
+			server.sendReplyTweet( createTweetActivity('zaphod'), message, success );
+			test.value( successCallbackRan ).is( false );
+		});
+
+		it( 'Tweet not sent if send_enabled is false', function() {
+			server.config.twitter.send_enabled = false;
+			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			test.value( updateStatusRan ).is( false );
+		});
+
+		it( 'Callback executed if send_enabled is false', function() {
+			server.config.twitter.send_enabled = false;
+			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			test.value( successCallbackRan ).is( true );
+		});
+
+		it( 'Callback not executed if error tweeting occurs', function() {
+			server.twit.tweetSendWillError = true;
+			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			test.value( successCallbackRan ).is( false );
+		});
+
+		it( 'Tweet is reply to ID from tweetActivity', function() {
+			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			test.value( updateStatusParams.in_reply_to_status_id ).is( tweetId );
+		});
+
+		after( function(){
+			server.twit = {};
+			server.config = {};
+		});
+	});
+
+// Test template
+//	describe( "suite", function() {
+//		before( function() {	
+//		});
+//		
+//		beforeEach( function() {
+//		});
+//		
+//		it( 'case', function() {
+//		});
+//
+//		after( function(){
+//		});
+//	});
 	
 });

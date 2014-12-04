@@ -164,34 +164,40 @@ CognicityReportsPowertrack.prototype = {
 	 * Send @reply Twitter message
 	 * @param {object} The Gnip tweet activity object this is a reply to
 	 * @param {string} message The tweet text to send
-	 * @param {function} callback Callback function called on success
+	 * @param {function} success Callback function called on success
 	 */
-	sendReplyTweet: function(tweetActivity, message, callback){
+	sendReplyTweet: function(tweetActivity, message, success){
 		var self = this;
+		
+		if ( tweetActivity.actor.preferredUsername === self.config.twitter.senderUsername ) {
+			// Never send tweets to ourself
+			self.logger.info( 'sendReplyTweet: Tweet user is same as senderUsername, not sending' );
+		} else {
+			// Tweet is not to ourself, attempt to send
+			var originalTweetId = tweetActivity.id;
+			originalTweetId = originalTweetId.split(':');
+			originalTweetId = originalTweetId[originalTweetId.length-1];
 
-		var originalTweetId = tweetActivity.id;
-		originalTweetId = originalTweetId.split(':');
-		originalTweetId = originalTweetId[originalTweetId.length-1];
+			var params = {};
+			params.in_reply_to_status_id = originalTweetId;
 
-		var params = {};
-		params.in_reply_to_status_id = originalTweetId;
+			message = '@' + tweetActivity.actor.preferredUsername + ' ' + message;
+			if ( self.config.twitter.addTimestamp ) message = message + " " + new Date().getTime();
 
-		message = '@' + tweetActivity.actor.preferredUsername + ' ' + message;
-		if ( self.config.twitter.addTimestamp ) message = message + " " + new Date().getTime();
-
-		if (self.config.twitter.send_enabled === true){
-			self.twit.updateStatus(message, params, function(err, data){
-				if (err) {
-					self.logger.error( 'Tweeting "' + message + '" with params "' + JSON.stringify(params) + '" failed: ' + err );
-				} else {
-					self.logger.debug( 'Sent tweet: "' + message + '" with params ' + JSON.stringify(params) );
-					if (callback) callback();
-				}
-			});
-		} else { // for testing
-			self.logger.info( 'sendReplyTweet: In test mode - no message will be sent. Callback will still run.' );
-			self.logger.info( 'sendReplyTweet: Would have tweeted: "' + message + '" with params ' + JSON.stringify(params) );
-			if (callback) callback();
+			if (self.config.twitter.send_enabled === true){
+				self.twit.updateStatus(message, params, function(err, data){
+					if (err) {
+						self.logger.error( 'Tweeting "' + message + '" with params "' + JSON.stringify(params) + '" failed: ' + err );
+					} else {
+						self.logger.debug( 'Sent tweet: "' + message + '" with params ' + JSON.stringify(params) );
+						if (success) success();
+					}
+				});
+			} else { // for testing
+				self.logger.info( 'sendReplyTweet: In test mode - no message will be sent. Callback will still run.' );
+				self.logger.info( 'sendReplyTweet: Would have tweeted: "' + message + '" with params ' + JSON.stringify(params) );
+				if (success) success();
+			}	
 		}
 	},
 
@@ -394,9 +400,7 @@ CognicityReportsPowertrack.prototype = {
 			self.insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
 
 			// Ask them to enable geo-location
-			if (tweetActivity.actor.preferredUsername !== "petajkt") {
-				self.sendReplyTweet( tweetActivity, self.getMessage('askforgeo_text', tweetActivity) );
-			}
+			self.sendReplyTweet( tweetActivity, self.getMessage('askforgeo_text', tweetActivity) );
 
 		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && !addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );

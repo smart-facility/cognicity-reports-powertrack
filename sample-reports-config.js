@@ -18,6 +18,7 @@ config.logger.logDirectory = null; // Set this to a full path to a directory - i
 
 //Twitter app authentication details
 config.twitter = {};
+config.twitter.senderUsername = ''; // Username (without @) of account sending the tweets
 config.twitter.consumer_key = '';
 config.twitter.consumer_secret = '';
 config.twitter.access_token_key = '';
