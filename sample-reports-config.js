@@ -7,6 +7,8 @@ var config = {};
 // Instance name - default name for this configuration (will be server process name)
 config.instance = 'cognicity-reports-powertrack';
 
+config.adminTwitterUsernames = null; // Enter twitter usernames here (without @, comma separated for multiples) to send a notification tweet on error conditions
+
 //Logging configuration
 config.logger = {};
 config.logger.level = "info"; // What level to log at; info, verbose or debug are most useful. Levels are (npm defaults): silly, debug, verbose, info, warn, error.
@@ -35,7 +37,6 @@ config.gnip.rules = {
     "location":"( contains:flood OR contains:banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta OR profile_bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR profile_bounding_box:[106.8 -6.4354 107.0782 -6.2] OR profile_bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR profile_bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )"
 };
 config.gnip.maxReconnectTimeout = 1000 * 60 * 5; // In milliseconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
-config.gnip.sendTweetOnMaxTimeoutTo = null; // Enter a twitter usernames here (without @, comma separated for multiples) to send a notification tweet if the max reconnection timeout is reached
 
 //Twitter parameters
 config.twitter.send_enabled = false; //send verfication requests?
@@ -72,5 +73,7 @@ config.pg.table_unconfirmed = 'tweet_reports_unconfirmed';
 config.pg.table_nonspatial_users = 'nonspatial_tweet_users';
 config.pg.table_nonspatial_tweet_reports = 'nonspatial_tweet_reports';
 config.pg.table_all_users = 'all_users';
+config.pg.reconnectionDelay = 1000 * 60 * 3; // Delay before attempting a reconnection in ms
+config.pg.reconnectionAttempts = 5; // Number of times to attempt reconnection before notifying admin and exiting
 
 module.exports = config;

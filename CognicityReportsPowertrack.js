@@ -57,6 +57,16 @@ CognicityReportsPowertrack.prototype = {
 	 * @type {Object}
 	 */
 	Gnip: null,
+	/**
+	 * Flag signifying if we are currently able to process tweets immediately.
+	 * Turned on if the database is temporarily offline so we can cache tweets for a short time.
+	 */
+	_cacheMode: false,
+	/**
+	 * Store tweets if we cannot process them immediately for later processing.
+	 * @type {Array}
+	 */
+	_cachedTweets: [],
 
 	/**
 	 * Resolve message code from config.twitter using passed language codes.
@@ -437,23 +447,9 @@ CognicityReportsPowertrack.prototype = {
 			if (streamReconnectTimeout >= self.config.gnip.maxReconnectTimeout) {
 				// Only send the notification once per disconnection
 				if (!disconnectionNotificationSent) {
-					// Send notification tweet if we have a configured username
-					if (self.config.gnip.sendTweetOnMaxTimeoutTo) {
-						// Construct the notification messages for each user.
-						self.config.gnip.sendTweetOnMaxTimeoutTo.split(",").forEach( function(username){
-							var trimmedUsername = username.trim();
-							// Always timestamp this, otherwise they will always look the same and won't post.
-							var message = '@' + trimmedUsername +
-								' ' + "Cognicity Reports PowerTrack Gnip connection has been offline for " +
-								self.config.gnip.maxReconnectTimeout + " seconds" +
-								" " + new Date().getTime();
-
-							self.logger.warn( 'connectStream: Tweeting warning: "' + message + '"' );
-							self.twit.updateStatus(message, function(err, data){
-								if (err) self.logger.error('connectStream: Tweeting failed: ' + err);
-							});
-						});
-					}
+					var message = "Cognicity Reports PowerTrack Gnip connection has been offline for " +
+						self.config.gnip.maxReconnectTimeout + " seconds";
+					self.tweetAdmin(message);
 					disconnectionNotificationSent = true;
 				}
 			} else {
@@ -501,19 +497,24 @@ CognicityReportsPowertrack.prototype = {
 
 		// When we receive a tweetActivity from the Gnip stream this event handler will be called
 		stream.on('tweet', function(tweetActivity) {
-			self.logger.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweetActivity));
+			if (self._cacheMode) {
+				self.logger.debug( "connectStream: caching incoming tweet for later processing (id=" + tweetActivity.id + ")" );
+				self._cachedTweets.push( tweetActivity );
+			} else {
+				self.logger.debug("connectStream: stream.on('tweet'): tweet = " + JSON.stringify(tweetActivity));
 
-			// Catch errors here, otherwise error in filter method is caught as stream error
-			try {
-				if (tweetActivity.actor) {
-					// This looks like a tweet in Gnip activity format
-					self.filter(tweetActivity);
-				} else {
-					// This looks like a system message
-					self.log.info("connectStream: Received system message: " + JSON.stringify(tweetActivity));
+				// Catch errors here, otherwise error in filter method is caught as stream error
+				try {
+					if (tweetActivity.actor) {
+						// This looks like a tweet in Gnip activity format
+						self.filter(tweetActivity);
+					} else {
+						// This looks like a system message
+						self.log.info("connectStream: Received system message: " + JSON.stringify(tweetActivity));
+					}
+				} catch (err) {
+					self.logger.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);
 				}
-			} catch (err) {
-				self.logger.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);
 			}
 		});
 
@@ -560,6 +561,61 @@ CognicityReportsPowertrack.prototype = {
 			stream.start();
 		});
 
+	},
+	
+	/**
+	 * Stop realtime processing of tweets and start caching tweets until caching mode is disabled.
+	 */
+	enableCacheMode: function() {
+		var self = this;
+		
+		self.logger.verbose( 'enableCacheMode: Enabling caching mode' );
+		self._cacheMode = true;
+	},
+	
+	/**
+	 * Result realtime processing of tweets.
+	 * Also immediately process any tweets cached while caching mode was enabled.
+	 */
+	disableCacheMode: function() {
+		var self = this;
+		
+		self.logger.verbose( 'disableCacheMode: Disabling caching mode' );
+		self._cacheMode = false;
+		
+		self.logger.verbose( 'disableCacheMode: Processing ' + self._cachedTweets.length + ' cached tweets' );
+		self._cachedTweets.forEach( function(tweetActivity) {
+			self.filter(tweetActivity);
+		});
+		self.logger.verbose( 'disableCacheMode: Cached tweets processed' );
+		self._cachedTweets = [];
+	},
+	
+	/**
+	 * Tweet the admin usernames defined in 'adminTwitterUsernames' in config.
+	 * @param message The message to tweet
+	 * @param callback Callback to execute after tweet sending
+	 */
+	tweetAdmin: function(warningMessage, callback) {
+		var self = this;
+		
+		// Send notification tweet if we have a configured username
+		if (self.config.adminTwitterUsernames) {
+			// Construct the notification messages for each user.
+			self.config.adminTwitterUsernames.split(",").forEach( function(username){
+				var trimmedUsername = username.trim();
+				// Always timestamp this, otherwise the messages will always look the same and won't post.
+				var message = '@' + trimmedUsername +
+					' ' + warningMessage +
+					" " + new Date().getTime();
+
+				self.logger.warn( 'tweetAdmin: Tweeting warning: "' + message + '"' );
+				self.twit.updateStatus(message, function(err, data){
+					if (err) self.logger.error('tweetAdmin: Tweeting failed: ' + err);
+					if (callback) callback();
+				});
+			});
+		}
 	}
 };
 

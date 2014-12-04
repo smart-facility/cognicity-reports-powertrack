@@ -109,6 +109,42 @@ var server = new cognicityReportsPowertrack(
 	Gnip
 );
 
+// Handle postgres idle connection error
+pg.on('error', function(err) {
+	logger.error('Postgres connection error: ' + err);
+	
+	logger.info('Enabling caching mode and attempting to reconnect at intervals');
+	server.enableCacheMode();
+	
+	var reconnectionAttempts = 0;
+	var reconnectionFunction = function() {
+		// Try and reconnect
+		pg.connect(config.pg.conString, function(err, client, done){
+			if (err) {
+				reconnectionAttempts++;
+				if (reconnectionAttempts >= config.pg.reconnectionAttempts) {
+					// We have tried the maximum number of times, tweet admin and exit in failure state
+					logger.error( 'Postgres reconnection failed' );
+					logger.error( 'Maximum reconnection attempts reached, exiting' );
+					server.tweetAdmin( 'Postgres connection cannot be re-established', function() {
+						exitWithStatus(1);
+					});
+				} else {
+					// If we failed, try and reconnect again after a delay
+					logger.error( 'Postgres reconnection failed, queuing next attempt for ' + config.pg.reconnectionDelay + 'ms' );
+					setTimeout( reconnectionFunction, config.pg.reconnectionDelay );
+				}
+			} else {
+				// If we succeeded, disable harvester caching mode
+				logger.info( 'Postgres reconnection succeeded, re-enabling real time processing' );
+				server.disableCacheMode();
+			}
+		});			
+	};
+	
+	reconnectionFunction();
+});
+
 // Catch unhandled exceptions, log, and exit with error status
 process.on('uncaughtException', function (err) {
 	logger.error('uncaughtException: ' + err.message + ", " + err.stack);

@@ -15,6 +15,15 @@ var server = new CognicityReportsPowertrack(
 	{}
 );
 
+// Mocked logger we can use to let code run without error when trying to call logger messages
+server.logger = {
+	error:function(){},
+	warn:function(){},
+	info:function(){},
+	verbose:function(){},
+	debug:function(){}
+};
+
 // Test harness for CognicityReportsPowertrack object
 describe( 'CognicityReportsPowertrack', function() {
 	
@@ -30,10 +39,6 @@ describe( 'CognicityReportsPowertrack', function() {
 					},
 					'defaultLanguage' : 'human'
 				}
-			};
-			// Mock logging calls to do nothing
-			server.logger = {
-				warn:function(){}
 			};
 		});
 		
@@ -63,11 +68,6 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 		it( 'Should return null if code cannot be resolved', function() {
 			test.value( server.getMessage( 'farewell', createTweetActivity('human') ) ).is( null );
-		});
-		
-		// Restore/erase mocked functions
-		after( function() {
-			server.logger = {};
 		});
 	});
 	
@@ -104,6 +104,7 @@ describe( 'CognicityReportsPowertrack', function() {
 
 		// Retain references to functions on the server which we're going to mock out for
 		// testing and then re-connect after the test suite
+		var oldLogger;
 		var oldInsertConfirmed;
 		var oldInsertNonSpatial;
 		var oldinsertUnConfirmed;
@@ -117,6 +118,7 @@ describe( 'CognicityReportsPowertrack', function() {
 
 		before( function() {
 			// Mock logging functions to store the log message so we can inspect it
+			oldLogger = server.logger;
 			server.logger = {
 				error:function(msg){ lastLog = msg; },
 				warn:function(msg){ lastLog = msg; },
@@ -223,15 +225,14 @@ describe( 'CognicityReportsPowertrack', function() {
 		
 		// Restore/erase mocked functions
 		after( function() {
+			server.logger = oldLogger;
 			server.insertConfirmed = oldInsertConfirmed;
 			server.insertNonSpatial = oldInsertNonSpatial;
 			server.insertUnConfirmed = oldinsertUnConfirmed;
 			server.insertInvitee = oldinsertInvitee;
 			server.sendReplyTweet = oldSendReplyTweet;
 			server.getMessage = oldGetMessage;
-			server.ifNewUser = oldIfNewUser;
-			
-			server.logger = {};
+			server.ifNewUser = oldIfNewUser;			
 		});
 	});
 	
@@ -243,11 +244,6 @@ describe( 'CognicityReportsPowertrack', function() {
 				'pg' : {
 					'conString' : ''
 				}
-			};
-			// Mock log methods
-			server.logger = {
-				debug:function(){},
-				error:function(){}
 			};
 		});
 		
@@ -296,7 +292,6 @@ describe( 'CognicityReportsPowertrack', function() {
 		
 		// Restore/erase mocked functions
 		after( function(){
-			server.logger = {};
 			server.config = {};
 			server.pg = {};
 		});
@@ -314,13 +309,6 @@ describe( 'CognicityReportsPowertrack', function() {
 		var oldSetTimeout; // Capture global setTimeout so we can mock it 
 		
 		before( function() {
-			// Mock logging functions with no-ops
-			server.logger = {
-				error:function(){},
-				warn:function(){},
-				info:function(){},
-				debug:function(){}
-			};
 			server.Gnip = {
 				Stream: function() { 
 					return {
@@ -364,8 +352,7 @@ describe( 'CognicityReportsPowertrack', function() {
 				lastDelay = delay;
 				callback();
 			};
-			/* jshint +W020 */
-			
+			/* jshint +W020 */			
 		});
 		
 		beforeEach( function() {
@@ -382,7 +369,6 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection time increases exponentially', function() {
 			server.config.gnip.maxReconnectTimeout = 10000;
 			reconnectTimes = 3;
-			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro";
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to conenct 3 times
 			test.value( lastDelay ).is( 4 * 1000 ); // So 4 second reconnect; delays of 1, 2, 4
@@ -391,7 +377,6 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection time is capped at maximum setting', function() {
 			server.config.gnip.maxReconnectTimeout = 3000;
 			reconnectTimes = 4;
-			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro";
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 4 ); // Expect stream tried to connect 4 times
 			test.value( lastDelay ).is( 3 * 1000 ); // Expect 3 second reconnect, delays of 1, 2, 3, 3
@@ -400,7 +385,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection notification tweet is only sent once', function() {
 			server.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 3;
-			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro";
+			server.config.adminTwitterUsernames = "astro";
 			server.connectStream(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
 			test.value( notifiedTimes ).is( 1 ); // Expect that we only notified the user once
@@ -409,31 +394,167 @@ describe( 'CognicityReportsPowertrack', function() {
 		it( 'Reconnection notification tweet is sent again if reconnected between disconnections', function() {
 			server.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 2;
-			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro";
+			server.config.adminTwitterUsernames = "astro";
 			server.connectStream(); // Will get connection errors only
 			streamReadyHandler(); // We reconnected to the stream
 			streamErrorHandler(); // And we were disconnected again
 			test.value( notifiedTimes ).is( 2 ); // Expect that we notified the user twice
 		});
-		
-		it( 'Reconnection notification tweet is sent to multiple users', function() {
-			server.config.gnip.maxReconnectTimeout = 1000;
-			reconnectTimes = 3;
-			server.config.gnip.sendTweetOnMaxTimeoutTo = "astro, elroy";
-			server.connectStream(); // Will get connection errors only
-			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
-			test.value( notifiedTimes ).is( 2 ); // Expect that we only notified the user once
-		});
 
 		after( function() {
-			server.logger = {};
 			/* jshint -W020 */ // We want to mock out a global function here
 			setTimeout = oldSetTimeout;
 			/* jshint +W020 */
 			server.Gnip = {};
 			server.twit = {};
+			server.config = {};
 		});
 
+	});
+	
+	describe( "tweetAdmin", function() {
+		var message = 'test';
+		
+		var notifiedTimes; // Number of times twitter notification was sent
+
+		before( function() {			
+			// Capture the number of times we send a message via twitter
+			server.twit = {
+				updateStatus: function() { notifiedTimes++; }	
+			};
+		});
+		
+		beforeEach( function() {
+			// Reset capture variables
+			notifiedTimes = 0;
+		});
+		
+		it( 'No usernames does not send tweets', function() {
+			server.config.adminTwitterUsernames = undefined;
+			server.tweetAdmin( message );
+			server.config.adminTwitterUsernames = null;
+			server.tweetAdmin( message );
+			server.config.adminTwitterUsernames = '';
+			server.tweetAdmin( message );
+			test.value( notifiedTimes ).is ( 0 );
+		});
+		
+		it( 'Notification tweet is sent to a single user', function() {
+			server.config.adminTwitterUsernames = "mario";
+			server.tweetAdmin( message );
+			test.value( notifiedTimes ).is ( 1 );
+		});
+		
+		it( 'Notification tweet is sent to multiple users', function() {
+			server.config.adminTwitterUsernames = "mario, peach";
+			server.tweetAdmin( message );
+			test.value( notifiedTimes ).is ( 2 );
+		});
+		
+		// Restore/erase mocked functions
+		after( function(){
+			server.config = {};
+			server.twit = {};
+		});
+		
+	});
+	
+	describe( "cacheMode", function() {
+		var streamTweetHandler; // Capture the tweet handler so we can call it explicitly during test
+		var oldFilter; // Capture server filter method
+		var tweetActivity = {actor:'ripley'};
+		
+		var filterCalledTimes;
+		
+		before( function() {	
+			server.config.gnip = {};
+			server.Gnip = {
+				Stream: function() { 
+					return {
+						start: function(){},
+						// Capture the error handler so we can call it immediately
+						on: function( event, callback ) {
+							if (event==='tweet') streamTweetHandler = callback;
+						}
+					};
+				},
+				// Mock the rules object and just call the callback immediately
+				Rules: function() { 
+					return {
+						live: {
+							update: function(rules, success){ success(); }
+						}
+					};
+				}
+			};
+			oldFilter = server.filter;
+			server.filter = function(){ filterCalledTimes++; };
+		});
+		
+		beforeEach( function() {
+			filterCalledTimes = 0;
+			server._cachedTweets = [];
+			server._cacheMode = false;
+		});
+		
+		it( 'Realtime processing is enabled by default', function() {
+			server.connectStream(); // Start processing stream
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			test.value( filterCalledTimes ).is( 1 );
+			test.value( server._cachedTweets.length ).is( 0 );
+		});
+
+		it( 'Enabling caching mode stops realtime filtering and retains tweets', function() {
+			server.connectStream(); // Start processing stream
+			server.enableCacheMode(); // Start cache mode
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			test.value( filterCalledTimes ).is( 0 );
+			test.value( server._cachedTweets.length ).is( 1 );
+		});
+		
+		it( 'Disabling caching mode reenables realtime filtering', function() {
+			server.connectStream(); // Start processing stream
+			server.enableCacheMode(); // Start cache mode
+			server.disableCacheMode(); // Stop cache mode
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			test.value( filterCalledTimes ).is( 1 );
+			test.value( server._cachedTweets.length ).is( 0 );
+		});
+
+		it( 'Cached tweets are processed when caching mode is disabled', function() {
+			server.connectStream(); // Start processing stream
+			server.enableCacheMode(); // Start cache mode
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			test.value( filterCalledTimes ).is( 0 );
+			test.value( server._cachedTweets.length ).is( 1 );
+			server.disableCacheMode(); // Stop cache mode
+			test.value( filterCalledTimes ).is( 1 );
+			test.value( server._cachedTweets.length ).is( 0 );
+		});
+
+		it( 'Multiple tweet handling', function() {
+			server.connectStream(); // Start processing stream
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			test.value( filterCalledTimes ).is( 2 );
+			test.value( server._cachedTweets.length ).is( 0 );
+			server.enableCacheMode(); // Start cache mode
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			streamTweetHandler(tweetActivity); // Simulate incoming tweet
+			test.value( filterCalledTimes ).is( 2 );
+			test.value( server._cachedTweets.length ).is( 3 );
+			server.disableCacheMode(); // Stop cache mode
+			test.value( filterCalledTimes ).is( 5 );
+			test.value( server._cachedTweets.length ).is( 0 );
+		});
+
+		// Restore/erase mocked functions
+		after( function(){
+			server.filter = oldFilter;
+			server.config = {};
+		});
+		
 	});
 	
 });

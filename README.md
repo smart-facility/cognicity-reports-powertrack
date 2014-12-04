@@ -62,10 +62,15 @@ App configuration parameters are stored in a configuration file which is parsed 
 * rulesUrl - URL to fetch JSON rules from Gnip PowerTrack
 * rules - List of objects to configure Gnip PowerTrack rules. Objects contain a series of key-value properties, where the key is the Gnip PowerTrack tag for the rule, and the value is the rule as a string.
 * maxReconnectTimeout - Time in seconds that is the longest delay between reconnection attempts for the stream
-* sendTweetOnMaxTimeoutTo - If the maximum reconnection time is reached, try and send a notification tweet to these users (without @, comma separated if there are multiple users)
 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
+
+#### Twitter warning configuration
+* adminTwitterUsernames - Enter twitter usernames here (without @, comma separated for multiples) to send a notification tweet on error conditions
+Notification conditions are: 
+* Gnip stream is disconnected and reaches `maxReconnectTimeout` time trying to reconnect
+* Connection to postgres is lost and cannot be reconnected in `pg.reconnectionAttempts` number of attempts
 
 #### Twitter send parameters
 * send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
@@ -90,6 +95,8 @@ Messages can be at most 109 characters long if addTimestamp is enabled, or 123 c
 #### Postgres connection
 * connection string - PostgreSQL connection details (see node-postgres module documenation)[https://github.com/brianc/node-postgres]
 * postgres tables as defined in database schema
+* reconnectionDelay - Delay between reconnection attempts if postgres connection lost
+* reconnectionAttempts - Number of times to attempt to reconnect before dying
 
 ### PostgreSQL/PostGIS schema (SQL folder)
 * createdb.sql creates an empty database for cognicity
