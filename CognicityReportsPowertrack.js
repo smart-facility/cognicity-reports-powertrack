@@ -574,7 +574,7 @@ CognicityReportsPowertrack.prototype = {
 	},
 	
 	/**
-	 * Result realtime processing of tweets.
+	 * Resume realtime processing of tweets.
 	 * Also immediately process any tweets cached while caching mode was enabled.
 	 */
 	disableCacheMode: function() {

@@ -30,10 +30,6 @@
 
 // app.js - cognicity-reports-powertrack application setup
 
-/* jshint node:true */
-/* jshint unused:vars */ // We want to keep function parameters on callbacks like the originals
-/* jshint curly:false */ // Don't require curly brackets around one-line statements
-
 /**
  * @file Collect unconfirmed reports from Twitter &amp; send report verification tweets
  * @copyright (c) Tomas Holderness &amp; SMART Infrastructure Facility January 2014
@@ -44,6 +40,9 @@
  *     node daemon.js cognicity-reports-config.js status
  *     node daemon.js cognicity-reports-config.js stop
  */
+
+// Node dependencies
+var path = require('path');
 
 // Modules
 /** ntwitter twitter interface module */
@@ -62,17 +61,21 @@ var Gnip = require('gnip');
 var cognicityReportsPowertrack = require('./CognicityReportsPowertrack.js');
 
 // Verify expected arguments
-if (process.argv[2]){
-	var config = require(__dirname+'/'+process.argv[2]); 
+if (process.argv[2]) {
+	var config = require( __dirname + path.sep + process.argv[2] ); 
 } else {
 	throw new Error('No config file. Usage: node app.js config.js');
 }
 
 // Logging configuration
+var logPath = ( config.logger.logDirectory ? config.logger.logDirectory : __dirname );
+logPath += path.sep;
+logPath += config.instance + ".log";
+
 logger
 	// Configure custom File transport to write plain text messages
 	.add(logger.transports.File, { 
-		filename: __dirname+"/"+config.instance+".log", // Write to projectname.log
+		filename: logPath, // Write to projectname.log
 		json: false, // Write in plain text, not JSON
 		maxsize: config.logger.maxFileSize, // Max size of each file
 		maxFiles: config.logger.maxFiles, // Max number of files
@@ -81,14 +84,25 @@ logger
 	// Console transport is no use to us when running as a daemon
 	.remove(logger.transports.Console);
 
+// FIXME This is a workaround for https://github.com/flatiron/winston/issues/228
+// If we exit immediately winston does not get a chance to write the last log message.
+// So we wait a short time before exiting.
+function exitWithStatus(exitStatus) {
+	logger.info( "Exiting with status " + exitStatus );
+	setTimeout( function() {
+		process.exit(exitStatus);
+	}, 500 );
+}
+
 logger.info("Application starting...");
 
 // Verify DB connection is up
 pg.connect(config.pg.conString, function(err, client, done){
 	if (err){
 		logger.error("DB Connection error: " + err);
+		logger.error("Fatal error: Application shutting down");
 		done();
-		process.exit(1);
+		exitWithStatus(1);
 	}
 });
 
@@ -105,7 +119,8 @@ var twit = new twitter({
 twit.verifyCredentials(function (err, data) {
 	if (err) {
 		logger.error("twit.verifyCredentials: Error verifying credentials: " + err);
-		process.exit(1);
+		logger.error("Fatal error: Application shutting down");
+		exitWithStatus(1);
 	} else {
 		logger.info("twit.verifyCredentials: Twitter credentials succesfully verified");
 	}
@@ -122,20 +137,57 @@ var server = new cognicityReportsPowertrack(
 	Gnip
 );
 
+// Handle postgres idle connection error
+pg.on('error', function(err) {
+	logger.error('Postgres connection error: ' + err);
+	
+	logger.info('Enabling caching mode and attempting to reconnect at intervals');
+	server.enableCacheMode();
+	
+	var reconnectionAttempts = 0;
+	var reconnectionFunction = function() {
+		// Try and reconnect
+		pg.connect(config.pg.conString, function(err, client, done){
+			if (err) {
+				reconnectionAttempts++;
+				if (reconnectionAttempts >= config.pg.reconnectionAttempts) {
+					// We have tried the maximum number of times, tweet admin and exit in failure state
+					logger.error( 'Postgres reconnection failed' );
+					logger.error( 'Maximum reconnection attempts reached, exiting' );
+					server.tweetAdmin( 'Postgres connection cannot be re-established', function() {
+						exitWithStatus(1);
+					});
+				} else {
+					// If we failed, try and reconnect again after a delay
+					logger.error( 'Postgres reconnection failed, queuing next attempt for ' + config.pg.reconnectionDelay + 'ms' );
+					setTimeout( reconnectionFunction, config.pg.reconnectionDelay );
+				}
+			} else {
+				// If we succeeded, disable harvester caching mode
+				logger.info( 'Postgres reconnection succeeded, re-enabling real time processing' );
+				server.disableCacheMode();
+			}
+		});			
+	};
+	
+	reconnectionFunction();
+});
+
 // Catch unhandled exceptions, log, and exit with error status
 process.on('uncaughtException', function (err) {
 	logger.error('uncaughtException: ' + err.message + ", " + err.stack);
-	process.exit(1);
+	logger.error("Fatal error: Application shutting down");
+	exitWithStatus(1);
 });
 
 // Catch kill and interrupt signals and log a clean exit status
 process.on('SIGTERM', function() {
 	logger.info('SIGTERM: Application shutting down');
-	process.exit(0);
+	exitWithStatus(0);
 });
 process.on('SIGINT', function() {
 	logger.info('SIGINT: Application shutting down');
-	process.exit(0);
+	exitWithStatus(0);
 });
 
 // Start up the twitter feed - connect the Gnip stream
@@ -156,7 +208,7 @@ if ( config.gnip.stream ) server.connectStream();
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Mon Nov 10 2014 10:08:17 GMT+1100 (EST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha10</a> on Thu Dec 04 2014 12:30:24 GMT+1100 (EST)
 </footer>
 
 <script> prettyPrint(); </script>
