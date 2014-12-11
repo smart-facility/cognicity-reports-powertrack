@@ -640,6 +640,103 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 	});
 
+	describe( "areTweetMessageLengthsOk", function() {
+		function createString(length) {
+			var s = "";
+			for (var i = 0; i<length; i++) {
+				s += "a";
+			}
+			return s;
+		}
+		
+		before( function() {
+		});
+		
+		beforeEach( function() {
+			server.config = {
+				twitter: {}	
+			};
+		});
+		
+		it( 'Non-object properties are not tested', function() {
+			server.config.twitter = {
+				singleProperty : createString(200)
+			};
+			
+			test.value( server.areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Single short message is ok', function() {
+			server.config.twitter = {
+				messageObject : {
+					'en' : createString(1)
+				}
+			};
+			test.value( server.areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Single long message is not ok', function() {
+			server.config.twitter = {
+				messageObject : {
+					'en' : createString(124)
+				}
+			};
+			test.value( server.areTweetMessageLengthsOk() ).is( false );
+		});
+
+		it( 'Message over timestamp boundary is ok when timestamp is off', function() {
+			server.config.twitter = {
+				messageObject : {
+					'en' : createString(120)
+				},
+				addTimestamp : false
+			};
+			test.value( server.areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Message over timestamp boundary is not ok when timestamp is on', function() {
+			server.config.twitter = {
+				messageObject : {
+					'en' : createString(120)
+				},
+				addTimestamp : true
+			};
+			test.value( server.areTweetMessageLengthsOk() ).is( false );
+		});
+
+		it( 'Multiple short messages are ok', function() {
+			server.config.twitter = {
+				messageObject1 : {
+					'en' : createString(100),
+					'fr' : createString(100)
+				},
+				messageObject2 : {
+					'en' : createString(100),
+					'fr' : createString(100)
+				}
+			};
+			test.value( server.areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Long message and multiple short messages are not ok', function() {
+			server.config.twitter = {
+				messageObject1 : {
+					'en' : createString(100),
+					'fr' : createString(100)
+				},
+				messageObject2 : {
+					'en' : createString(100),
+					'fr' : createString(200)
+				}
+			};
+			test.value( server.areTweetMessageLengthsOk() ).is( false );
+		});
+
+		after( function(){
+			server.config = {};
+		});
+	});
+	
 // Test template
 //	describe( "suite", function() {
 //		before( function() {	

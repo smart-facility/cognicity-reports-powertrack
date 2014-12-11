@@ -162,5 +162,11 @@ process.on('SIGINT', function() {
 	exitWithStatus(0);
 });
 
+// Verify that messages to tweet are acceptable length
+if ( !server.areTweetMessageLengthsOk() ) {
+	logger.error( "Tweet message lengths not ok, shutting down" );
+	exitWithStatus(1);
+}
+
 // Start up the twitter feed - connect the Gnip stream
 if ( config.gnip.stream ) server.connectStream();

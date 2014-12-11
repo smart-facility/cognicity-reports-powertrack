@@ -620,6 +620,38 @@ CognicityReportsPowertrack.prototype = {
 				});
 			});
 		}
+	},
+	
+	/**
+	 * Check that all tweetable message texts are of an acceptable length.
+	 * This is 109 characters max if timestamps are enabled, or 123 characters max if timestamps are not enabled.
+	 * Ref: https://dev.twitter.com/overview/api/counting-characters (max tweet = 140 chars)
+	 * Ref: https://support.twitter.com/articles/14609-changing-your-username (max username = 15 chars)
+	 * @return True if message texts are all okay, false if any are not.
+	 */
+	areTweetMessageLengthsOk: function() {
+		var self = this;
+		var lengthsOk = true;
+		
+		Object.keys( self.config.twitter ).forEach( function(configItemKey) {
+			// We only want to process the objects containing language/message pairs here,
+			// not the single properties.
+			var configItem = self.config.twitter[configItemKey];
+			if (typeof configItem === "object") {
+				var maxLength = 140;
+				maxLength -= 17; // Username, @ sign and space = 123
+				if ( self.config.twitter.addTimestamp ) maxLength -= 14; // 13 digit timestamp + space = 109 (13 digit timestamp is ok until the year 2286)
+				Object.keys( configItem ).forEach( function(messageKey) {
+					var message = configItem[messageKey];
+					if ( message.length > maxLength ) {
+						self.logger.error( "Message '" + message + "' is too long (" + message.length + " chars)" );
+						lengthsOk = false;
+					}
+				});
+			}
+		});
+		
+		return lengthsOk;
 	}
 };
 
