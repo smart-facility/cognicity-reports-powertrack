@@ -638,13 +638,13 @@ CognicityReportsPowertrack.prototype = {
 			// not the single properties.
 			var configItem = self.config.twitter[configItemKey];
 			if (typeof configItem === "object") {
-				var maxLength = 140;
-				maxLength -= 17; // Username, @ sign and space = 123
-				if ( self.config.twitter.addTimestamp ) maxLength -= 14; // 13 digit timestamp + space = 109 (13 digit timestamp is ok until the year 2286)
+				var maxLength = 140; // Maximum tweet length
+				maxLength -= 17; // Minus username, @ sign and space = 123
+				if ( self.config.twitter.addTimestamp ) maxLength -= 14; // Minus 13 digit timestamp + space = 109 (13 digit timestamp is ok until the year 2286)
 				Object.keys( configItem ).forEach( function(messageKey) {
 					var message = configItem[messageKey];
 					if ( message.length > maxLength ) {
-						self.logger.error( "Message '" + message + "' is too long (" + message.length + " chars)" );
+						self.logger.error( "Message " + configItemKey + "." + messageKey + " '" + message + "' is too long (" + message.length + " chars)" );
 						lengthsOk = false;
 					}
 				});
