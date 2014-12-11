@@ -126,7 +126,7 @@ pg.on('error', function(err) {
 					// We have tried the maximum number of times, tweet admin and exit in failure state
 					logger.error( 'Postgres reconnection failed' );
 					logger.error( 'Maximum reconnection attempts reached, exiting' );
-					server.tweetAdmin( 'Postgres connection cannot be re-established', function() {
+					server.tweetAdmin( 'Postgres connection cannot be re-established, shutting down', function() {
 						exitWithStatus(1);
 					});
 				} else {
@@ -149,7 +149,9 @@ pg.on('error', function(err) {
 process.on('uncaughtException', function (err) {
 	logger.error('uncaughtException: ' + err.message + ", " + err.stack);
 	logger.error("Fatal error: Application shutting down");
-	exitWithStatus(1);
+	server.tweetAdmin( 'Uncaught exception, shutting down', function() {
+		exitWithStatus(1);
+	});
 });
 
 // Catch kill and interrupt signals and log a clean exit status
