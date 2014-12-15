@@ -30,7 +30,7 @@ var Gnip = require('gnip');
  * CognicityReportsPowertrack interface module
  * @type {CognicityReportsPowertrack}
  */
-var cognicityReportsPowertrack = require('./CognicityReportsPowertrack.js');
+var cognicityReportsPowertrack = require('./CognicityReportsPowertrack.js'); // Variable needs to be lowercase or jsdoc output is not correctly linked
 
 // Verify expected arguments
 if (process.argv[2]) {
