@@ -14,17 +14,17 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 * [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or compatible
 
 #### Node Modules
-* Node-Daemonize 2 version 0.4.2 or compatible
-* Node-Postgres version 2.0.0 or compatible
-* ntwitter version 0.5.0 or compatible
-* gnip version 0.2.1 or compatible
-* winston version 0.8.1 or compatible
+* [Node-Daemonize 2](https://github.com/niegowski/node-daemonize2/) version 0.4.2 or compatible
+* [Node-Postgres](https://github.com/brianc/node-postgres) version 2.0.0 or compatible
+* [ntwitter](https://github.com/AvianFlu/ntwitter) version 0.5.0 or compatible
+* [gnip](https://github.com/demian85/gnip) version 0.2.1 or compatible
+* [winston](https://github.com/flatiron/winston) version 0.8.1 or compatible
 
 #### Dev Modules
-* jshint version 2.5.8 or compatible
-* unit.js version 1.0.2 or compatible
-* mocha version 2.0.1 or compatible
-* jsdoc version 3.3.0 or compatible
+* [jshint](https://github.com/jshint/node-jshint) version 2.5.8 or compatible
+* [unit.js](http://unitjs.com/) version 1.0.2 or compatible
+* [mocha](http://mochajs.org/) version 2.0.1 or compatible
+* [jsdoc](https://github.com/jsdoc3/jsdoc) version 3.3.0 or compatible
 
 If you're going to commit changes to the JavaScript, be sure to run 'npm test' first - and fix any issues that it complains about, otherwise the build will fail when you push the commit.
 
