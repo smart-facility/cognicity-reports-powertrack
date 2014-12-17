@@ -17,13 +17,25 @@
 var path = require('path');
 
 // Modules
-/** ntwitter twitter interface module */
+/** 
+ * ntwitter twitter interface module 
+ * @type {Object} 
+ */
 var twitter = require('ntwitter');
-/** Postgres interface module */
+/** 
+ * Postgres interface module
+ * @type {Object} 
+ */
 var pg = require('pg');
-/** Winston logger module */
+/** 
+ * Winston logger module
+ * @type {Object} 
+ */
 var logger = require('winston');
-/** Gnip PowerTrack interface module */
+/** 
+ * Gnip PowerTrack interface module
+ * @type {Object}
+ */
 var Gnip = require('gnip');
 
 /** 
@@ -79,7 +91,10 @@ pg.connect(config.pg.conString, function(err, client, done){
 });
 
 // Configure new instance of the ntwitter interface
-/** ntwitter interface instance */
+/** 
+ * ntwitter interface instance
+ * @type {Object} 
+ */
 var twit = new twitter({
 	consumer_key: config.twitter.consumer_key,
 	consumer_secret: config.twitter.consumer_secret,
