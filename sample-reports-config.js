@@ -1,49 +1,39 @@
 'use strict';
 
-//sample-config.js - sample configuration file for cognicity-reports module
+// sample-config.js - sample configuration file for cognicity-reports module
 
 var config = {};
 
 // Instance name - default name for this configuration (will be server process name)
 config.instance = 'cognicity-reports-powertrack';
 
-//Logging configuration
+// Notification settings
+config.adminTwitterUsernames = null; // Enter twitter usernames here (without @, comma separated for multiples) to send a notification tweet on error conditions
+
+// Logging configuration
 config.logger = {};
 config.logger.level = "info"; // What level to log at; info, verbose or debug are most useful. Levels are (npm defaults): silly, debug, verbose, info, warn, error.
 config.logger.maxFileSize = 1024 * 1024 * 100; // Max file size in bytes of each log file; default 100MB
 config.logger.maxFiles = 10; // Max number of log files kept
 config.logger.logDirectory = null; // Set this to a full path to a directory - if not set logs will be written to the application directory.
 
-//Twitter app authentication details
+// Twitter app authentication details
 config.twitter = {};
-config.twitter.consumer_key = '';
-config.twitter.consumer_secret = '';
-config.twitter.access_token_key = '';
-config.twitter.access_token_secret = '';
+config.twitter.senderUsername = ''; // Username (without @) of account sending the tweets
+config.twitter.consumer_key = ''; // Take from the twitter dev admin interface
+config.twitter.consumer_secret = ''; // Take from the twitter dev admin interface
+config.twitter.access_token_key = ''; // Take from the twitter dev admin interface
+config.twitter.access_token_secret = ''; // Take from the twitter dev admin interface
 
-//Gnip Powertrack API
-config.gnip = {};
-config.gnip.stream = true; //connect to stream and log reports?
-config.gnip.streamTimeout = 1000 * 60; // In milliseconds. Must be >30s as a keep-alive is sent at least every 30s
-config.gnip.username = 'username';
-config.gnip.password = 'password';
-config.gnip.steamUrl = 'https://stream.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod.json?client=1'; // Append ?client=1 to use backfill
-config.gnip.rulesUrl = 'https://api.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod/rules.json';
-config.gnip.rules = {
-    "boundingbox":"( contains:flood OR contains:banjir ) ( bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR bounding_box:[106.8 -6.4354 107.0782 -6.2] OR bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )",
-    "addressed":"( contains:flood OR contains:banjir ) @petajkt",
-    "location":"( contains:flood OR contains:banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta OR profile_bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR profile_bounding_box:[106.8 -6.4354 107.0782 -6.2] OR profile_bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR profile_bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )"
-};
-config.gnip.maxReconnectTimeout = 1000 * 60 * 5; // In milliseconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
-config.gnip.sendTweetOnMaxTimeoutTo = null; // Enter a twitter usernames here (without @, comma separated for multiples) to send a notification tweet if the max reconnection timeout is reached
-
-//Twitter parameters
-config.twitter.send_enabled = false; //send verfication requests?
+// Twitter parameters
 
 // Twitter message texts
 // Note we use IN and ID because twitter and Gnip return different language codes for Indonesian
 // The messages should be no longer than 109 characters if timestamps are enabled, or 123 characters if timestamps are disabled
-config.twitter.defaultLanguage = 'en';
+config.twitter.defaultLanguage = 'en'; // The default language code to use if we can't resolve one from the tweet
+// Message codes. The name of the object (config.twitter.foo) is the name of the message type, that object should contain key value pairs
+// where the key is the language code to resolve and the value is the message as a string.
+// Note we have both ID and IN for indonesian 
 config.twitter.invite_text = {
 	'in' : 'Invite/Verification Tweet Text [IN]',
 	'id' : 'Invite/Verification Tweet Text [ID]',
@@ -59,12 +49,29 @@ config.twitter.thanks_text = {
 	'id' : 'Thank-you Tweet Text [ID]',
 	'en' : 'Thank-you Tweet Text [EN]'
 };
-//Append a timestamp to each sent tweet
+// Append a timestamp to each sent tweet
 config.twitter.addTimestamp = true;
 
-//Postgres database connection
+//Gnip Powertrack API
+config.gnip = {};
+config.gnip.stream = true; // Connect to stream and log reports?
+config.gnip.streamTimeout = 1000 * 60; // In milliseconds. Must be >30s as a keep-alive is sent at least every 30s
+config.gnip.username = 'username'; // Gnip username
+config.gnip.password = 'password'; // Gnip password
+config.gnip.streamUrl = 'https://stream.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod.json?client=1'; // Gnip stream URL, take from the Gnip admin interface. Append ?client=1 to use backfill
+config.gnip.rulesUrl = 'https://api.gnip.com:443/accounts/ACCOUNT_NAME/publishers/twitter/streams/track/prod/rules.json'; // Gnip rules URL, take from the Gnip admin interface.
+// Gnip rules, enter as an object where the key is the rule name and the value is the rule as a string
+config.gnip.rules = {
+    "boundingbox":"( contains:flood OR contains:banjir ) ( bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR bounding_box:[106.8 -6.4354 107.0782 -6.2] OR bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )",
+    "addressed":"( contains:flood OR contains:banjir ) @petajkt",
+    "location":"( contains:flood OR contains:banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta OR profile_bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR profile_bounding_box:[106.8 -6.4354 107.0782 -6.2] OR profile_bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR profile_bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )"
+};
+config.gnip.maxReconnectTimeout = 1000 * 60 * 5; // In milliseconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
+
+// Postgres database connection
 config.pg = {};
 config.pg.conString = "postgres://postgres:password@localhost:5432/cognicity";
+// Database tables
 config.pg.table_tweets = 'tweet_reports';
 config.pg.table_users = 'tweet_users';
 config.pg.table_invitees = 'tweet_invitees';
@@ -72,5 +79,8 @@ config.pg.table_unconfirmed = 'tweet_reports_unconfirmed';
 config.pg.table_nonspatial_users = 'nonspatial_tweet_users';
 config.pg.table_nonspatial_tweet_reports = 'nonspatial_tweet_reports';
 config.pg.table_all_users = 'all_users';
+// Database reconnection settings
+config.pg.reconnectionDelay = 1000 * 60 * 3; // Delay before attempting a reconnection in ms
+config.pg.reconnectionAttempts = 5; // Number of times to attempt reconnection before notifying admin and exiting
 
 module.exports = config;

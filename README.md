@@ -10,22 +10,23 @@ CogniCity
 Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity framework, responsible for collecting relevant tweets via Gnip PowerTrack, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
 
 ### Dependencies
-* [NodeJS](http://nodejs.org) version 0.10.12 or later
-* [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or later.
+* [NodeJS](http://nodejs.org) version 0.10.16 or compatible
+* [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or compatible
 
 #### Node Modules
-* Node-Daemonize 2 version 0.4.2 or compatible
-* Node-Postgres version 2.0.0 or compatible
-* ntwitter version 0.5.0 or compatible
-* gnip version 0.2.1 or compatible
-* winston version 0.8.1 or compatible
+* [Node-Daemonize 2](https://github.com/niegowski/node-daemonize2/) version 0.4.2 or compatible
+* [Node-Postgres](https://github.com/brianc/node-postgres) version 2.0.0 or compatible
+* [ntwitter](https://github.com/AvianFlu/ntwitter) version 0.5.0 or compatible
+* [gnip](https://github.com/demian85/gnip) version 0.2.1 or compatible
+* [winston](https://github.com/flatiron/winston) version 0.8.1 or compatible
 
 #### Dev Modules
-* jshint version 2.5.8 or compatible
-* unit.js version 1.0.2 or compatible
-* mocha version 2.0.1 or compatible
+* [jshint](https://github.com/jshint/node-jshint) version 2.5.8 or compatible
+* [unit.js](http://unitjs.com/) version 1.0.2 or compatible
+* [mocha](http://mochajs.org/) version 2.0.1 or compatible
+* [jsdoc](https://github.com/jsdoc3/jsdoc) version 3.3.0 or compatible
 
-If you're going to commit changes to the JavaScript, be sure to run a 'npm test' first - and fix any issues that it complains about, otherwise the build will fail when you push the commit.
+If you're going to commit changes to the JavaScript, be sure to run 'npm test' first - and fix any issues that it complains about, otherwise the build will fail when you push the commit.
 
 ### Installation
 Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](http://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
@@ -58,14 +59,20 @@ App configuration parameters are stored in a configuration file which is parsed 
 * streamTimeout - Gnip stream timeout, should be >30s (in milliseconds)
 * username - Gnip username
 * password - Gnip password
-* steamUrl - URL to fetch JSON stream from Gnip PowerTrack
+* streamUrl - URL to fetch JSON stream from Gnip PowerTrack
 * rulesUrl - URL to fetch JSON rules from Gnip PowerTrack
 * rules - List of objects to configure Gnip PowerTrack rules. Objects contain a series of key-value properties, where the key is the Gnip PowerTrack tag for the rule, and the value is the rule as a string.
 * maxReconnectTimeout - Time in seconds that is the longest delay between reconnection attempts for the stream
-* sendTweetOnMaxTimeoutTo - If the maximum reconnection time is reached, try and send a notification tweet to these users (without @, comma separated if there are multiple users)
 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
+* senderUsername - The username of the account the app authentication credentials are for (without the @ sign)
+
+#### Twitter warning configuration
+* adminTwitterUsernames - Enter twitter usernames here (without @, comma separated for multiples) to send a notification tweet on error conditions
+Notification conditions are: 
+* Gnip stream is disconnected and reaches `maxReconnectTimeout` time trying to reconnect
+* Connection to postgres is lost and cannot be reconnected in `pg.reconnectionAttempts` number of attempts
 
 #### Twitter send parameters
 * send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
@@ -90,10 +97,11 @@ Messages can be at most 109 characters long if addTimestamp is enabled, or 123 c
 #### Postgres connection
 * connection string - PostgreSQL connection details (see node-postgres module documenation)[https://github.com/brianc/node-postgres]
 * postgres tables as defined in database schema
+* reconnectionDelay - Delay between reconnection attempts if postgres connection lost
+* reconnectionAttempts - Number of times to attempt to reconnect before dying
 
-### PostgreSQL/PostGIS schema (SQL folder)
-* createdb.sql creates an empty database for cognicity
-* schame.sql adds PostGIS support and builds the relational schema for cognicity
+### PostgreSQL/PostGIS schema
+* see the [cognicity-schema](https://github.com/smart-facility/cognicity-schema) project for schema files
 
 ### Run
 The app is run as a background process using the Daemonize 2 library. The process name is set to the configuration instance `config.instance` defined in the configuration file.
@@ -111,7 +119,8 @@ project-name daemon stopped
 ```
 
 ### Logging
-Winston writes to project-name.log (and project-name#.log if configured for multiple files)
+* Winston writes to project-name.log (and project-name#.log if configured for multiple files)
+* The log directory can be configured, by default it is the project directory
 
 ### Development
 
@@ -138,7 +147,7 @@ npm run-script jshint
 Will execute the command:
 
 ```shell
-jshint *.js test/*.js
+jshint app.js CognicityReportsPowertrack.js daemon.js sample-reports-config.js test-config.js test/testApp.js test/testCognicityReportsPowertrack.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js
 ```
 
 ##### Mocha
@@ -175,8 +184,16 @@ npm run-script build-docs
 This runs JSHint using the configuration options in .jshintrc and the command:
 
 ```shell
-jsdoc -d docs *.js
+jsdoc -d docs app.js CognicityReportsPowertrack.js
 ```
+
+#### Release
+
+The release procedure is as follows:
+* Update the CHANGELOG.md file with the newly released version, date, and a high-level overview of changes. Commit the change. 
+* Create a tag in git from the current head of master. The tag version should be the same as the version specified in the package.json file - this is the release version.
+* Update the version in the package.json file and commit the change.
+* Further development is now on the updated version number until the release process begins again.
 
 ### License
 This software is released under the GPLv3 License. See License.txt for details.
