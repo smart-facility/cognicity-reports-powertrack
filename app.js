@@ -87,6 +87,8 @@ pg.connect(config.pg.conString, function(err, client, done){
 		logger.error("Fatal error: Application shutting down");
 		done();
 		exitWithStatus(1);
+	} else {
+		logger.info("DB connection successful");
 	}
 });
 
