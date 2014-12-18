@@ -439,8 +439,6 @@ CognicityReportsPowertrack.prototype = {
 		// Send a notification on an extended disconnection
 		var disconnectionNotificationSent = false;
 
-		// TODO Get replay data on reconnect?
-
 		// Attempt to reconnect the socket.
 		// If we fail, wait an increasing amount of time before we try again.
 		function reconnectSocket() {
