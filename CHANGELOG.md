@@ -12,3 +12,7 @@ CogniCity
 * Fix for always sending geo-tweets without recursion from whitelisted account
 * Improved error checking at start-up
 * Tweet admin account on un-handled exceptions
+
+### 1.0.2 - 05/01/2015
+* Blacklist of usernames not to reply tweet to available
+* Log DB connection success message at startup
