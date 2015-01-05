@@ -19,7 +19,7 @@ config.logger.logDirectory = null; // Set this to a full path to a directory - i
 
 // Twitter app authentication details
 config.twitter = {};
-config.twitter.senderUsername = ''; // Username (without @) of account sending the tweets
+config.twitter.usernameReplyBlacklist = ''; // Twitter usernames (without @, comma separated for multiples) which will never be sent to in response to tweet processing
 config.twitter.consumer_key = ''; // Take from the twitter dev admin interface
 config.twitter.consumer_secret = ''; // Take from the twitter dev admin interface
 config.twitter.access_token_key = ''; // Take from the twitter dev admin interface

@@ -66,7 +66,7 @@ App configuration parameters are stored in a configuration file which is parsed 
 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
-* senderUsername - The username of the account the app authentication credentials are for (without the @ sign)
+* usernameReplyBlacklist - Twitter usernames (without @, comma separated for multiples) which will never be sent to in response to tweet processing
 
 #### Twitter warning configuration
 * adminTwitterUsernames - Enter twitter usernames here (without @, comma separated for multiples) to send a notification tweet on error conditions

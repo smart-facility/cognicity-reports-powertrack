@@ -170,9 +170,16 @@ CognicityReportsPowertrack.prototype = {
 	sendReplyTweet: function(tweetActivity, message, success){
 		var self = this;
 		
-		if ( tweetActivity.actor.preferredUsername === self.config.twitter.senderUsername ) {
-			// Never send tweets to ourself
-			self.logger.info( 'sendReplyTweet: Tweet user is same as senderUsername, not sending' );
+		var usernameInBlacklist = false;
+		if (self.config.twitter.usernameReplyBlacklist) {
+			self.config.twitter.usernameReplyBlacklist.split(",").forEach( function(blacklistUsername){
+				if ( tweetActivity.actor.preferredUsername === blacklistUsername.trim() ) usernameInBlacklist = true;
+			});
+		}
+		
+		if ( usernameInBlacklist ) {
+			// Never send tweets to usernames in blacklist
+			self.logger.info( 'sendReplyTweet: Tweet user is in usernameReplyBlacklist, not sending' );
 		} else {
 			// Tweet is not to ourself, attempt to send
 			var originalTweetId = tweetActivity.id;

@@ -586,7 +586,7 @@ describe( 'CognicityReportsPowertrack', function() {
 			};
 			server.config = {
 				twitter: {
-					senderUsername : 'zaphod'
+					usernameReplyBlacklist : 'zaphod, ford,arthur'
 				}	
 			};
 		});
@@ -606,8 +606,14 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 
 		
-		it( "Tweet not sent to senderUsername", function() {
+		it( "Tweet not sent to usernames in usernameReplyBlacklist", function() {
 			server.sendReplyTweet( createTweetActivity('zaphod'), message, success );
+			test.value( successCallbackRan ).is( false );
+
+			server.sendReplyTweet( createTweetActivity('ford'), message, success );
+			test.value( successCallbackRan ).is( false );
+			
+			server.sendReplyTweet( createTweetActivity('arthur'), message, success );
 			test.value( successCallbackRan ).is( false );
 		});
 
