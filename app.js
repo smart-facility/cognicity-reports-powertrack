@@ -17,32 +17,16 @@
 var path = require('path');
 
 // Modules
-/** 
- * ntwitter twitter interface module 
- * @type {Object} 
- */
+// ntwitter twitter interface module 
 var twitter = require('ntwitter');
-/** 
- * Postgres interface module
- * @type {Object} 
- */
+// Postgres interface module
 var pg = require('pg');
-/** 
- * Winston logger module
- * @type {Object} 
- */
+// Winston logger module
 var logger = require('winston');
-/** 
- * Gnip PowerTrack interface module
- * @type {Object}
- */
+// Gnip PowerTrack interface module
 var Gnip = require('gnip');
-
-/** 
- * CognicityReportsPowertrack interface module
- * @type {CognicityReportsPowertrack}
- */
-var cognicityReportsPowertrack = require('./CognicityReportsPowertrack.js'); // Variable needs to be lowercase or jsdoc output is not correctly linked
+// CognicityReportsPowertrack interface module
+var CognicityReportsPowertrack = require('./CognicityReportsPowertrack.js');
 
 // Verify expected arguments
 if (process.argv[2]) {
@@ -93,10 +77,6 @@ pg.connect(config.pg.conString, function(err, client, done){
 });
 
 // Configure new instance of the ntwitter interface
-/** 
- * ntwitter interface instance
- * @type {Object} 
- */
 var twit = new twitter({
 	consumer_key: config.twitter.consumer_key,
 	consumer_secret: config.twitter.consumer_secret,
@@ -118,7 +98,7 @@ twit.verifyCredentials(function (err, data) {
 // Construct new instance of the cognicity module,
 // passing in the configuration and pre-configured instances
 // of other modules
-var server = new cognicityReportsPowertrack(
+var server = new CognicityReportsPowertrack(
 	config,
 	twit,
 	pg,
