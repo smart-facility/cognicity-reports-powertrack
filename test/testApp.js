@@ -39,3 +39,18 @@ describe( 'app.js', function() {
 	});
 
 });
+
+//Test template
+//describe( "suite", function() {
+//	before( function() {	
+//	});
+//	
+//	beforeEach( function() {
+//	});
+//	
+//	it( 'case', function() {
+//	});
+//
+//	after( function(){
+//	});
+//});
