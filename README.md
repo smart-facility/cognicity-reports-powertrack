@@ -25,6 +25,7 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 * [unit.js](http://unitjs.com/) version 1.0.2 or compatible
 * [mocha](http://mochajs.org/) version 2.0.1 or compatible
 * [jsdoc](https://github.com/jsdoc3/jsdoc) version 3.2.0 or compatible
+* [istanbul](https://github.com/gotwarlost/istanbul) version 0.3.5 or compatible
 
 If you're going to commit changes to the JavaScript, be sure to run 'npm test' first - and fix any issues that it complains about, otherwise the build will fail when you push the commit.
 
@@ -181,11 +182,17 @@ To build the JSDoc documentation into the folder 'docs', run the following npm s
 npm run-script build-docs
 ```
 
-This runs JSHint using the configuration options in .jshintrc and the command:
+This runs JSHint using the configuration options in .jshintrc and the command from package.json.
+
+#### Test Coverage
+
+To build test code coverage documentation, run the following npm script:
 
 ```shell
-jsdoc -d docs app.js CognicityReportsPowertrack.js
+npm run-script coverage
 ```
+
+This will run istanbul code coverage over the full mocha test harness and produce HTML documentation in the directory `coverage`.
 
 #### Release
 
