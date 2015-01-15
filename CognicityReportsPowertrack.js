@@ -9,7 +9,6 @@
  * - sends messages to users via twitter
  * - stores data from tweets in database
  * @constructor
- * @this {CognicityReportsPowertrack}
  * @param {object} config Configuration object
  * @param {object} twit Configured instance of twitter object from ntwitter module
  * @param {object} pg Configured instance of pg object from pg module

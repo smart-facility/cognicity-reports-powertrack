@@ -2,6 +2,48 @@
 
 // sample-config.js - sample configuration file for cognicity-reports module
 
+/** 
+ * Configuration for cognicity-reports-powertrack
+ * @namespace {object} config
+ * @property {string} instance Name for this instance of the application
+ * @property {?string} adminTwitterUsernames Twitter usernames (without @, comma separated for multiples) to send a notification tweet on error conditions
+ * @property {object} logger Configuration object for logging module
+ * @property {string} logger.level Logging level - info, verbose or debug are most useful. Levels are (npm defaults): silly, debug, verbose, info, warn, error.
+ * @property {number} logger.maxFileSize Max file size in bytes of each log file
+ * @property {number} logger.maxFiles Max number of log files kept
+ * @property {?string} logger.logDirectory Full path to directory for log files - if null logs will be written to the application directory
+ * @property {object} twitter Configuration object for Twitter interface
+ * @property {string} twitter.usernameReplyBlacklist Twitter usernames (without @, comma separated for multiples) which will never be sent to in response to tweet processing
+ * @property {string} twitter.consumer_key Take from the twitter dev admin interface
+ * @property {string} twitter.consumer_secret Take from the twitter dev admin interface
+ * @property {string} twitter.access_token_key Take from the twitter dev admin interface
+ * @property {string} twitter.access_token_secret Take from the twitter dev admin interface
+ * @property {string} twitter.defaultLanguage The default language code to use if we can't resolve one from the tweet
+ * @property {object} twitter.invite_text Twitter message texts. The key is the language code to resolve and the value is the message as a string.
+ * @property {object} twitter.askforgeo_text Twitter message texts. The key is the language code to resolve and the value is the message as a string.
+ * @property {object} twitter.thanks_text Twitter message texts. The key is the language code to resolve and the value is the message as a string.
+ * @property {boolean} twitter.addTimestamp If true, append a timestamp to each sent tweet
+ * @property {object} gnip Configuration object for Gnip PowerTrack interface
+ * @property {boolean} gnip.stream If true, connect to the Gnip stream and process tweets
+ * @property {number} gnip.streamTimeout Network timeout for Gnip stream connection, in milliseconds. Must be >30s as a keep-alive is sent at least every 30s
+ * @property {string} gnip.username Username for Gnip PowerTrack
+ * @property {string} gnip.password Password for Gnip PowerTrack
+ * @property {string} gnip.streamUrl URL for Gnip PowerTrack stream, take from the PowerTrack admin interface. Append '?client=1' to use backfill.
+ * @property {string} gnip.rulesUrl URL for the Gnip PowerTrack rules interface, take frmo the PowerTrack admin interface.
+ * @property {object} gnip.rules Gnip rules, enter as an object where the key is the rule name and the value is the rule as a string
+ * @property {number} gnip.maxReconnectTimeout In milliseconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection as exponential backoff strategy is used
+ * @property {object} pg Configuration object for PostGres interface
+ * @property {string} pg.conString PostGres connection string
+ * @property {string} pg.table_tweets Database table name for tweets
+ * @property {string} pg.table_users Database table name for user information
+ * @property {string} pg.table_invitees Database table name for users who have been tweeted
+ * @property {string} pg.table_unconfirmed Database table name for unconfirmed reports
+ * @property {string} pg.table_nonspatial_users Database table name for users who have had a non-spatial report received
+ * @property {string} pg.table_nonspatial_tweet_reports Database table name for nonspatial tweets
+ * @property {string} pg.table_all_users Database table name for user hashes
+ * @property {number} pg.reconnectionDelay Delay before attempting a reconnection in ms
+ * @property {number} pg.reconnectionAttempts Number of times to attempt reconnection before notifying admin and exiting
+ */
 var config = {};
 
 // Instance name - default name for this configuration (will be server process name)
