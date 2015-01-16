@@ -44,6 +44,7 @@ npm install
 To build on Windows we recommend installing all dependencies (making sure to use all 32 bit or all 64 bit, depending on your architecture) plus following the instructions (for Windows 7 follow the Windows 7/8 instructions) for [node-gyp](https://github.com/TooTallNate/node-gyp) and then:
 * You need to add *C:\Program Files\PostgreSQL\9.3\bin* (modifying that location if necessary to point to the installed version of PostgreSQL) to path so the build script finds `pg_config`, and
 * You need to create the *%APPDATA%\npm* folder and run cmd (and hence npm) as administrator. *%APPDATA%* is usually under *C:\Users\your_username\AppData\Remote*.
+* You may need to specify the version of the build tools installed by adding the argument `--msvs_version=2013` to the `npm` command (substituting the appropriate version)
 Then you can run `npm install`.
 
 ### Configuration
@@ -96,7 +97,7 @@ Messages can be at most 109 characters long if addTimestamp is enabled, or 123 c
 * thanks_text - Thank-you message for confirmed tweet
 
 #### Postgres connection
-* connection string - PostgreSQL connection details (see node-postgres module documenation)[https://github.com/brianc/node-postgres]
+* conString - PostgreSQL connection details string (see node-postgres module documenation)[https://github.com/brianc/node-postgres]
 * postgres tables as defined in database schema
 * reconnectionDelay - Delay between reconnection attempts if postgres connection lost
 * reconnectionAttempts - Number of times to attempt to reconnect before dying
@@ -142,30 +143,23 @@ JSHint will run on all JavaScript files in the root folder and test folders.
 Running the script:
 
 ```shell
-npm run-script jshint
+npm run jshint
 ```
 
-Will execute the command:
-
-```shell
-jshint app.js CognicityReportsPowertrack.js daemon.js sample-reports-config.js test-config.js test/testApp.js test/testCognicityReportsPowertrack.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js
-```
+This will print an error to the screen if any problems are found.
 
 ##### Mocha
 
 Mocha will run all unit tests in the test folder and can be run with the following script:
 
 ```shell
-npm run-script mocha
+npm run mocha
 ```
 
-This will run the command:
-
-```shell
-mocha test
-```
+The test output will tell you how many tests passed and failed.
 
 #### Git Hooks
+
 There is a git pre-commit hook which will run the 'npm test' command before your commit and will fail the commit if testing fails.
 
 To use this hook, copy the file from 'git-hooks/pre-commit' to '.git/hooks/pre-commit' in your project folder.
@@ -176,23 +170,23 @@ cp git-hooks/pre-commit .git/hooks/
 
 #### Documentation
 
-To build the JSDoc documentation into the folder 'docs', run the following npm script:
+To build the JSDoc documentation run the following npm script:
 
 ```shell
-npm run-script build-docs
+npm run build-docs
 ```
 
-This runs JSHint using the configuration options in .jshintrc and the command from package.json.
+This will generate the API documentation in HTML format in the `docs` folder, where you can open it with a web browser.
 
 #### Test Coverage
 
 To build test code coverage documentation, run the following npm script:
 
 ```shell
-npm run-script coverage
+npm run coverage
 ```
 
-This will run istanbul code coverage over the full mocha test harness and produce HTML documentation in the directory `coverage`.
+This will run istanbul code coverage over the full mocha test harness and produce HTML documentation in the directory `coverage` where you can open it with a web browser.
 
 #### Release
 
