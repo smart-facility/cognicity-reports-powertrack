@@ -23,11 +23,11 @@
     "node": "^0.10.16"
   },
   "scripts": {
-    "test": "npm run-script jshint && npm run-script mocha",
+    "test": "npm run jshint && npm run mocha",
     "jshint": "jshint app.js CognicityReportsPowertrack.js daemon.js sample-reports-config.js test-config.js test/testApp.js test/testCognicityReportsPowertrack.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js",
     "mocha": "mocha test",
     "build-docs": "jsdoc -d docs package.json sample-reports-config.js app.js CognicityReportsPowertrack.js",
-    "build": "npm run-script test && npm run-script build-docs",
+    "build": "npm run test && npm run build-docs",
     "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha"
   }
 }
