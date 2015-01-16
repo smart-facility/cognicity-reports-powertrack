@@ -32,8 +32,8 @@ var CognicityReportsPowertrack = function(
 
 CognicityReportsPowertrack.prototype = {
 	/**
-	 * Configuration object containing properties read from config file
-	 * @type {object}
+	 * Configuration object
+	 * @type {config}
 	 */
 	config: null,
 	/**
@@ -52,7 +52,7 @@ CognicityReportsPowertrack.prototype = {
 	 */
 	logger: null,
 	/**
-	 * Gnip Instance of Gnip object from Gnip module
+	 * Instance of Gnip object from Gnip module
 	 * @type {object}
 	 */
 	Gnip: null,
@@ -63,7 +63,7 @@ CognicityReportsPowertrack.prototype = {
 	 */
 	_cacheMode: false,
 	/**
-	 * Store tweets if we cannot process them immediately for later processing.
+	 * Store tweets if we cannot process them immediately, for later processing.
 	 * @type {Array}
 	 */
 	_cachedTweets: [],
@@ -71,7 +71,7 @@ CognicityReportsPowertrack.prototype = {
 	/**
 	 * Resolve message code from config.twitter using passed language codes.
 	 * Will fall back to trying to resolve message using default language set in configuration.
-	 * @param {string} code Code to lookup in config.twitter
+	 * @param {string} code Message code to lookup in config.twitter
 	 * @param {GnipTweetActivity} tweetActivity Tweet activity object; check twitter language code and Gnip language codes for a match
 	 * @returns {?string} Message text, or null if not resolved.
 	 */
