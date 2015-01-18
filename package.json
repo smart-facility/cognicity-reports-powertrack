@@ -27,7 +27,7 @@
     "jshint": "jshint app.js CognicityReportsPowertrack.js daemon.js sample-reports-config.js test-config.js test/testApp.js test/testCognicityReportsPowertrack.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js",
     "mocha": "mocha test",
     "build-docs": "jsdoc -d docs package.json sample-reports-config.js app.js CognicityReportsPowertrack.js",
-    "build": "npm run test && npm run build-docs",
+    "build": "npm test && npm run build-docs && npm run coverage",
     "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha"
   }
 }
