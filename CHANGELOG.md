@@ -16,3 +16,7 @@ CogniCity
 ### 1.0.2 - 05/01/2015
 * Blacklist of usernames not to reply tweet to available
 * Log DB connection success message at startup
+
+### 1.0.3 - 21/01/2015
+* Updated JSDoc outputs
+* Added Istanbul code coverage.
