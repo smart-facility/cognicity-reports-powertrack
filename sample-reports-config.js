@@ -2,6 +2,56 @@
 
 // sample-config.js - sample configuration file for cognicity-reports module
 
+/** 
+ * Configuration for cognicity-reports-powertrack
+ * @namespace {object} config
+ * @property {string} instance Name for this instance of the application
+ * @property {?string} adminTwitterUsernames Twitter usernames (without @, comma separated for multiples) to send a notification tweet on error conditions
+ * @property {object} logger Configuration object for logging module
+ * @property {string} logger.level Logging level - info, verbose or debug are most useful. Levels are (npm defaults): silly, debug, verbose, info, warn, error.
+ * @property {number} logger.maxFileSize Max file size in bytes of each log file
+ * @property {number} logger.maxFiles Max number of log files kept
+ * @property {?string} logger.logDirectory Full path to directory for log files - if null, logs will be written to the application directory
+ * @property {object} twitter Configuration object for Twitter interface
+ * @property {string} twitter.usernameReplyBlacklist Twitter usernames (without @, comma separated for multiples) which will never be responded to as part of tweet processing
+ * @property {string} twitter.consumer_key Take from the twitter dev admin interface
+ * @property {string} twitter.consumer_secret Take from the twitter dev admin interface
+ * @property {string} twitter.access_token_key Take from the twitter dev admin interface
+ * @property {string} twitter.access_token_secret Take from the twitter dev admin interface
+ * @property {string} twitter.defaultLanguage The default language code to use if we can't resolve one from the tweet
+ * @property {object} twitter.invite_text Object of twitter message texts mapping a language code to a message
+ * @property {string} twitter.invite_text.(name) Language code to resolve
+ * @property {string} twitter.invite_text.(value) Message to be tweeted
+ * @property {object} twitter.askforgeo_text Object of twitter message texts mapping a language code to a message
+ * @property {string} twitter.askforgeo_text.(name) Language code to resolve
+ * @property {string} twitter.askforgeo_text.(value) Message to be tweeted
+ * @property {object} twitter.thanks_text Object of twitter message texts mapping a language code to a message
+ * @property {string} twitter.thanks_text.(name) Language code to resolve
+ * @property {string} twitter.thanks_text.(value) Message to be tweeted
+ * @property {boolean} twitter.addTimestamp If true, append a timestamp to each sent tweet
+ * @property {object} gnip Configuration object for Gnip PowerTrack interface
+ * @property {boolean} gnip.stream If true, connect to the Gnip stream and process tweets
+ * @property {number} gnip.streamTimeout Network timeout for Gnip stream connection, in milliseconds. Must be >30s as a keep-alive is sent at least every 30s. {@link http://support.gnip.com/apis/consuming_streaming_data.html#keepalive_signals}
+ * @property {string} gnip.username Username for Gnip PowerTrack
+ * @property {string} gnip.password Password for Gnip PowerTrack
+ * @property {string} gnip.streamUrl URL for Gnip PowerTrack stream, take from the PowerTrack admin interface. Append '?client=1' to use backfill. {@link http://support.gnip.com/apis/consuming_streaming_data.html#Backfill}
+ * @property {string} gnip.rulesUrl URL for the Gnip PowerTrack rules interface, take from the PowerTrack admin interface.
+ * @property {object} gnip.rules Object of Gnip rules mapping rule names to rule text
+ * @property {string} gnip.rules.(name) Rule name
+ * @property {string} gnip.rules.(value) Rule text
+ * @property {number} gnip.maxReconnectTimeout Maximum reconnection delay in milliseconds. Exponential backoff strategy is used starting at 1000 and will stop growing at this value.
+ * @property {object} pg Configuration object for PostGres interface
+ * @property {string} pg.conString PostGres connection string
+ * @property {string} pg.table_tweets Database table name for tweets
+ * @property {string} pg.table_users Database table name for user information
+ * @property {string} pg.table_invitees Database table name for users who have been tweeted
+ * @property {string} pg.table_unconfirmed Database table name for unconfirmed reports
+ * @property {string} pg.table_nonspatial_users Database table name for users who have had a non-spatial report received
+ * @property {string} pg.table_nonspatial_tweet_reports Database table name for nonspatial tweets
+ * @property {string} pg.table_all_users Database table name for user hashes
+ * @property {number} pg.reconnectionDelay Delay before attempting a reconnection in ms
+ * @property {number} pg.reconnectionAttempts Number of times to attempt reconnection before notifying admin and exiting
+ */
 var config = {};
 
 // Instance name - default name for this configuration (will be server process name)

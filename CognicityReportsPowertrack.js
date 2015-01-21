@@ -9,12 +9,11 @@
  * - sends messages to users via twitter
  * - stores data from tweets in database
  * @constructor
- * @this {CognicityReportsPowertrack}
- * @param {Object} config Configuration object
- * @param {Object} twit Configured instance of twitter object from ntwitter module
- * @param {Object} pg Configured instance of pg object from pg module
- * @param {Object} logger Configured instance of logger object from Winston module
- * @param {Object} Gnip Instance of Gnip object from Gnip module
+ * @param {config} config Configuration object
+ * @param {object} twit Configured instance of twitter object from ntwitter module
+ * @param {object} pg Configured instance of pg object from pg module
+ * @param {object} logger Configured instance of logger object from Winston module
+ * @param {object} Gnip Instance of Gnip object from Gnip module
  */
 var CognicityReportsPowertrack = function(
 	config,
@@ -33,38 +32,38 @@ var CognicityReportsPowertrack = function(
 
 CognicityReportsPowertrack.prototype = {
 	/**
-	 * Configuration object containing properties read from config file
-	 * @type {Object}
+	 * Configuration object
+	 * @type {config}
 	 */
 	config: null,
 	/**
 	 * Configured instance of twitter object from ntwitter module
-	 * @type {Object}
+	 * @type {object}
 	 */
 	twit: null,
 	/**
 	 * Configured instance of pg object from pg module
-	 * @type {Object}
+	 * @type {object}
 	 */
 	pg: null,
 	/**
 	 * Configured instance of logger object from Winston module
-	 * @type {Object}
+	 * @type {object}
 	 */
 	logger: null,
 	/**
-	 * Gnip Instance of Gnip object from Gnip module
-	 * @type {Object}
+	 * Instance of Gnip object from Gnip module
+	 * @type {object}
 	 */
 	Gnip: null,
 	/**
 	 * Flag signifying if we are currently able to process tweets immediately.
 	 * Turned on if the database is temporarily offline so we can cache tweets for a short time.
-	 * @type {Boolean}
+	 * @type {boolean}
 	 */
 	_cacheMode: false,
 	/**
-	 * Store tweets if we cannot process them immediately for later processing.
+	 * Store tweets if we cannot process them immediately, for later processing.
 	 * @type {Array}
 	 */
 	_cachedTweets: [],
@@ -72,9 +71,9 @@ CognicityReportsPowertrack.prototype = {
 	/**
 	 * Resolve message code from config.twitter using passed language codes.
 	 * Will fall back to trying to resolve message using default language set in configuration.
-	 * @param {String} code Code to lookup in config.twitter
-	 * @param {Object} tweetActivity Gnip twitter activity object; check twitter language code and Gnip language codes for a match
-	 * @returns {String} Message text, or null if not resolved.
+	 * @param {string} code Message code to lookup in config.twitter
+	 * @param {GnipTweetActivity} tweetActivity Tweet activity object; check twitter language code and Gnip language codes for a match
+	 * @returns {?string} Message text, or null if not resolved.
 	 */
 	getMessage: function(code, tweetActivity) {
 		var self = this;
@@ -100,14 +99,22 @@ CognicityReportsPowertrack.prototype = {
 
 	/**
 	 * DB query success callback
-	 * @callback dbQuerySuccess
-	 * @param {Object} result The 'pg' module result object on a successful query
+	 * @callback DbQuerySuccess
+	 * @param {object} result The 'pg' module result object on a successful query
 	 */
 
 	/**
+	 * Gnip PowerTrack Tweet Activity object.
+	 * @see {@link http://support.gnip.com/sources/twitter/data_format.html}
+	 * @typedef GnipTweetActivity
+	 */
+	
+	/**
 	 * Execute the SQL against the database connection. Run the success callback on success if supplied.
-	 * @param {Object} config The pg config object for a parameterized query, e.g. {text:"select * from foo where a=$1", values:['bar']}
-	 * @param {dbQuerySuccess} success Callback function to execute on success.
+	 * @param {object} config The pg config object for a parameterized query, e.g. {text:"select * from foo where a=$1", values:['bar']}
+	 * @param {string} config.text The SQL query to execute
+	 * @param {Array} config.values Parameterized values to use for the SQL query
+	 * @param {DbQuerySuccess} success Callback function to execute on success.
 	 */
 	dbQuery: function(config, success){
 		var self = this;
@@ -140,8 +147,8 @@ CognicityReportsPowertrack.prototype = {
 
 	/**
 	 * Only execute the success callback if the user is not currently in the all users table.
-	 * @param {String} user The twitter screen name to check if exists
-	 * @param {dbQuerySuccess} callback Callback to execute if the user doesn't exist
+	 * @param {string} user The twitter screen name to check if exists
+	 * @param {DbQuerySuccess} callback Callback to execute if the user doesn't exist
 	 */
 	ifNewUser: function(user, success){
 		var self = this;
@@ -163,9 +170,9 @@ CognicityReportsPowertrack.prototype = {
 
 	/**
 	 * Send @reply Twitter message
-	 * @param {Object} tweetActivity The Gnip tweet activity object this is a reply to
-	 * @param {String} message The tweet text to send
-	 * @param {Function} success Callback function called on success
+	 * @param {GnipTweetActivity} tweetActivity The Gnip tweet activity object this is a reply to
+	 * @param {string} message The tweet text to send
+	 * @param {function} success Callback function called on success
 	 */
 	sendReplyTweet: function(tweetActivity, message, success){
 		var self = this;
@@ -212,7 +219,7 @@ CognicityReportsPowertrack.prototype = {
 	/**
 	 * Insert a confirmed report - i.e. has geo coordinates and is addressed.
 	 * Store both the tweet information and the user hash.
-	 * @param {Object} tweetActivity Gnip PowerTrack tweet activity object
+	 * @param {GnipTweetActivity} tweetActivity Gnip PowerTrack tweet activity object
 	 */
 	insertConfirmed: function(tweetActivity){
 		var self = this;
@@ -262,7 +269,7 @@ CognicityReportsPowertrack.prototype = {
 
 	/**
 	 * Insert an invitee - i.e. a user we've invited to participate.
-	 * @param {Object} tweetActivity Gnip PowerTrack tweet activity object
+	 * @param {GnipTweetActivity} tweetActivity Gnip PowerTrack tweet activity object
 	 */
 	insertInvitee: function(tweetActivity){
 		var self = this;
@@ -280,7 +287,7 @@ CognicityReportsPowertrack.prototype = {
 
 	/**
 	 * Insert an unconfirmed report - i.e. has geo coordinates but is not addressed.
-	 * @param {Object} tweetActivity Gnip PowerTrack tweet activity object
+	 * @param {GnipTweetActivity} tweetActivity Gnip PowerTrack tweet activity object
 	 */
 	insertUnConfirmed: function(tweetActivity){
 		var self = this;
@@ -306,7 +313,7 @@ CognicityReportsPowertrack.prototype = {
 
 	/**
 	 * Insert a non-spatial tweet report - i.e. we got an addressed tweet without geo coordinates.
-	 * @param {Object} tweetActivity Gnip PowerTrack tweet activity object
+	 * @param {GnipTweetActivity} tweetActivity Gnip PowerTrack tweet activity object
 	 */
 	insertNonSpatial: function(tweetActivity){
 		var self = this;
@@ -355,7 +362,7 @@ CognicityReportsPowertrack.prototype = {
 	 * Main stream tweet filtering logic.
 	 * Filter the incoming tweet and decide what action needs to be taken:
 	 * confirmed report, ask for geo, ask user to participate, or nothing
-	 * @param {Object} tweetActivity The tweet activity from Gnip
+	 * @param {GnipTweetActivity} tweetActivity The tweet activity from Gnip
 	 */
 	filter: function(tweetActivity){
 		var self = this;
@@ -603,8 +610,8 @@ CognicityReportsPowertrack.prototype = {
 	
 	/**
 	 * Tweet the admin usernames defined in 'adminTwitterUsernames' in config.
-	 * @param {String} warningMessage The message to tweet
-	 * @param {Function} callback Callback to execute after tweet sending
+	 * @param {string} warningMessage The message to tweet
+	 * @param {function} callback Callback to execute after tweet sending
 	 */
 	tweetAdmin: function(warningMessage, callback) {
 		var self = this;
@@ -631,9 +638,9 @@ CognicityReportsPowertrack.prototype = {
 	/**
 	 * Check that all tweetable message texts are of an acceptable length.
 	 * This is 109 characters max if timestamps are enabled, or 123 characters max if timestamps are not enabled.
-	 * Ref: https://dev.twitter.com/overview/api/counting-characters (max tweet = 140 chars)
-	 * Ref: https://support.twitter.com/articles/14609-changing-your-username (max username = 15 chars)
-	 * @return {Boolean} True if message texts are all okay, false if any are not.
+	 * @see {@link https://dev.twitter.com/overview/api/counting-characters} (max tweet = 140 chars)
+	 * @see {@link https://support.twitter.com/articles/14609-changing-your-username} (max username = 15 chars)
+	 * @return {boolean} True if message texts are all okay, false if any are not.
 	 */
 	areTweetMessageLengthsOk: function() {
 		var self = this;

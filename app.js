@@ -3,7 +3,7 @@
 // app.js - cognicity-reports-powertrack application setup
 
 /**
- * @file Collect unconfirmed reports from Twitter & send report verification tweets
+ * @file Collect unconfirmed reports from Twitter via Gnip PowerTrack & send report verification tweets
  * @copyright (c) Tomas Holderness & SMART Infrastructure Facility January 2014
  * @license Released under GNU GPLv3 License (see LICENSE.txt).
  * @example
