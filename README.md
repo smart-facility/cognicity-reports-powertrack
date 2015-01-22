@@ -9,6 +9,9 @@ CogniCity
 ### About
 Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity framework, responsible for collecting relevant tweets via Gnip PowerTrack, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
 
+### API Documentation
+[http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html](http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html)
+
 ### Dependencies
 * [NodeJS](http://nodejs.org) version 0.10.16 or compatible
 * [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or compatible
@@ -72,7 +75,7 @@ Set the app authentication parameters as provided by Twitter. See the [ntwitter-
 
 #### Twitter warning configuration
 * adminTwitterUsernames - Enter twitter usernames here (without @, comma separated for multiples) to send a notification tweet on error conditions
-Notification conditions are: 
+Notification conditions are:
 * Gnip stream is disconnected and reaches `maxReconnectTimeout` time trying to reconnect
 * Connection to postgres is lost and cannot be reconnected in `pg.reconnectionAttempts` number of attempts
 
@@ -191,7 +194,7 @@ This will run istanbul code coverage over the full mocha test harness and produc
 #### Release
 
 The release procedure is as follows:
-* Update the CHANGELOG.md file with the newly released version, date, and a high-level overview of changes. Commit the change. 
+* Update the CHANGELOG.md file with the newly released version, date, and a high-level overview of changes. Commit the change.
 * Create a tag in git from the current head of master. The tag version should be the same as the version specified in the package.json file - this is the release version.
 * Update the version in the package.json file and commit the change.
 * Further development is now on the updated version number until the release process begins again.
