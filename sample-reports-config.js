@@ -2,7 +2,7 @@
 
 // sample-config.js - sample configuration file for cognicity-reports module
 
-/** 
+/**
  * Configuration for cognicity-reports-powertrack
  * @namespace {object} config
  * @property {string} instance Name for this instance of the application
@@ -76,6 +76,7 @@ config.twitter.access_token_key = ''; // Take from the twitter dev admin interfa
 config.twitter.access_token_secret = ''; // Take from the twitter dev admin interface
 
 // Twitter parameters
+config.twitter.send_enabled = false; // Enable sending of tweets?
 
 // Twitter message texts
 // Note we use IN and ID because twitter and Gnip return different language codes for Indonesian
@@ -83,7 +84,7 @@ config.twitter.access_token_secret = ''; // Take from the twitter dev admin inte
 config.twitter.defaultLanguage = 'en'; // The default language code to use if we can't resolve one from the tweet
 // Message codes. The name of the object (config.twitter.foo) is the name of the message type, that object should contain key value pairs
 // where the key is the language code to resolve and the value is the message as a string.
-// Note we have both ID and IN for indonesian 
+// Note we have both ID and IN for indonesian
 config.twitter.invite_text = {
 	'in' : 'Invite/Verification Tweet Text [IN]',
 	'id' : 'Invite/Verification Tweet Text [ID]',
@@ -116,7 +117,7 @@ config.gnip.rules = {
     "addressed":"( contains:flood OR contains:banjir ) @petajkt",
     "location":"( contains:flood OR contains:banjir ) ( bio_location_contains:jakarta OR place_contains:jakarta OR profile_bounding_box:[106.5894 -6.4354 106.799999999 -6.2] OR profile_bounding_box:[106.8 -6.4354 107.0782 -6.2] OR profile_bounding_box:[106.5894 -6.199999999 106.799999999 -5.9029] OR profile_bounding_box:[106.8 -6.199999999 107.0782 -5.9029] )"
 };
-config.gnip.maxReconnectTimeout = 1000 * 60 * 5; // In milliseconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection 
+config.gnip.maxReconnectTimeout = 1000 * 60 * 5; // In milliseconds; 5 minutes for max reconnection timeout - will mean ~10 minutes from first disconnection
 
 // Postgres database connection
 config.pg = {};
