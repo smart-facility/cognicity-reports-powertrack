@@ -5,7 +5,7 @@
 var config = require("./sample-reports-config.js");
 
 // Change instance name so we log to test.log
-config.instance = 'test';
+config.logger.filename = 'test';
 
 // Export our modified config
 module.exports = config;
