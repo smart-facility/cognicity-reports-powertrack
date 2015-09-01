@@ -109,20 +109,22 @@ Messages can be at most 109 characters long if addTimestamp is enabled, or 123 c
 
 ### Run
 The app can be run as a background process using the [pm2 process manager](https://github.com/Unitech/pm2).
-Check: The process name is set to the configuration instance `config.instance` defined in the configuration file.
+
 To install pm2, run:
 ```shell
 sudo npm install pm2 -g
 ```
 The app can then be started using
 ```shell
-pm2 start app.js test-config.js
+pm2 start app.js -- test-config.js
 ```
 To have pm2 started on OS startup run
 ```shell
 pm2 startup
 ```
-and then run the command as per the instructions that prints out.
+and then run the command as per the instructions that prints out. If that command errors then you may have to specify (note that systemd should be used on CentOS 7). At present there is a bug in the installed shell script on CentOS/Redhat 7 which can be fixed using [these instructions](
+http://www.buildsucceeded.com/2015/solved-pm2-startup-at-boot-time-centos-7-red-hat-linux/)
+
 For further details refer to the [README for pm2](https://github.com/Unitech/PM2/blob/master/README.md).
 
 ### Logging
