@@ -17,7 +17,6 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 * [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or compatible
 
 #### Node Modules
-* [Node-Daemonize 2](https://github.com/niegowski/node-daemonize2/) version 0.4.2 or compatible
 * [Node-Postgres](https://github.com/brianc/node-postgres) version 2.0.0 or compatible
 * [ntwitter](https://github.com/AvianFlu/ntwitter) version 0.5.0 or compatible
 * [gnip](https://github.com/demian85/gnip) version 0.2.1 or compatible
@@ -109,19 +108,22 @@ Messages can be at most 109 characters long if addTimestamp is enabled, or 123 c
 * see the [cognicity-schema](https://github.com/smart-facility/cognicity-schema) project for schema files
 
 ### Run
-The app is run as a background process using the Daemonize 2 library. The process name is set to the configuration instance `config.instance` defined in the configuration file.
-
+The app can be run as a background process using the [pm2 process manager](https://github.com/Unitech/pm2).
+Check: The process name is set to the configuration instance `config.instance` defined in the configuration file.
+To install pm2, run:
 ```shell
-$ cd cognicity-server/
-$ node daemon.js sample-config.js start
-project-name daemon started. PID 1000
-
-$node daemon.js sample-config.js status
-project-name running
-
-$node daemon.js sample-config.js stop
-project-name daemon stopped
+sudo npm install pm2 -g
 ```
+The app can then be started using
+```shell
+pm2 start app.js test-config.js
+```
+To have pm2 started on OS startup run
+```shell
+pm2 startup
+```
+and then run the command as per the instructions that prints out.
+For further details refer to the [README for pm2](https://github.com/Unitech/PM2/blob/master/README.md).
 
 ### Logging
 * Winston writes to project-name.log (and project-name#.log if configured for multiple files)
