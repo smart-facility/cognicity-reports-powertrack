@@ -116,7 +116,7 @@ sudo npm install pm2 -g
 ```
 The app can then be started using
 ```shell
-pm2 start app.js -- test-config.js
+pm2 start processes.json
 ```
 To have pm2 started on OS startup run
 ```shell

@@ -1,0 +1,6 @@
+[{
+  "script"  : "app.js",
+  "name"    : "harvester",
+  "watch"   : true,
+  "args"    : ["config.js"]
+}]
