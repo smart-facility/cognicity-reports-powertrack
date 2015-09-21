@@ -2,6 +2,6 @@
   "script"  : "app.js",
   "name"    : "harvester",
   "watch"   : true,
-  ignore_watch : ["[\\/\\\\]\\./", "node_modules", "*.log"]
+  ignore_watch : ["[\\/\\\\]\\./", "node_modules", "*.log"],
   "args"    : ["config.js"]
 }]
