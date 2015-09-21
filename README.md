@@ -17,7 +17,6 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 * [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or compatible
 
 #### Node Modules
-* [Node-Daemonize 2](https://github.com/niegowski/node-daemonize2/) version 0.4.2 or compatible
 * [Node-Postgres](https://github.com/brianc/node-postgres) version 2.0.0 or compatible
 * [ntwitter](https://github.com/AvianFlu/ntwitter) version 0.5.0 or compatible
 * [gnip](https://github.com/demian85/gnip) version 0.2.1 or compatible
@@ -109,19 +108,27 @@ Messages can be at most 109 characters long if addTimestamp is enabled, or 123 c
 * see the [cognicity-schema](https://github.com/smart-facility/cognicity-schema) project for schema files
 
 ### Run
-The app is run as a background process using the Daemonize 2 library. The process name is set to the configuration instance `config.instance` defined in the configuration file.
+The app can be run as a background process using the [pm2 process manager](https://github.com/Unitech/pm2).
 
+To install pm2, run:
 ```shell
-$ cd cognicity-server/
-$ node daemon.js sample-config.js start
-project-name daemon started. PID 1000
-
-$node daemon.js sample-config.js status
-project-name running
-
-$node daemon.js sample-config.js stop
-project-name daemon stopped
+sudo npm install pm2 -g
 ```
+The app can then be started using
+```shell
+pm2 start processes.json
+```
+To have pm2 started on OS startup run
+```shell
+pm2 startup
+```
+and then run the command as per the instructions that prints out. If that command errors then you may have to specify (note that systemd should be used on CentOS 7). At present there is a bug in the installed shell script on CentOS/Redhat 7 which can be fixed using [these instructions](
+http://www.buildsucceeded.com/2015/solved-pm2-startup-at-boot-time-centos-7-red-hat-linux/)
+Note that you may need to change `/etc/init.d/pm2-init.sh` to set `export PM2_HOME="/path/to/user/home/.pm2"`.
+
+The file [processes.json](processes.json) contains a number of options that can be set, including the name of the process (default: "harvester") and the watch list. At the moment any paths or files starting with . (including .git), node_modules and all \*.log files will be logged, but any other changes (e.g. to a config file, or to the code itself) will automatically result in a restart of the process. Refer to the [documentation](http://pm2.keymetrics.io/docs/usage/application-declaration/) for more options in the [processes.json](processes.json) file.
+
+For further details refer to the [README for pm2](https://github.com/Unitech/PM2/blob/master/README.md).
 
 ### Logging
 * Winston writes to project-name.log (and project-name#.log if configured for multiple files)
