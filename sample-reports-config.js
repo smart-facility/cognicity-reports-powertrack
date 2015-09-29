@@ -5,13 +5,13 @@
 /**
  * Configuration for cognicity-reports-powertrack
  * @namespace {object} config
- * @property {string} instance Name for this instance of the application
  * @property {?string} adminTwitterUsernames Twitter usernames (without @, comma separated for multiples) to send a notification tweet on error conditions
  * @property {object} logger Configuration object for logging module
  * @property {string} logger.level Logging level - info, verbose or debug are most useful. Levels are (npm defaults): silly, debug, verbose, info, warn, error.
  * @property {number} logger.maxFileSize Max file size in bytes of each log file
  * @property {number} logger.maxFiles Max number of log files kept
  * @property {?string} logger.logDirectory Full path to directory for log files - if null, logs will be written to the application directory
+ * @property {string} logger.filename Name of log file
  * @property {object} twitter Configuration object for Twitter interface
  * @property {string} twitter.usernameReplyBlacklist Twitter usernames (without @, comma separated for multiples) which will never be responded to as part of tweet processing
  * @property {string} twitter.consumer_key Take from the twitter dev admin interface
@@ -53,8 +53,6 @@
  * @property {number} pg.reconnectionAttempts Number of times to attempt reconnection before notifying admin and exiting
  */
 var config = {};
-
-// Instance name - default name for this configuration (will be server process name)
 
 // Notification settings
 config.adminTwitterUsernames = null; // Enter twitter usernames here (without @, comma separated for multiples) to send a notification tweet on error conditions
