@@ -122,11 +122,10 @@ To have pm2 started on OS startup run
 ```shell
 pm2 startup
 ```
-and then run the command as per the instructions that prints out. If that command errors then you may have to specify (note that systemd should be used on CentOS 7). At present there is a bug in the installed shell script on CentOS/Redhat 7 which can be fixed using [these instructions](
+and then run the command as per the instructions that prints out. If that command errors then you may have to specify the system (note that systemd should be used on CentOS 7). Note that if the process is not running as root (recommended) you will need to change `/etc/init.d/pm2-init.sh` to set `export PM2_HOME="/path/to/user/home/.pm2"`, as per [these instructions](
 http://www.buildsucceeded.com/2015/solved-pm2-startup-at-boot-time-centos-7-red-hat-linux/)
-Note that you may need to change `/etc/init.d/pm2-init.sh` to set `export PM2_HOME="/path/to/user/home/.pm2"`.
 
-The file [processes.json](processes.json) contains a number of options that can be set, including the name of the process (default: "harvester"), the config file to use, and the watch list. At the moment any paths or files starting with . (including .git), node_modules and all \*.log files will be logged, but any other changes (e.g. to a config file, or to the code itself) will automatically result in a restart of the process. Refer to the [documentation](http://pm2.keymetrics.io/docs/usage/application-declaration/) for more options in the [processes.json](processes.json) file.
+The file [processes.json](processes.json) contains a number of options that can be set, including the name of the process (default: "harvester") and the watch list. At the moment any paths or files starting with . (including .git), node_modules, git, test folders, and all \*.log files will be ignored, but any other changes (e.g. to a config file, or to the code itself) will automatically result in a restart of the process. Refer to the [documentation](http://pm2.keymetrics.io/docs/usage/application-declaration/) for more options in the [processes.json](processes.json) file.
 
 For further details refer to the [README for pm2](https://github.com/Unitech/PM2/blob/master/README.md).
 
