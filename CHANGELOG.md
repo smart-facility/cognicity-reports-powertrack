@@ -20,3 +20,7 @@ CogniCity
 ### 1.0.3 - 21/01/2015
 * Updated JSDoc outputs
 * Added Istanbul code coverage.
+
+### 1.0.4 - 08/10/2015
+* Removed node-daemonize2 support
+* Improved config file for PM2 support
