@@ -14,7 +14,7 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 
 ### Dependencies
 * [NodeJS](http://nodejs.org) version 0.10.16 or compatible
-* [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or compatible
+* [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis.org/) version 2.0 or compatible
 
 #### Node Modules
 * [Node-Postgres](https://github.com/brianc/node-postgres) version 3.0.0 or compatible
@@ -32,7 +32,7 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 If you're going to commit changes to the JavaScript, be sure to run 'npm test' first - and fix any issues that it complains about, otherwise the build will fail when you push the commit.
 
 ### Installation
-Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](http://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
+Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](https://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
 
 Install the node dependencies in package.json using NPM: `npm install`
 
