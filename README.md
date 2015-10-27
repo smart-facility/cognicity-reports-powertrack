@@ -17,7 +17,7 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 * [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis/) version 2.0 or compatible
 
 #### Node Modules
-* [Node-Postgres](https://github.com/brianc/node-postgres) version 2.0.0 or compatible
+* [Node-Postgres](https://github.com/brianc/node-postgres) version 3.0.0 or compatible
 * [ntwitter](https://github.com/AvianFlu/ntwitter) version 0.5.0 or compatible
 * [gnip](https://github.com/demian85/gnip) version 0.2.1 or compatible
 * [winston](https://github.com/flatiron/winston) version 0.8.1 or compatible
