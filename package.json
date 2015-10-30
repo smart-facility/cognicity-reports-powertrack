@@ -1,15 +1,12 @@
 {
   "name": "cognicity-reports-powertrack",
   "description": "CogniCity reports Gnip PowerTrack module",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "author": "Tomas Holderness <tomas@uow.edu.au>",
   "preferGlobal": false,
   "private": true,
   "dependencies": {
-    "ntwitter": "^0.5.0",
-    "pg": "^3.0.0",
-    "gnip": "^0.2.1",
-    "winston": "^0.8.1"
+    "gnip": "^0.2.1"
   },
   "devDependencies": {
     "jsdoc": "^3.2.0",
@@ -23,9 +20,9 @@
   },
   "scripts": {
     "test": "npm run jshint && npm run mocha",
-    "jshint": "jshint app.js CognicityReportsPowertrack.js sample-reports-config.js test/test-config.js test/testApp.js test/testCognicityReportsPowertrack.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js",
+    "jshint": "jshint index.js sample-powertrack-config.js test/testPowertrackDataSource.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js",
     "mocha": "mocha test",
-    "build-docs": "jsdoc -d docs package.json sample-reports-config.js app.js CognicityReportsPowertrack.js",
+    "build-docs": "jsdoc -d docs package.json sample-reports-config.js PowertrackDataSource.js",
     "build": "npm test && npm run build-docs && npm run coverage",
     "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha"
   }

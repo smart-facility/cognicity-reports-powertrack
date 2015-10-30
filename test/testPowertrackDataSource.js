@@ -3,35 +3,34 @@
 /* jshint -W079 */ // Ignore this error for this import only, as we get a redefinition problem
 var test = require('unit.js');
 /* jshint +W079 */
-var CognicityReportsPowertrack = require('../CognicityReportsPowertrack.js');
+var PowertrackDataSource = require('../PowertrackDataSource');
+var Harvester = require('../../Harvester');
 
 // Create server with empty objects
 // We will mock these objects as required for each test suite
-var server = new CognicityReportsPowertrack(
-	{},
-	{},
-	{},
-	{},
+var powertrackDataSource = new PowertrackDataSource(
+	new Harvester({},{},{}),
 	{}
 );
 
 // Mocked logger we can use to let code run without error when trying to call logger messages
-server.logger = {
+powertrackDataSource.logger = {
 	error:function(){},
 	warn:function(){},
 	info:function(){},
 	verbose:function(){},
 	debug:function(){}
 };
+powertrackDataSource.harvester.logger = powertrackDataSource.logger;
 
 // Test harness for CognicityReportsPowertrack object
-describe( 'CognicityReportsPowertrack', function() {
+describe( 'PowertrackDataSource', function() {
 	
 	// Test suite for i18n getMessage function
-	describe( 'getMessage', function() {
+	describe( '_getMessage', function() {
 		// Setup by adding some codes and a defaultLanguage to the config
 		before( function() {
-			server.config = {
+			powertrackDataSource.config = {
 				'twitter' : {
 					'greeting' : {
 						'human' : 'hi',
@@ -55,19 +54,19 @@ describe( 'CognicityReportsPowertrack', function() {
 		}
 		
 		it( 'Should resolve a string for twitter language code', function() {
-			test.string( server.getMessage( 'greeting', createTweetActivity('human') ) ).is( 'hi' );
+			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('human') ) ).is( 'hi' );
 		});
 		it( 'Should resolve a string for Gnip language code', function() {
-			test.string( server.getMessage( 'greeting', createTweetActivity(null,'monkey') ) ).is( 'eek' );
+			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity(null,'monkey') ) ).is( 'eek' );
 		});
 		it( 'Should resolve twitter code if both twitter and Gnip codes present', function() {
-			test.string( server.getMessage( 'greeting', createTweetActivity('monkey','human') ) ).is( 'eek' );
+			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('monkey','human') ) ).is( 'eek' );
 		});
 		it( 'Should resolve a string for default language', function() {
-			test.string( server.getMessage( 'greeting', createTweetActivity('cat') ) ).is( 'hi' );
+			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('cat') ) ).is( 'hi' );
 		});
 		it( 'Should return null if code cannot be resolved', function() {
-			test.value( server.getMessage( 'farewell', createTweetActivity('human') ) ).is( null );
+			test.value( powertrackDataSource._getMessage( 'farewell', createTweetActivity('human') ) ).is( null );
 		});
 	});
 	
@@ -118,8 +117,8 @@ describe( 'CognicityReportsPowertrack', function() {
 
 		before( function() {
 			// Mock logging functions to store the log message so we can inspect it
-			oldLogger = server.logger;
-			server.logger = {
+			oldLogger = powertrackDataSource.logger;
+			powertrackDataSource.logger = {
 				error:function(msg){ lastLog = msg; },
 				warn:function(msg){ lastLog = msg; },
 				info:function(msg){ lastLog = msg; },
@@ -128,43 +127,43 @@ describe( 'CognicityReportsPowertrack', function() {
 			};
 			
 			// Retain functions we're going to mock out
-			oldInsertConfirmed = server.insertConfirmed;
-			oldInsertNonSpatial = server.insertNonSpatial;
-			oldinsertUnConfirmed = server.insertUnConfirmed;
-			oldinsertInvitee = server.insertInvitee;
-			oldSendReplyTweet = server.sendReplyTweet;
-			oldGetMessage = server.getMessage;
-			oldIfNewUser = server.ifNewUser;
+			oldInsertConfirmed = powertrackDataSource._insertConfirmed;
+			oldInsertNonSpatial = powertrackDataSource._insertNonSpatial;
+			oldinsertUnConfirmed = powertrackDataSource._insertUnConfirmed;
+			oldinsertInvitee = powertrackDataSource._insertInvitee;
+			oldSendReplyTweet = powertrackDataSource._sendReplyTweet;
+			oldGetMessage = powertrackDataSource._getMessage;
+			oldIfNewUser = powertrackDataSource._ifNewUser;
 			
 			// Mock these methods as we will look at the log message to check the code path
-			server.insertConfirmed = function(){};
-			server.insertNonSpatial = function(){};
-			server.insertUnConfirmed = function(){};
-			server.insertInvitee = function(){};
-			server.sendReplyTweet = function(){};
-			server.getMessage = function(){};
-			server.ifNewUser = function(){};
+			powertrackDataSource._insertConfirmed = function(){};
+			powertrackDataSource._insertNonSpatial = function(){};
+			powertrackDataSource._insertUnConfirmed = function(){};
+			powertrackDataSource._insertInvitee = function(){};
+			powertrackDataSource._sendReplyTweet = function(){};
+			powertrackDataSource._getMessage = function(){};
+			powertrackDataSource._ifNewUser = function(){};
 		});
 		
 		// Test all the variants of the 4 true/false categorization switches
 		
 		// Location T/F
 		it( '+BOUNDINGBOX +GEO +ADDRESSED +LOCATION = confirmed', function() {
-			server.filter( createTweetActivity(true, true, true, true) );
+			powertrackDataSource.filter( createTweetActivity(true, true, true, true) );
 			test.value( lastLog ).contains( confirmedString );
 		});
 		it( '+BOUNDINGBOX +GEO +ADDRESSED -LOCATION = confirmed', function() {
-			server.filter( createTweetActivity(true, true, true, false) );
+			powertrackDataSource.filter( createTweetActivity(true, true, true, false) );
 			test.value( lastLog ).contains( confirmedString );
 		});
 		
 		// Addressed F + above
 		it( '+BOUNDINGBOX +GEO -ADDRESSED +LOCATION = unconfirmed', function() {
-			server.filter( createTweetActivity(true, true, false, true) );
+			powertrackDataSource.filter( createTweetActivity(true, true, false, true) );
 			test.value( lastLog ).contains( unconfirmedString );
 		});
 		it( '+BOUNDINGBOX +GEO -ADDRESSED -LOCATION = unconfirmed', function() {
-			server.filter( createTweetActivity(true, true, false, false) );
+			powertrackDataSource.filter( createTweetActivity(true, true, false, false) );
 			test.value( lastLog ).contains( unconfirmedString );
 		});
 		
@@ -173,132 +172,71 @@ describe( 'CognicityReportsPowertrack', function() {
 		// filter code, as a BOUNDINGBOX hit without explicit tweet GEO is not enough
 		// - so these actually fall in to filter cases like '-BOUNDINGBOX -GEO ...'
 		it( '+BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask for geo', function() {
-			server.filter( createTweetActivity(true, false, true, true) );
+			powertrackDataSource.filter( createTweetActivity(true, false, true, true) );
 			test.value( lastLog ).contains( askForGeoString );
 		});
 		it( '+BOUNDINGBOX -GEO +ADDRESSED -LOCATION = no match', function() {
-			server.filter( createTweetActivity(true, false, true, false) );
+			powertrackDataSource.filter( createTweetActivity(true, false, true, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '+BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask to participate', function() {
-			server.filter( createTweetActivity(true, false, false, true) );
+			powertrackDataSource.filter( createTweetActivity(true, false, false, true) );
 			test.value( lastLog ).contains( askToParticipateString );
 		});
 		it( '+BOUNDINGBOX -GEO -ADDRESSED -LOCATION = no match', function() {
-			server.filter( createTweetActivity(true, false, false, false) );
+			powertrackDataSource.filter( createTweetActivity(true, false, false, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		
 		// Boundingbox F + above
 		it( '-BOUNDINGBOX +GEO +ADDRESSED +LOCATION = no match', function() {
-			server.filter( createTweetActivity(false, true, true, true) );
+			powertrackDataSource.filter( createTweetActivity(false, true, true, true) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX +GEO +ADDRESSED -LOCATION = no match', function() {
-			server.filter( createTweetActivity(false, true, true, false) );
+			powertrackDataSource.filter( createTweetActivity(false, true, true, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX +GEO -ADDRESSED +LOCATION = no match', function() {
-			server.filter( createTweetActivity(false, true, false, true) );
+			powertrackDataSource.filter( createTweetActivity(false, true, false, true) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX +GEO -ADDRESSED -LOCATION = no match', function() {
-			server.filter( createTweetActivity(false, true, false, false) );
+			powertrackDataSource.filter( createTweetActivity(false, true, false, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask for geo', function() {
-			server.filter( createTweetActivity(false, false, true, true) );
+			powertrackDataSource.filter( createTweetActivity(false, false, true, true) );
 			test.value( lastLog ).contains( askForGeoString );
 		});
 		it( '-BOUNDINGBOX -GEO +ADDRESSED -LOCATION = no match', function() {
-			server.filter( createTweetActivity(false, false, true, false) );
+			powertrackDataSource.filter( createTweetActivity(false, false, true, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask to participate', function() {
-			server.filter( createTweetActivity(false, false, false, true) );
+			powertrackDataSource.filter( createTweetActivity(false, false, false, true) );
 			test.value( lastLog ).contains( askToParticipateString );
 		});
 		it( '-BOUNDINGBOX -GEO -ADDRESSED -LOCATION = no match', function() {
-			server.filter( createTweetActivity(false, false, false, false) );
+			powertrackDataSource.filter( createTweetActivity(false, false, false, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		
 		// Restore/erase mocked functions
 		after( function() {
-			server.logger = oldLogger;
-			server.insertConfirmed = oldInsertConfirmed;
-			server.insertNonSpatial = oldInsertNonSpatial;
-			server.insertUnConfirmed = oldinsertUnConfirmed;
-			server.insertInvitee = oldinsertInvitee;
-			server.sendReplyTweet = oldSendReplyTweet;
-			server.getMessage = oldGetMessage;
-			server.ifNewUser = oldIfNewUser;			
+			powertrackDataSource.logger = oldLogger;
+			powertrackDataSource._insertConfirmed = oldInsertConfirmed;
+			powertrackDataSource._insertNonSpatial = oldInsertNonSpatial;
+			powertrackDataSource._insertUnConfirmed = oldinsertUnConfirmed;
+			powertrackDataSource._insertInvitee = oldinsertInvitee;
+			powertrackDataSource._sendReplyTweet = oldSendReplyTweet;
+			powertrackDataSource._getMessage = oldGetMessage;
+			powertrackDataSource._ifNewUser = oldIfNewUser;			
 		});
 	});
 	
-	// Test suite for dbQuery function
-	describe( 'dbQuery', function() {
-		before( function() {
-			// Mock required parts of the PG config
-			server.config = {
-				'pg' : {
-					'conString' : ''
-				}
-			};
-		});
-		
-		// Setup a success handler which just flags whether it was run or not
-		var successful = false;
-		var successHandler = function(result) {
-			successful = true;
-		};
-		
-		beforeEach( function(){
-			// Reset our success handler state
-			successful = false;
-			
-			// Mock the PG object to let us set error states
-			// Mock the connect and query methods to just pass through their arguments
-			server.pg = {
-				connectionErr: null,
-				connectionClient: {
-					query: function(config, handler) {
-						handler(server.pg.queryErr, server.pg.queryResult);
-					}
-				},
-				connectionDone: function(){},
-				queryErr: null,
-				queryResult: null,
-				connect : function(config, success) {
-					success(server.pg.connectionErr, server.pg.connectionClient, server.pg.connectionDone);
-				}
-			};
-		});
-
-		it( 'Connection error does not run success handler', function() {
-			server.pg.connectionErr = true;
-			server.dbQuery("", successHandler);
-			test.value( successful ).isFalse();
-		});
-		it( 'Query error does not run success handler', function() {
-			server.pg.queryErr = true;
-			server.dbQuery("", successHandler);
-			test.value( successful ).isFalse();
-		});
-		it( 'No error does run success handler', function() {
-			server.dbQuery("", successHandler);
-			test.value( successful ).isTrue();
-		});
-		
-		// Restore/erase mocked functions
-		after( function(){
-			server.config = {};
-			server.pg = {};
-		});
-	});
-	
-	// Test suite for connectStream
-	describe( 'connectStream', function() {
+	// Test suite for start
+	describe( 'start', function() {
 		var streamStarted; // Counter for number of times Gnip.Stream.start was called
 		var lastDelay; // The last delay passed to setTimeout
 		var reconnectTimes; // Number of times to attempt to reconnect (so the test does not go on forever)
@@ -309,7 +247,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		var oldSetTimeout; // Capture global setTimeout so we can mock it 
 		
 		before( function() {
-			server.Gnip = {
+			powertrackDataSource.Gnip = {
 				Stream: function() { 
 					return {
 						start: function(){
@@ -341,8 +279,9 @@ describe( 'CognicityReportsPowertrack', function() {
 				}
 			};
 			// Capture the number of times we send a message via twitter
-			server.twit = {
-				updateStatus: function() { notifiedTimes++; }	
+			powertrackDataSource.harvester.twitter = {
+				updateStatus: function() { notifiedTimes++; },
+				tweetAdmin: function() { notifiedTimes++; }
 			};
 			// Store the global setTimeout
 			oldSetTimeout = setTimeout;
@@ -357,7 +296,7 @@ describe( 'CognicityReportsPowertrack', function() {
 		
 		beforeEach( function() {
 			// Setup object for Gnip configuration
-			server.config.gnip = {};
+			powertrackDataSource.config.gnip = {};
 			
 			// Reset the counters and handler references
 			streamStarted = 0;
@@ -367,35 +306,39 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 		
 		it( 'Reconnection time increases exponentially', function() {
-			server.config.gnip.maxReconnectTimeout = 10000;
+			powertrackDataSource.config.gnip.maxReconnectTimeout = 10000;
 			reconnectTimes = 3;
-			server.connectStream(); // Will get connection errors only
+			powertrackDataSource.start(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to conenct 3 times
 			test.value( lastDelay ).is( 4 * 1000 ); // So 4 second reconnect; delays of 1, 2, 4
 		});
 
 		it( 'Reconnection time is capped at maximum setting', function() {
-			server.config.gnip.maxReconnectTimeout = 3000;
+			powertrackDataSource.config.gnip.maxReconnectTimeout = 3000;
 			reconnectTimes = 4;
-			server.connectStream(); // Will get connection errors only
+			powertrackDataSource.start(); // Will get connection errors only
 			test.value( streamStarted ).is( 4 ); // Expect stream tried to connect 4 times
 			test.value( lastDelay ).is( 3 * 1000 ); // Expect 3 second reconnect, delays of 1, 2, 3, 3
 		});
 
 		it( 'Reconnection notification tweet is only sent once', function() {
-			server.config.gnip.maxReconnectTimeout = 1000;
+			powertrackDataSource.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 3;
-			server.config.adminTwitterUsernames = "astro";
-			server.connectStream(); // Will get connection errors only
+			powertrackDataSource.harvester.config = {
+				adminTwitterUsernames: "astro"
+			};
+			powertrackDataSource.start(); // Will get connection errors only
 			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
 			test.value( notifiedTimes ).is( 1 ); // Expect that we only notified the user once
 		});
 
 		it( 'Reconnection notification tweet is sent again if reconnected between disconnections', function() {
-			server.config.gnip.maxReconnectTimeout = 1000;
+			powertrackDataSource.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 2;
-			server.config.adminTwitterUsernames = "astro";
-			server.connectStream(); // Will get connection errors only
+			powertrackDataSource.harvester.config = {
+				adminTwitterUsernames: "astro"
+			};
+			powertrackDataSource.start(); // Will get connection errors only
 			streamReadyHandler(); // We reconnected to the stream
 			streamErrorHandler(); // And we were disconnected again
 			test.value( notifiedTimes ).is( 2 ); // Expect that we notified the user twice
@@ -405,58 +348,12 @@ describe( 'CognicityReportsPowertrack', function() {
 			/* jshint -W020 */ // We want to mock out a global function here
 			setTimeout = oldSetTimeout;
 			/* jshint +W020 */
-			server.Gnip = {};
-			server.twit = {};
-			server.config = {};
+			powertrackDataSource.Gnip = {};
+			powertrackDataSource.harvester.config = {};
+			powertrackDataSource.harvester.twitter = {};
+			powertrackDataSource.config = {};
 		});
 
-	});
-	
-	describe( "tweetAdmin", function() {
-		var message = 'princess is in another castle';
-		
-		var notifiedTimes; // Number of times twitter notification was sent
-
-		before( function() {			
-			// Capture the number of times we send a message via twitter
-			server.twit = {
-				updateStatus: function() { notifiedTimes++; }	
-			};
-		});
-		
-		beforeEach( function() {
-			// Reset capture variables
-			notifiedTimes = 0;
-		});
-		
-		it( 'No usernames does not send tweets', function() {
-			server.config.adminTwitterUsernames = undefined;
-			server.tweetAdmin( message );
-			server.config.adminTwitterUsernames = null;
-			server.tweetAdmin( message );
-			server.config.adminTwitterUsernames = '';
-			server.tweetAdmin( message );
-			test.value( notifiedTimes ).is ( 0 );
-		});
-		
-		it( 'Notification tweet is sent to a single user', function() {
-			server.config.adminTwitterUsernames = "mario";
-			server.tweetAdmin( message );
-			test.value( notifiedTimes ).is ( 1 );
-		});
-		
-		it( 'Notification tweet is sent to multiple users', function() {
-			server.config.adminTwitterUsernames = "mario, peach";
-			server.tweetAdmin( message );
-			test.value( notifiedTimes ).is ( 2 );
-		});
-		
-		// Restore/erase mocked functions
-		after( function(){
-			server.config = {};
-			server.twit = {};
-		});
-		
 	});
 	
 	describe( "cacheMode", function() {
@@ -467,8 +364,8 @@ describe( 'CognicityReportsPowertrack', function() {
 		var filterCalledTimes;
 		
 		before( function() {	
-			server.config.gnip = {};
-			server.Gnip = {
+			powertrackDataSource.config.gnip = {};
+			powertrackDataSource.Gnip = {
 				Stream: function() { 
 					return {
 						start: function(){},
@@ -487,72 +384,72 @@ describe( 'CognicityReportsPowertrack', function() {
 					};
 				}
 			};
-			oldFilter = server.filter;
-			server.filter = function(){ filterCalledTimes++; };
+			oldFilter = powertrackDataSource.filter;
+			powertrackDataSource.filter = function(){ filterCalledTimes++; };
 		});
 		
 		beforeEach( function() {
 			filterCalledTimes = 0;
-			server._cachedTweets = [];
-			server._cacheMode = false;
+			powertrackDataSource._cachedData = [];
+			powertrackDataSource._cacheMode = false;
 		});
 		
 		it( 'Realtime processing is enabled by default', function() {
-			server.connectStream(); // Start processing stream
+			powertrackDataSource.start(); // Start processing stream
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			test.value( filterCalledTimes ).is( 1 );
-			test.value( server._cachedTweets.length ).is( 0 );
+			test.value( powertrackDataSource._cachedData.length ).is( 0 );
 		});
 
 		it( 'Enabling caching mode stops realtime filtering and retains tweets', function() {
-			server.connectStream(); // Start processing stream
-			server.enableCacheMode(); // Start cache mode
+			powertrackDataSource.start(); // Start processing stream
+			powertrackDataSource.enableCacheMode(); // Start cache mode
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			test.value( filterCalledTimes ).is( 0 );
-			test.value( server._cachedTweets.length ).is( 1 );
+			test.value( powertrackDataSource._cachedData.length ).is( 1 );
 		});
 		
 		it( 'Disabling caching mode reenables realtime filtering', function() {
-			server.connectStream(); // Start processing stream
-			server.enableCacheMode(); // Start cache mode
-			server.disableCacheMode(); // Stop cache mode
+			powertrackDataSource.start(); // Start processing stream
+			powertrackDataSource.enableCacheMode(); // Start cache mode
+			powertrackDataSource.disableCacheMode(); // Stop cache mode
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			test.value( filterCalledTimes ).is( 1 );
-			test.value( server._cachedTweets.length ).is( 0 );
+			test.value( powertrackDataSource._cachedData.length ).is( 0 );
 		});
 
 		it( 'Cached tweets are processed when caching mode is disabled', function() {
-			server.connectStream(); // Start processing stream
-			server.enableCacheMode(); // Start cache mode
+			powertrackDataSource.start(); // Start processing stream
+			powertrackDataSource.enableCacheMode(); // Start cache mode
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			test.value( filterCalledTimes ).is( 0 );
-			test.value( server._cachedTweets.length ).is( 1 );
-			server.disableCacheMode(); // Stop cache mode
+			test.value( powertrackDataSource._cachedData.length ).is( 1 );
+			powertrackDataSource.disableCacheMode(); // Stop cache mode
 			test.value( filterCalledTimes ).is( 1 );
-			test.value( server._cachedTweets.length ).is( 0 );
+			test.value( powertrackDataSource._cachedData.length ).is( 0 );
 		});
 
 		it( 'Multiple tweet handling', function() {
-			server.connectStream(); // Start processing stream
+			powertrackDataSource.start(); // Start processing stream
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			test.value( filterCalledTimes ).is( 2 );
-			test.value( server._cachedTweets.length ).is( 0 );
-			server.enableCacheMode(); // Start cache mode
+			test.value( powertrackDataSource._cachedData.length ).is( 0 );
+			powertrackDataSource.enableCacheMode(); // Start cache mode
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
 			test.value( filterCalledTimes ).is( 2 );
-			test.value( server._cachedTweets.length ).is( 3 );
-			server.disableCacheMode(); // Stop cache mode
+			test.value( powertrackDataSource._cachedData.length ).is( 3 );
+			powertrackDataSource.disableCacheMode(); // Stop cache mode
 			test.value( filterCalledTimes ).is( 5 );
-			test.value( server._cachedTweets.length ).is( 0 );
+			test.value( powertrackDataSource._cachedData.length ).is( 0 );
 		});
 
 		// Restore/erase mocked functions
 		after( function(){
-			server.filter = oldFilter;
-			server.config = {};
+			powertrackDataSource.filter = oldFilter;
+			powertrackDataSource.config = {};
 		});
 		
 	});
@@ -577,14 +474,14 @@ describe( 'CognicityReportsPowertrack', function() {
 		var message = 'pan galactic gargle blaster';
 		
 		before( function() {	
-			server.twit = {
+			powertrackDataSource.twit = {
 				updateStatus: function(message,params,callback) {
 					updateStatusRan = true;
 					updateStatusParams = params;
-					callback( server.twit.tweetSendWillError, {} );
+					callback( powertrackDataSource.twit.tweetSendWillError, {} );
 				}	
 			};
-			server.config = {
+			powertrackDataSource.config = {
 				twitter: {
 					usernameReplyBlacklist : 'zaphod, ford,arthur'
 				}	
@@ -592,154 +489,57 @@ describe( 'CognicityReportsPowertrack', function() {
 		});
 		
 		beforeEach( function() {
-			server.twit.tweetSendWillError = false;
-			server.config.twitter.send_enabled = true;
+			powertrackDataSource.twit.tweetSendWillError = false;
+			powertrackDataSource.config.twitter.send_enabled = true;
 			successCallbackRan = false;
 			updateStatusRan = false;
 			updateStatusParams = {};
 		});
 		
 		it( "sendReplyTweet calls updateStatus and executes callback", function() {
-			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
 			test.value( successCallbackRan ).is( true );
 			test.value( updateStatusRan ).is( true );
 		});
 
 		
 		it( "Tweet not sent to usernames in usernameReplyBlacklist", function() {
-			server.sendReplyTweet( createTweetActivity('zaphod'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('zaphod'), message, success );
 			test.value( successCallbackRan ).is( false );
 
-			server.sendReplyTweet( createTweetActivity('ford'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('ford'), message, success );
 			test.value( successCallbackRan ).is( false );
 			
-			server.sendReplyTweet( createTweetActivity('arthur'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('arthur'), message, success );
 			test.value( successCallbackRan ).is( false );
 		});
 
 		it( 'Tweet not sent if send_enabled is false', function() {
-			server.config.twitter.send_enabled = false;
-			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource.config.twitter.send_enabled = false;
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
 			test.value( updateStatusRan ).is( false );
 		});
 
 		it( 'Callback executed if send_enabled is false', function() {
-			server.config.twitter.send_enabled = false;
-			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource.config.twitter.send_enabled = false;
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
 			test.value( successCallbackRan ).is( true );
 		});
 
 		it( 'Callback not executed if error tweeting occurs', function() {
-			server.twit.tweetSendWillError = true;
-			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource.twit.tweetSendWillError = true;
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
 			test.value( successCallbackRan ).is( false );
 		});
 
 		it( 'Tweet is reply to ID from tweetActivity', function() {
-			server.sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
 			test.value( updateStatusParams.in_reply_to_status_id ).is( tweetId );
 		});
 
 		after( function(){
-			server.twit = {};
-			server.config = {};
-		});
-	});
-
-	describe( "areTweetMessageLengthsOk", function() {
-		function createString(length) {
-			var s = "";
-			for (var i = 0; i<length; i++) {
-				s += "a";
-			}
-			return s;
-		}
-		
-		before( function() {
-		});
-		
-		beforeEach( function() {
-			server.config = {
-				twitter: {}	
-			};
-		});
-		
-		it( 'Non-object properties are not tested', function() {
-			server.config.twitter = {
-				singleProperty : createString(200)
-			};
-			
-			test.value( server.areTweetMessageLengthsOk() ).is( true );
-		});
-
-		it( 'Single short message is ok', function() {
-			server.config.twitter = {
-				messageObject : {
-					'en' : createString(1)
-				}
-			};
-			test.value( server.areTweetMessageLengthsOk() ).is( true );
-		});
-
-		it( 'Single long message is not ok', function() {
-			server.config.twitter = {
-				messageObject : {
-					'en' : createString(124)
-				}
-			};
-			test.value( server.areTweetMessageLengthsOk() ).is( false );
-		});
-
-		it( 'Message over timestamp boundary is ok when timestamp is off', function() {
-			server.config.twitter = {
-				messageObject : {
-					'en' : createString(120)
-				},
-				addTimestamp : false
-			};
-			test.value( server.areTweetMessageLengthsOk() ).is( true );
-		});
-
-		it( 'Message over timestamp boundary is not ok when timestamp is on', function() {
-			server.config.twitter = {
-				messageObject : {
-					'en' : createString(120)
-				},
-				addTimestamp : true
-			};
-			test.value( server.areTweetMessageLengthsOk() ).is( false );
-		});
-
-		it( 'Multiple short messages are ok', function() {
-			server.config.twitter = {
-				messageObject1 : {
-					'en' : createString(100),
-					'fr' : createString(100)
-				},
-				messageObject2 : {
-					'en' : createString(100),
-					'fr' : createString(100)
-				}
-			};
-			test.value( server.areTweetMessageLengthsOk() ).is( true );
-		});
-
-		it( 'Long message and multiple short messages are not ok', function() {
-			server.config.twitter = {
-				messageObject1 : {
-					'en' : createString(100),
-					'fr' : createString(100)
-				},
-				messageObject2 : {
-					'en' : createString(100),
-					'fr' : createString(200)
-				}
-			};
-			test.value( server.areTweetMessageLengthsOk() ).is( false );
-		});
-
-		after( function(){
-			server.config = {};
+			powertrackDataSource.twit = {};
+			powertrackDataSource.config = {};
 		});
 	});
 	
