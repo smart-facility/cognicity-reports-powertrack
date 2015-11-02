@@ -3,7 +3,8 @@ node_js:
    - "0.10"
 sudo: false
 
-# Setting up pre-requirements
+# This data source module expects to be run in a sub-directory of the cognicity-reports module
+# Is there a nicer way to do this? Can we prevent the redunandant first checkout by Travis? Can we checkout at the revision that Travis uses?
 before_install:
   - git clone https://github.com/smart-facility/cognicity-reports.git cognicity-reports -b 2.0.x
   - git clone https://github.com/smart-facility/cognicity-reports-powertrack.git cognicity-reports/cognicity-reports-powertrack -b 2.0.x
