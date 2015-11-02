@@ -4,7 +4,7 @@ node_js:
 sudo: false
 
 # Setting up pre-requirements
-install:
+before_install:
   - git clone https://github.com/smart-facility/cognicity-reports.git cognicity-reports -b 2.0.x
   - git clone https://github.com/smart-facility/cognicity-reports-powertrack.git cognicity-reports/cognicity-reports-powertrack -b 2.0.x
   - cd cognicity-reports/cognicity-reports-powertrack
