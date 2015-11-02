@@ -13,9 +13,11 @@ var PowertrackDataSource = function PowertrackDataSource(
 		config
 	){
 	
+	// Store references to harvester and logger
 	this.harvester = harvester;
 	this.logger = harvester.logger;
 
+	// Copy harvester config into our own config
 	this.config = harvester.config;
 	for (var prop in config) {
 		this.config[prop] = config[prop];
@@ -24,6 +26,7 @@ var PowertrackDataSource = function PowertrackDataSource(
 	// Gnip PowerTrack interface module
 	this.Gnip = require('gnip');
 	
+	// Set constructor reference (used to print the name of this data source)
 	this.constructor = PowertrackDataSource;
 }
 
@@ -49,7 +52,7 @@ PowertrackDataSource.prototype = {
 	harvester: null,
 	
 	/**
-	 * Instance of the Winston logger
+	 * Instance of the Winston logger.
 	 */
 	logger: null,
 	
@@ -322,11 +325,6 @@ PowertrackDataSource.prototype = {
 		});
 
 	},
-
-	/**
-	 * TODO
-	 */
-	stop: function() {},
 
 	/**
 	 * DB query success callback

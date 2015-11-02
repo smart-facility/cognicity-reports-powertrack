@@ -4,6 +4,8 @@
 var test = require('unit.js');
 /* jshint +W079 */
 var PowertrackDataSource = require('../PowertrackDataSource');
+
+// Mock harvester
 var harvester = {
 	logger: {},
 	tweetAdmin: function(){}
