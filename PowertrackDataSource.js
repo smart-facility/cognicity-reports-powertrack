@@ -340,7 +340,7 @@ PowertrackDataSource.prototype = {
 	_ifNewUser: function(user, success){
 		var self = this;
 
-		self.dbQuery(
+		self.harvester.dbQuery(
 			{
 				text: "SELECT user_hash FROM " + self.config.pg.table_all_users + " WHERE user_hash = md5($1);",
 				values: [ user ]
@@ -412,7 +412,7 @@ PowertrackDataSource.prototype = {
 		var self = this;
 
 		//insertUser with count -> upsert
-		self.dbQuery(
+		self.harvester.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_tweets + " " +
 					"(created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
@@ -437,7 +437,7 @@ PowertrackDataSource.prototype = {
 			},
 			function(result) {
 				self.logger.info('Logged confirmed tweet report');
-				self.dbQuery(
+				self.harvester.dbQuery(
 					{
 						text : "SELECT upsert_tweet_users(md5($1));",
 						values : [
@@ -461,7 +461,7 @@ PowertrackDataSource.prototype = {
 	_insertInvitee: function(tweetActivity){
 		var self = this;
 
-		self.dbQuery(
+		self.harvester.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_invitees + " (user_hash) VALUES (md5($1));",
 				values : [ tweetActivity.actor.preferredUsername ]
@@ -479,7 +479,7 @@ PowertrackDataSource.prototype = {
 	_insertUnConfirmed: function(tweetActivity){
 		var self = this;
 
-		self.dbQuery(
+		self.harvester.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_unconfirmed + " " +
 					"(created_at, the_geom) " +
@@ -505,7 +505,7 @@ PowertrackDataSource.prototype = {
 	_insertNonSpatial: function(tweetActivity){
 		var self = this;
 
-		self.dbQuery(
+		self.harvester.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_nonspatial_tweet_reports + " " +
 					"(created_at, text, hashtags, urls, user_mentions, lang) " +
@@ -533,7 +533,7 @@ PowertrackDataSource.prototype = {
 		);
 
 		self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-			self.dbQuery(
+			self.harvester.dbQuery(
 				{
 					text : "INSERT INTO " + self.config.pg.table_nonspatial_users + " (user_hash) VALUES (md5($1));",
 					values : [ tweetActivity.actor.preferredUsername ]
