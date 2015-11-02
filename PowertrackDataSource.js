@@ -23,6 +23,8 @@ var PowertrackDataSource = function PowertrackDataSource(
 	
 	// Gnip PowerTrack interface module
 	this.Gnip = require('gnip');
+	
+	this.constructor = PowertrackDataSource;
 }
 
 PowertrackDataSource.prototype = {
