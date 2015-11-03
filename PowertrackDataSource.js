@@ -20,7 +20,9 @@ var PowertrackDataSource = function PowertrackDataSource(
 	// Copy harvester config into our own config
 	this.config = harvester.config;
 	for (var prop in config) {
-		this.config[prop] = config[prop];
+		if (config.hasOwnProperty(prop)) {
+			this.config[prop] = config[prop];
+		}
 	}
 	
 	// Gnip PowerTrack interface module
@@ -28,7 +30,7 @@ var PowertrackDataSource = function PowertrackDataSource(
 	
 	// Set constructor reference (used to print the name of this data source)
 	this.constructor = PowertrackDataSource;
-}
+};
 
 PowertrackDataSource.prototype = {
 		

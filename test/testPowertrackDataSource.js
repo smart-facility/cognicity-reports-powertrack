@@ -547,6 +547,36 @@ describe( 'PowertrackDataSource', function() {
 		
 	});
 	
+	describe( "constructor", function() {
+		
+		before( function() {	
+		});
+		
+		beforeEach( function() {
+		});
+		
+		it( 'Config is merged from harvester with data source', function() {
+			var pds = new PowertrackDataSource(
+				{
+					config: {
+						zombie: "brains"
+					}
+				},
+				{
+					vampire: "blood"
+				}
+			);
+
+			test.value( pds.config.zombie ).is( 'brains' );
+			test.value( pds.config.vampire ).is( 'blood' );
+		});
+
+		// Restore/erase mocked functions
+		after( function(){
+		});
+		
+	});
+	
 // Test template
 //	describe( "suite", function() {
 //		before( function() {	

@@ -20,9 +20,9 @@
   },
   "scripts": {
     "test": "npm run jshint && npm run mocha",
-    "jshint": "jshint index.js sample-powertrack-config.js test/testPowertrackDataSource.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js",
+    "jshint": "jshint index.js PowertrackDataSource.js sample-powertrack-config.js test/testPowertrackDataSource.js twitter-send-test/twitter-send-test.js twitter-reply-test/twitter-reply-test.js",
     "mocha": "mocha test",
-    "build-docs": "jsdoc -d docs package.json sample-reports-config.js PowertrackDataSource.js",
+    "build-docs": "jsdoc -d docs package.json index.js sample-reports-config.js PowertrackDataSource.js",
     "build": "npm test && npm run build-docs && npm run coverage",
     "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha"
   }
