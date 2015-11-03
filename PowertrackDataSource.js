@@ -2,9 +2,8 @@
 
 /**
  * The Gnip Powertrack data source.
- * Connect to the Gnip Powertrack stream and processing matching tweet data.
+ * Connect to the Gnip Powertrack stream and process matching tweet data.
  * @constructor
- * @extends BaseDataSource
  * @param {Harvester} harvester An instance of the harvester object.
  * @param {object} config Gnip powertrack specific configuration.
  */
@@ -327,12 +326,6 @@ PowertrackDataSource.prototype = {
 		});
 
 	},
-
-	/**
-	 * DB query success callback
-	 * @callback DbQuerySuccess
-	 * @param {object} result The 'pg' module result object on a successful query
-	 */
 
 	/**
 	 * Only execute the success callback if the user is not currently in the all users table.
