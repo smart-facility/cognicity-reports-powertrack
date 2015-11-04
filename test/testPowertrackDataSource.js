@@ -5,8 +5,8 @@ var test = require('unit.js');
 /* jshint +W079 */
 var PowertrackDataSource = require('../PowertrackDataSource');
 
-// Mock harvester
-var harvester = {
+// Mock reports
+var reports = {
 	logger: {},
 	tweetAdmin: function(){}
 };
@@ -14,7 +14,7 @@ var harvester = {
 // Create server with empty objects
 // We will mock these objects as required for each test suite
 var powertrackDataSource = new PowertrackDataSource(
-	harvester,
+	reports,
 	{}
 );
 
@@ -26,7 +26,7 @@ powertrackDataSource.logger = {
 	verbose:function(){},
 	debug:function(){}
 };
-powertrackDataSource.harvester.logger = powertrackDataSource.logger;
+powertrackDataSource.reports.logger = powertrackDataSource.logger;
 
 // Test harness for CognicityReportsPowertrack object
 describe( 'PowertrackDataSource', function() {
@@ -284,7 +284,7 @@ describe( 'PowertrackDataSource', function() {
 				}
 			};
 			// Capture the number of times we send a message via twitter
-			powertrackDataSource.harvester.tweetAdmin = function() {
+			powertrackDataSource.reports.tweetAdmin = function() {
 				notifiedTimes++;
 			};
 			// Store the global setTimeout
@@ -328,7 +328,7 @@ describe( 'PowertrackDataSource', function() {
 		it( 'Reconnection notification tweet is only sent once', function() {
 			powertrackDataSource.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 3;
-			powertrackDataSource.harvester.config = {
+			powertrackDataSource.reports.config = {
 				adminTwitterUsernames: "astro"
 			};
 			powertrackDataSource.start(); // Will get connection errors only
@@ -339,7 +339,7 @@ describe( 'PowertrackDataSource', function() {
 		it( 'Reconnection notification tweet is sent again if reconnected between disconnections', function() {
 			powertrackDataSource.config.gnip.maxReconnectTimeout = 1000;
 			reconnectTimes = 2;
-			powertrackDataSource.harvester.config = {
+			powertrackDataSource.reports.config = {
 				adminTwitterUsernames: "astro"
 			};
 			powertrackDataSource.start(); // Will get connection errors only
@@ -353,8 +353,8 @@ describe( 'PowertrackDataSource', function() {
 			setTimeout = oldSetTimeout;
 			/* jshint +W020 */
 			powertrackDataSource.Gnip = {};
-			powertrackDataSource.harvester.config = {};
-			powertrackDataSource.harvester.twitter = {};
+			powertrackDataSource.reports.config = {};
+			powertrackDataSource.reports.twitter = {};
 			powertrackDataSource.config = {};
 			powertrackDataSource.tweetAdmin = oldTweetAdmin;
 		});
@@ -381,11 +381,11 @@ describe( 'PowertrackDataSource', function() {
 		var message = 'pan galactic gargle blaster';
 		
 		before( function() {	
-			powertrackDataSource.harvester.twitter = {
+			powertrackDataSource.reports.twitter = {
 				updateStatus: function(message,params,callback) {
 					updateStatusRan = true;
 					updateStatusParams = params;
-					callback( powertrackDataSource.harvester.twitter.tweetSendWillError, {} );
+					callback( powertrackDataSource.reports.twitter.tweetSendWillError, {} );
 				}	
 			};
 			powertrackDataSource.config = {
@@ -396,7 +396,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 		
 		beforeEach( function() {
-			powertrackDataSource.harvester.twitter.tweetSendWillError = false;
+			powertrackDataSource.reports.twitter.tweetSendWillError = false;
 			powertrackDataSource.config.twitter.send_enabled = true;
 			successCallbackRan = false;
 			updateStatusRan = false;
@@ -434,7 +434,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 		it( 'Callback not executed if error tweeting occurs', function() {
-			powertrackDataSource.harvester.twitter.tweetSendWillError = true;
+			powertrackDataSource.reports.twitter.tweetSendWillError = true;
 			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
 			test.value( successCallbackRan ).is( false );
 		});
@@ -445,7 +445,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 		after( function(){
-			powertrackDataSource.harvester.twitter = {};
+			powertrackDataSource.reports.twitter = {};
 			powertrackDataSource.config = {};
 		});
 	});
@@ -555,7 +555,7 @@ describe( 'PowertrackDataSource', function() {
 		beforeEach( function() {
 		});
 		
-		it( 'Config is merged from harvester with data source', function() {
+		it( 'Config is merged from reports with data source', function() {
 			var pds = new PowertrackDataSource(
 				{
 					config: {

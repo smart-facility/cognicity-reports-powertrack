@@ -4,20 +4,20 @@
  * The Gnip Powertrack data source.
  * Connect to the Gnip Powertrack stream and process matching tweet data.
  * @constructor
- * @param {Harvester} harvester An instance of the harvester object.
+ * @param {Reports} reports An instance of the reports object.
  * @param {object} config Gnip powertrack specific configuration.
  */
 var PowertrackDataSource = function PowertrackDataSource(
-		harvester,
+		reports,
 		config
 	){
 	
-	// Store references to harvester and logger
-	this.harvester = harvester;
-	this.logger = harvester.logger;
+	// Store references to reports and logger
+	this.reports = reports;
+	this.logger = reports.logger;
 
-	// Copy harvester config into our own config
-	this.config = harvester.config;
+	// Copy reports config into our own config
+	this.config = reports.config;
 	for (var prop in config) {
 		if (config.hasOwnProperty(prop)) {
 			this.config[prop] = config[prop];
@@ -41,16 +41,16 @@ PowertrackDataSource.prototype = {
 
 	/**
 	 * Data source configuration.
-	 * This contains the harvester configuration and the data source specific configuration.
+	 * This contains the reports configuration and the data source specific configuration.
 	 * @type {object}
 	 */
 	config: {},
 	
 	/**
-	 * Instance of the harvester that the data source uses to interact with Cognicity Server.
-	 * @type {Harvester}
+	 * Instance of the reports module that the data source uses to interact with Cognicity Server.
+	 * @type {Reports}
 	 */
-	harvester: null,
+	reports: null,
 	
 	/**
 	 * Instance of the Winston logger.
@@ -213,7 +213,7 @@ PowertrackDataSource.prototype = {
 				if (!disconnectionNotificationSent) {
 					var message = "Cognicity Reports PowerTrack Gnip connection has been offline for " +
 						self.config.gnip.maxReconnectTimeout + " seconds";
-					self.harvester.tweetAdmin(message);
+					self.reports.tweetAdmin(message);
 					disconnectionNotificationSent = true;
 				}
 			} else {
@@ -335,7 +335,7 @@ PowertrackDataSource.prototype = {
 	_ifNewUser: function(user, success){
 		var self = this;
 
-		self.harvester.dbQuery(
+		self.reports.dbQuery(
 			{
 				text: "SELECT user_hash FROM " + self.config.pg.table_all_users + " WHERE user_hash = md5($1);",
 				values: [ user ]
@@ -382,7 +382,7 @@ PowertrackDataSource.prototype = {
 			if ( self.config.twitter.addTimestamp ) message = message + " " + new Date().getTime();
 
 			if (self.config.twitter.send_enabled === true){
-				self.harvester.twitter.updateStatus(message, params, function(err, data){
+				self.reports.twitter.updateStatus(message, params, function(err, data){
 					if (err) {
 						self.logger.error( 'Tweeting "' + message + '" with params "' + JSON.stringify(params) + '" failed: ' + err );
 					} else {
@@ -407,7 +407,7 @@ PowertrackDataSource.prototype = {
 		var self = this;
 
 		//insertUser with count -> upsert
-		self.harvester.dbQuery(
+		self.reports.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_tweets + " " +
 					"(created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
@@ -432,7 +432,7 @@ PowertrackDataSource.prototype = {
 			},
 			function(result) {
 				self.logger.info('Logged confirmed tweet report');
-				self.harvester.dbQuery(
+				self.reports.dbQuery(
 					{
 						text : "SELECT upsert_tweet_users(md5($1));",
 						values : [
@@ -456,7 +456,7 @@ PowertrackDataSource.prototype = {
 	_insertInvitee: function(tweetActivity){
 		var self = this;
 
-		self.harvester.dbQuery(
+		self.reports.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_invitees + " (user_hash) VALUES (md5($1));",
 				values : [ tweetActivity.actor.preferredUsername ]
@@ -474,7 +474,7 @@ PowertrackDataSource.prototype = {
 	_insertUnConfirmed: function(tweetActivity){
 		var self = this;
 
-		self.harvester.dbQuery(
+		self.reports.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_unconfirmed + " " +
 					"(created_at, the_geom) " +
@@ -500,7 +500,7 @@ PowertrackDataSource.prototype = {
 	_insertNonSpatial: function(tweetActivity){
 		var self = this;
 
-		self.harvester.dbQuery(
+		self.reports.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_nonspatial_tweet_reports + " " +
 					"(created_at, text, hashtags, urls, user_mentions, lang) " +
@@ -528,7 +528,7 @@ PowertrackDataSource.prototype = {
 		);
 
 		self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-			self.harvester.dbQuery(
+			self.reports.dbQuery(
 				{
 					text : "INSERT INTO " + self.config.pg.table_nonspatial_users + " (user_hash) VALUES (md5($1));",
 					values : [ tweetActivity.actor.preferredUsername ]
