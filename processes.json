@@ -1,7 +1,0 @@
-[{
-  "script"  : "app.js",
-  "name"    : "harvester",
-  "watch"   : true,
-  ignore_watch : ["[\\/\\\\]\\./", "node_modules", "git-hooks", "test", "twitter-reply-test", "twitter-send-test", "^.*\.log$"],
-  "args"    : ["sample-reports-config.js"]
-}]
