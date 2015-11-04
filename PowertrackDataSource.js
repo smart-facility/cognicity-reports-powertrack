@@ -382,7 +382,7 @@ PowertrackDataSource.prototype = {
 			if ( self.config.twitter.addTimestamp ) message = message + " " + new Date().getTime();
 
 			if (self.config.twitter.send_enabled === true){
-				self.twit.updateStatus(message, params, function(err, data){
+				self.harvester.twitter.updateStatus(message, params, function(err, data){
 					if (err) {
 						self.logger.error( 'Tweeting "' + message + '" with params "' + JSON.stringify(params) + '" failed: ' + err );
 					} else {
