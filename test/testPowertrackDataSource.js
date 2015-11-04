@@ -381,11 +381,11 @@ describe( 'PowertrackDataSource', function() {
 		var message = 'pan galactic gargle blaster';
 		
 		before( function() {	
-			powertrackDataSource.twit = {
+			powertrackDataSource.harvester.twitter = {
 				updateStatus: function(message,params,callback) {
 					updateStatusRan = true;
 					updateStatusParams = params;
-					callback( powertrackDataSource.twit.tweetSendWillError, {} );
+					callback( powertrackDataSource.harvester.twitter.tweetSendWillError, {} );
 				}	
 			};
 			powertrackDataSource.config = {
@@ -396,7 +396,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 		
 		beforeEach( function() {
-			powertrackDataSource.twit.tweetSendWillError = false;
+			powertrackDataSource.harvester.twitter.tweetSendWillError = false;
 			powertrackDataSource.config.twitter.send_enabled = true;
 			successCallbackRan = false;
 			updateStatusRan = false;
@@ -434,7 +434,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 		it( 'Callback not executed if error tweeting occurs', function() {
-			powertrackDataSource.twit.tweetSendWillError = true;
+			powertrackDataSource.harvester.twitter.tweetSendWillError = true;
 			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
 			test.value( successCallbackRan ).is( false );
 		});
@@ -445,7 +445,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 		after( function(){
-			powertrackDataSource.twit = {};
+			powertrackDataSource.harvester.twitter = {};
 			powertrackDataSource.config = {};
 		});
 	});
@@ -576,6 +576,12 @@ describe( 'PowertrackDataSource', function() {
 		});
 		
 	});
+	
+	// TODO _ifNewUser
+	// TODO _insertConfirmed
+	// TODO _insertInvitee
+	// TODO _insertUnConfirmed
+	// TODO _insertNonSpatial
 	
 // Test template
 //	describe( "suite", function() {
