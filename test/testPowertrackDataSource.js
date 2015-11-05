@@ -549,30 +549,20 @@ describe( 'PowertrackDataSource', function() {
 	
 	describe( "constructor", function() {
 		
-		before( function() {	
-		});
-		
-		beforeEach( function() {
-		});
-		
 		it( 'Config is merged from reports with data source', function() {
 			var pds = new PowertrackDataSource(
 				{
 					config: {
-						zombie: "brains"
+						jupiter: "europa"
 					}
 				},
 				{
-					vampire: "blood"
+					saturn: "enceladus"
 				}
 			);
 
-			test.value( pds.config.zombie ).is( 'brains' );
-			test.value( pds.config.vampire ).is( 'blood' );
-		});
-
-		// Restore/erase mocked functions
-		after( function(){
+			test.value( pds.config.jupiter ).is( 'europa' );
+			test.value( pds.config.saturn ).is( 'enceladus' );
 		});
 		
 	});
