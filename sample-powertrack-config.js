@@ -1,6 +1,6 @@
 'use strict';
 
-// sample-config.js - sample configuration file for cognicity-reports module
+// sample-powertrack-config.js - sample configuration file for cognicity-reports-powertrack module
 
 /**
  * Configuration for cognicity-reports-powertrack
