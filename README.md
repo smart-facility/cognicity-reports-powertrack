@@ -7,7 +7,8 @@ CogniCity
 [![Build Status](https://travis-ci.org/smart-facility/cognicity-reports-powertrack.svg)](https://travis-ci.org/smart-facility/cognicity-reports-powertrack)
 
 ### About
-Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity framework, responsible for collecting relevant tweets via Gnip PowerTrack, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
+Cognicity-reports-powertrack is the NodeJS reports module for collecting relevant tweets via Gnip PowerTrack as part of the Cognicity Framework, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
+This module is not designed to be run standalone but is designed to be run as a submodule of [cognicity-reports](https://github.com/smart-facility/cognicity-reports), which can run just with this submodule alone. For further information
 
 ### API Documentation
 [http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html](http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html)
@@ -28,9 +29,9 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 If you're going to commit changes to the JavaScript, be sure to run 'npm test' first - and fix any issues that it complains about, otherwise the build will fail when you push the commit.
 
 ### Installation
-Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](https://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
+Please install this as a submodule of [cognicity-reports](https://github.com/smart-facility/cognicity-reports). Please refer to the [documentation of that project](https://github.com/smart-facility/cognicity-reports/blob/2.0.x/README.md) for further information.
 
-Install the node dependencies in package.json using NPM: `npm install`
+Install the node dependencies for this submodule as listed in package.json using npm: `npm install`
 
 #### Platform-specific notes ####
 To build on OS X we recommend using [homebrew](http://brew.sh) to install node, npm, and required node modules as follows:
