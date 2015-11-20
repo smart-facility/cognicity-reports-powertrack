@@ -1,5 +1,7 @@
 'use strict';
 
+/* global setTimeout:true */
+
 /* jshint -W079 */ // Ignore this error for this import only, as we get a redefinition problem
 var test = require('unit.js');
 /* jshint +W079 */
@@ -30,7 +32,7 @@ powertrackDataSource.reports.logger = powertrackDataSource.logger;
 
 // Test harness for CognicityReportsPowertrack object
 describe( 'PowertrackDataSource', function() {
-	
+
 	// Test suite for i18n getMessage function
 	describe( '_getMessage', function() {
 		// Setup by adding some codes and a defaultLanguage to the config
@@ -45,19 +47,19 @@ describe( 'PowertrackDataSource', function() {
 				}
 			};
 		});
-		
+
 		// Create a dummy tweet activity object based on the language codes passed in
 		function createTweetActivity(lang1, lang2) {
 			var tweetActivity = {};
 			if (lang1) tweetActivity.twitter_lang = lang1;
 			if (lang2) tweetActivity.gnip = {
 				language: {
-					value: lang2	
+					value: lang2
 				}
 			};
 			return tweetActivity;
 		}
-		
+
 		it( 'Should resolve a string for twitter language code', function() {
 			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('human') ) ).is( 'hi' );
 		});
@@ -74,7 +76,7 @@ describe( 'PowertrackDataSource', function() {
 			test.value( powertrackDataSource._getMessage( 'farewell', createTweetActivity('human') ) ).is( null );
 		});
 	});
-	
+
 	// Test suite for filter function
 	describe( 'filter', function() {
 		// The strings we look for in the log messages
@@ -83,7 +85,7 @@ describe( 'PowertrackDataSource', function() {
 		var unconfirmedString = "= unconfirmed";
 		var askToParticipateString = "= ask user to participate";
 		var noMatchString = "Tweet did not match";
-		
+
 		// Create a dummy tweetActivity object matching the criteria we specified
 		function createTweetActivity(boundingbox, geo, addressed, location) {
 			var tweetActivity = {
@@ -95,14 +97,14 @@ describe( 'PowertrackDataSource', function() {
 				},
 				body : "b"
 			};
-			
+
 			if (boundingbox) tweetActivity.gnip.matching_rules.push( {tag:"boundingbox"} );
 			if (addressed) tweetActivity.gnip.matching_rules.push( {tag:"addressed"} );
 			if (location) tweetActivity.gnip.matching_rules.push( {tag:"location"} );
 			if (geo) tweetActivity.geo = {
 				coordinates: [1,2]
 			};
-			
+
 			return tweetActivity;
 		}
 
@@ -116,7 +118,7 @@ describe( 'PowertrackDataSource', function() {
 		var oldSendReplyTweet;
 		var oldGetMessage;
 		var oldIfNewUser;
-		
+
 		// Store the last message we logged; this lets us do some neat testing of code paths
 		var lastLog = "";
 
@@ -130,7 +132,7 @@ describe( 'PowertrackDataSource', function() {
 				verbose:function(msg){ lastLog = msg; },
 				debug:function(msg){ lastLog = msg; }
 			};
-			
+
 			// Retain functions we're going to mock out
 			oldInsertConfirmed = powertrackDataSource._insertConfirmed;
 			oldInsertNonSpatial = powertrackDataSource._insertNonSpatial;
@@ -139,7 +141,7 @@ describe( 'PowertrackDataSource', function() {
 			oldSendReplyTweet = powertrackDataSource._sendReplyTweet;
 			oldGetMessage = powertrackDataSource._getMessage;
 			oldIfNewUser = powertrackDataSource._ifNewUser;
-			
+
 			// Mock these methods as we will look at the log message to check the code path
 			powertrackDataSource._insertConfirmed = function(){};
 			powertrackDataSource._insertNonSpatial = function(){};
@@ -149,9 +151,9 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource._getMessage = function(){};
 			powertrackDataSource._ifNewUser = function(){};
 		});
-		
+
 		// Test all the variants of the 4 true/false categorization switches
-		
+
 		// Location T/F
 		it( '+BOUNDINGBOX +GEO +ADDRESSED +LOCATION = confirmed', function() {
 			powertrackDataSource.filter( createTweetActivity(true, true, true, true) );
@@ -161,7 +163,7 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource.filter( createTweetActivity(true, true, true, false) );
 			test.value( lastLog ).contains( confirmedString );
 		});
-		
+
 		// Addressed F + above
 		it( '+BOUNDINGBOX +GEO -ADDRESSED +LOCATION = unconfirmed', function() {
 			powertrackDataSource.filter( createTweetActivity(true, true, false, true) );
@@ -171,7 +173,7 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource.filter( createTweetActivity(true, true, false, false) );
 			test.value( lastLog ).contains( unconfirmedString );
 		});
-		
+
 		// Geo F + above
 		// Note that +BOUNDINGBOX -GEO means that BOUNDINGBOX is set to false in our
 		// filter code, as a BOUNDINGBOX hit without explicit tweet GEO is not enough
@@ -192,7 +194,7 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource.filter( createTweetActivity(true, false, false, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
-		
+
 		// Boundingbox F + above
 		it( '-BOUNDINGBOX +GEO +ADDRESSED +LOCATION = no match', function() {
 			powertrackDataSource.filter( createTweetActivity(false, true, true, true) );
@@ -226,7 +228,7 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource.filter( createTweetActivity(false, false, false, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
-		
+
 		// Restore/erase mocked functions
 		after( function() {
 			powertrackDataSource.logger = oldLogger;
@@ -236,10 +238,10 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource._insertInvitee = oldinsertInvitee;
 			powertrackDataSource._sendReplyTweet = oldSendReplyTweet;
 			powertrackDataSource._getMessage = oldGetMessage;
-			powertrackDataSource._ifNewUser = oldIfNewUser;			
+			powertrackDataSource._ifNewUser = oldIfNewUser;
 		});
 	});
-	
+
 	// Test suite for start
 	describe( 'start', function() {
 		var streamStarted; // Counter for number of times Gnip.Stream.start was called
@@ -249,11 +251,11 @@ describe( 'PowertrackDataSource', function() {
 		var streamReadyHandler; // Capture the ready handler so we can call it explicitly during test
 		var notifiedTimes; // Number of times twitter notification was sent
 		var oldTweetAdmin; // Save old tweetAdmin function
-		var oldSetTimeout; // Capture global setTimeout so we can mock it 
-		
+		var oldSetTimeout; // Capture global setTimeout so we can mock it
+
 		before( function() {
 			powertrackDataSource.Gnip = {
-				Stream: function() { 
+				Stream: function() {
 					return {
 						start: function(){
 							// For the specified number of times, increment the counter and call the error handler immediately
@@ -275,7 +277,7 @@ describe( 'PowertrackDataSource', function() {
 					};
 				},
 				// Mock the rules object and just call the callback immediately
-				Rules: function() { 
+				Rules: function() {
 					return {
 						live: {
 							update: function(rules, success){ success(); }
@@ -295,20 +297,20 @@ describe( 'PowertrackDataSource', function() {
 				lastDelay = delay;
 				callback();
 			};
-			/* jshint +W020 */			
+			/* jshint +W020 */
 		});
-		
+
 		beforeEach( function() {
 			// Setup object for Gnip configuration
 			powertrackDataSource.config.gnip = {};
-			
+
 			// Reset the counters and handler references
 			streamStarted = 0;
 			lastDelay = 0;
 			streamErrorHandler = null;
 			notifiedTimes = 0;
 		});
-		
+
 		it( 'Reconnection time increases exponentially', function() {
 			powertrackDataSource.config.gnip.maxReconnectTimeout = 10000;
 			reconnectTimes = 3;
@@ -366,7 +368,7 @@ describe( 'PowertrackDataSource', function() {
 		var updateStatusRan;
 		var updateStatusParams;
 		var tweetId = "5377776775";
-		
+
 		function createTweetActivity(username) {
 			return {
 				id : 'tag:search.twitter.com,2005:'+tweetId,
@@ -375,26 +377,26 @@ describe( 'PowertrackDataSource', function() {
 				}
 			};
 		}
-		function success(){ 
+		function success(){
 			successCallbackRan = true;
 		}
 		var message = 'pan galactic gargle blaster';
-		
-		before( function() {	
+
+		before( function() {
 			powertrackDataSource.reports.twitter = {
 				updateStatus: function(message,params,callback) {
 					updateStatusRan = true;
 					updateStatusParams = params;
 					callback( powertrackDataSource.reports.twitter.tweetSendWillError, {} );
-				}	
+				}
 			};
 			powertrackDataSource.config = {
 				twitter: {
 					usernameReplyBlacklist : 'zaphod, ford,arthur'
-				}	
+				}
 			};
 		});
-		
+
 		beforeEach( function() {
 			powertrackDataSource.reports.twitter.tweetSendWillError = false;
 			powertrackDataSource.config.twitter.send_enabled = true;
@@ -402,21 +404,21 @@ describe( 'PowertrackDataSource', function() {
 			updateStatusRan = false;
 			updateStatusParams = {};
 		});
-		
+
 		it( "sendReplyTweet calls updateStatus and executes callback", function() {
 			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
 			test.value( successCallbackRan ).is( true );
 			test.value( updateStatusRan ).is( true );
 		});
 
-		
+
 		it( "Tweet not sent to usernames in usernameReplyBlacklist", function() {
 			powertrackDataSource._sendReplyTweet( createTweetActivity('zaphod'), message, success );
 			test.value( successCallbackRan ).is( false );
 
 			powertrackDataSource._sendReplyTweet( createTweetActivity('ford'), message, success );
 			test.value( successCallbackRan ).is( false );
-			
+
 			powertrackDataSource._sendReplyTweet( createTweetActivity('arthur'), message, success );
 			test.value( successCallbackRan ).is( false );
 		});
@@ -449,18 +451,18 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource.config = {};
 		});
 	});
-	
+
 	describe( "cacheMode", function() {
 		var streamTweetHandler; // Capture the tweet handler so we can call it explicitly during test
 		var oldFilter; // Capture server filter method
 		var tweetActivity = {actor:'ripley'};
-		
+
 		var filterCalledTimes;
-		
-		before( function() {	
+
+		before( function() {
 			powertrackDataSource.config.gnip = {};
 			powertrackDataSource.Gnip = {
-				Stream: function() { 
+				Stream: function() {
 					return {
 						start: function(){},
 						// Capture the error handler so we can call it immediately
@@ -470,7 +472,7 @@ describe( 'PowertrackDataSource', function() {
 					};
 				},
 				// Mock the rules object and just call the callback immediately
-				Rules: function() { 
+				Rules: function() {
 					return {
 						live: {
 							update: function(rules, success){ success(); }
@@ -481,13 +483,13 @@ describe( 'PowertrackDataSource', function() {
 			oldFilter = powertrackDataSource.filter;
 			powertrackDataSource.filter = function(){ filterCalledTimes++; };
 		});
-		
+
 		beforeEach( function() {
 			filterCalledTimes = 0;
 			powertrackDataSource._cachedData = [];
 			powertrackDataSource._cacheMode = false;
 		});
-		
+
 		it( 'Realtime processing is enabled by default', function() {
 			powertrackDataSource.start(); // Start processing stream
 			streamTweetHandler(tweetActivity); // Simulate incoming tweet
@@ -502,7 +504,7 @@ describe( 'PowertrackDataSource', function() {
 			test.value( filterCalledTimes ).is( 0 );
 			test.value( powertrackDataSource._cachedData.length ).is( 1 );
 		});
-		
+
 		it( 'Disabling caching mode reenables realtime filtering', function() {
 			powertrackDataSource.start(); // Start processing stream
 			powertrackDataSource.enableCacheMode(); // Start cache mode
@@ -544,11 +546,11 @@ describe( 'PowertrackDataSource', function() {
 		after( function(){
 			powertrackDataSource.filter = oldFilter;
 		});
-		
+
 	});
-	
+
 	describe( "constructor", function() {
-		
+
 		it( 'Config is merged from reports with data source', function() {
 			var pds = new PowertrackDataSource(
 				{
@@ -564,28 +566,28 @@ describe( 'PowertrackDataSource', function() {
 			test.value( pds.config.jupiter ).is( 'europa' );
 			test.value( pds.config.saturn ).is( 'enceladus' );
 		});
-		
+
 	});
-	
+
 	// TODO _ifNewUser
 	// TODO _insertConfirmed
 	// TODO _insertInvitee
 	// TODO _insertUnConfirmed
 	// TODO _insertNonSpatial
-	
+
 // Test template
 //	describe( "suite", function() {
-//		before( function() {	
+//		before( function() {
 //		});
-//		
+//
 //		beforeEach( function() {
 //		});
-//		
+//
 //		it( 'case', function() {
 //		});
 //
 //		after( function(){
 //		});
 //	});
-	
+
 });
