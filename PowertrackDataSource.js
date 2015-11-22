@@ -11,7 +11,7 @@ var PowertrackDataSource = function PowertrackDataSource(
 		reports,
 		config
 	){
-	
+
 	// Store references to reports and logger
 	this.reports = reports;
 	this.logger = reports.logger;
@@ -23,16 +23,16 @@ var PowertrackDataSource = function PowertrackDataSource(
 			this.config[prop] = config[prop];
 		}
 	}
-	
+
 	// Gnip PowerTrack interface module
 	this.Gnip = require('gnip');
-	
+
 	// Set constructor reference (used to print the name of this data source)
 	this.constructor = PowertrackDataSource;
 };
 
 PowertrackDataSource.prototype = {
-		
+
 	/**
 	 * Instance of Gnip object from Gnip module
 	 * @type {object}
@@ -45,31 +45,31 @@ PowertrackDataSource.prototype = {
 	 * @type {object}
 	 */
 	config: {},
-	
+
 	/**
 	 * Instance of the reports module that the data source uses to interact with Cognicity Server.
 	 * @type {Reports}
 	 */
 	reports: null,
-	
+
 	/**
 	 * Instance of the Winston logger.
 	 */
 	logger: null,
-	
+
 	/**
 	 * Flag signifying if we are currently able to process incoming data immediately.
 	 * Turned on if the database is temporarily offline so we can cache for a short time.
 	 * @type {boolean}
 	 */
 	_cacheMode: false,
-	
+
 	/**
 	 * Store data if we cannot process immediately, for later processing.
 	 * @type {Array}
 	 */
 	_cachedData: [],
-	
+
 	/**
 	 * Resolve message code from config.twitter using passed language codes.
 	 * Will fall back to trying to resolve message using default language set in configuration.
@@ -358,14 +358,14 @@ PowertrackDataSource.prototype = {
 	 */
 	_sendReplyTweet: function(tweetActivity, message, success) {
 		var self = this;
-		
+
 		var usernameInBlacklist = false;
 		if (self.config.twitter.usernameReplyBlacklist) {
 			self.config.twitter.usernameReplyBlacklist.split(",").forEach( function(blacklistUsername){
 				if ( tweetActivity.actor.preferredUsername === blacklistUsername.trim() ) usernameInBlacklist = true;
 			});
 		}
-		
+
 		if ( usernameInBlacklist ) {
 			// Never send tweets to usernames in blacklist
 			self.logger.info( '_sendReplyTweet: Tweet user is in usernameReplyBlacklist, not sending' );
@@ -394,7 +394,7 @@ PowertrackDataSource.prototype = {
 				self.logger.info( '_sendReplyTweet: In test mode - no message will be sent. Callback will still run.' );
 				self.logger.info( '_sendReplyTweet: Would have tweeted: "' + message + '" with params ' + JSON.stringify(params) );
 				if (success) success();
-			}	
+			}
 		}
 	},
 
@@ -410,7 +410,7 @@ PowertrackDataSource.prototype = {
 		self.reports.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_tweets + " " +
-					"(created_at, text, hashtags, urls, user_mentions, lang, the_geom) " +
+					"(created_at, text, hashtags, text_urls, user_mentions, lang, the_geom) " +
 					"VALUES (" +
 					"$1, " +
 					"$2, " +
@@ -539,13 +539,13 @@ PowertrackDataSource.prototype = {
 			);
 		});
 	},
-	
+
 	/**
 	 * Stop realtime processing of tweets and start caching tweets until caching mode is disabled.
 	 */
 	enableCacheMode: function() {
 		var self = this;
-		
+
 		self.logger.verbose( 'enableCacheMode: Enabling caching mode' );
 		self._cacheMode = true;
 	},
@@ -556,10 +556,10 @@ PowertrackDataSource.prototype = {
 	 */
 	disableCacheMode: function() {
 		var self = this;
-		
+
 		self.logger.verbose( 'disableCacheMode: Disabling caching mode' );
 		self._cacheMode = false;
-		
+
 		self.logger.verbose( 'disableCacheMode: Processing ' + self._cachedData.length + ' cached tweets' );
 		self._cachedData.forEach( function(data) {
 			self.filter(data);
