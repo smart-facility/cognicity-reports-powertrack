@@ -410,7 +410,7 @@ PowertrackDataSource.prototype = {
 		self.reports.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_tweets + " " +
-					"(created_at, text, hashtags, text_urls, user_mentions, lang, the_geom) " +
+					"(created_at, text, hashtags, text_urls, user_mentions, lang, url, the_geom) " +
 					"VALUES (" +
 					"$1, " +
 					"$2, " +
@@ -418,7 +418,8 @@ PowertrackDataSource.prototype = {
 					"$4, " +
 					"$5, " +
 					"$6, " +
-					"ST_GeomFromText('POINT(' || $7 || ')',4326)" +
+					"$7, " +
+					"ST_GeomFromText('POINT(' || $8 || ')',4326)" +
 					");",
 				values : [
 				    tweetActivity.postedTime,
@@ -427,6 +428,7 @@ PowertrackDataSource.prototype = {
 				    JSON.stringify(tweetActivity.twitter_entities.urls),
 				    JSON.stringify(tweetActivity.twitter_entities.user_mentions),
 				    tweetActivity.twitter_lang,
+						tweetActivity.link,
 				    tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
 				]
 			},
