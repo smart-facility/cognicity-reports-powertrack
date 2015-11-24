@@ -357,7 +357,7 @@ PowertrackDataSource.prototype = {
 	 * @param {boolean} send with timestamp toggle
 	 * @param {function} success Callback function called on success
 	 */
-	_sendReplyTweet: function(tweetActivity, message, addtimestamp, success) {
+	_sendReplyTweet: function(tweetActivity, message, addTimestamp, success) {
 		var self = this;
 
 		var usernameInBlacklist = false;
