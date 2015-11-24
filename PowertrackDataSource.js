@@ -118,7 +118,7 @@ PowertrackDataSource.prototype = {
 
 		// Catch tweets from authorised user to verification
 		if ( tweetActivity.actor.preferredUsername === self.config.twitter.usernameVerify && tweetActivity.verb === 'share') {
-			self._ifConfirmedReportExists(tweetActivity.id.split(',')[1].split(':')[1], self._insertVerified);
+			self._processVerifiedReport(tweetActivity.object.id.split(',')[1].split(':')[1]);
 		}
 
 		// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
@@ -356,49 +356,39 @@ PowertrackDataSource.prototype = {
 	},
 
 	/**
-	 * Only execute the success callback if a matching tweet_id is found in the tweet_reports table
-	 * @param {integer} tweet_id The twitter id to check if exists
-	 * @param {DbQuerySuccess} callback Callback to execute if the user doesn't exist
+	 * Update a report status to verified if a matching tweet_id is found in the tweet_reports table
+	 * @param {integer} retweet_id The retweeted twitter ID which may be a confirmed report
 	 */
-	_ifConfirmedReportExists: function(tweet_id, success){
+	_processVerifiedReport: function(retweet_id){
 		var self = this;
-
+		// Check to see if the referenced report is confirmed
 		self.reports.dbQuery(
 			{
 				text: "SELECT pkey FROM " + self.config.pg.table_tweets + " WHERE tweet_id = $1;",
-				values: [ tweet_id ]
+				values : [retweet_id]
 			},
+			// Update status
 			function(result) {
-				if (result && result.rows && result.rows.length === 0) {
-					success(result);
-				} else {
-					self.logger.debug("Not performing callback as tweet not found in database");
+				if (result && result.rows && result.rows.length === 1 && result.rows[0]) {
+					self.reports.dbQuery(
+						{
+							text : "UPDATE " + self.config.pg.table_all_reports + " " +
+								"SET STATUS = 'verified' WHERE fkey = $1 AND source = 'twitter';",
+							values : [
+								result.rows[0].pkey
+							]
+						},
+						function(result) {
+							self.logger.info('Logged verified tweet report');
+						}
+					);
+				}
+					else {
+						self.logger.debug("Not performing callback as tweet not found in database");
 				}
 			}
 		);
 	},
-
-	/**
-	 * Insert a verified report - i.e. retweeted by authorised user
-	 * @param {report_id_foreign_key} primary key of tweet in table tweet_reports is foreign key in all_reports table.
-	 */
-	_insertVerified: function(report_id_foreign_key) {
-		var self = this;
-
-		self.reports.dbQuery(
-			{
-				text : "UPDATE " + self.config.pg.table_all_reports + " " +
-					"SET STATUS = 'verified' WHERE fkey = $1 AND source = 'twitter';",
-				values : [
-					report_id_foreign_key
-				]
-			},
-			function(result) {
-				self.logger.info('Logged verified tweet report');
-			}
-		);
-	},
-
 
 	/**
 	 * Send @reply Twitter message
