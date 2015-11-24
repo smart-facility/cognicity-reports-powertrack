@@ -151,7 +151,7 @@ PowertrackDataSource.prototype = {
 
 			// If we haven't contacted the user before, send them an invite tweet
 			self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-				self._sendReplyTweet(tweetActivity, self._getMessage('invite_text', tweetActivity), function(){
+				self._sendReplyTweet(tweetActivity, self._getMessage('invite_text', tweetActivity), self.config.twitter.addTimestamp, function(){
 					self._insertInvitee(tweetActivity);
 				});
 			});
@@ -162,14 +162,14 @@ PowertrackDataSource.prototype = {
 			self._insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
 
 			// Ask them to enable geo-location
-			self._sendReplyTweet( tweetActivity, self._getMessage('askforgeo_text', tweetActivity) );
+			self._sendReplyTweet( tweetActivity, self._getMessage('askforgeo_text', tweetActivity), self.config.twitter.addTimestamp );
 
 		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && !addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
 
 			// If we haven't contacted the user beforem, send them an invite tweet
 			self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-				self._sendReplyTweet(tweetActivity, self._getMessage('invite_text', tweetActivity), function(){
+				self._sendReplyTweet(tweetActivity, self._getMessage('invite_text', tweetActivity), self.config.twitter.addTimestamp, function(){
 					self._insertInvitee(tweetActivity);
 				});
 			});
@@ -354,9 +354,10 @@ PowertrackDataSource.prototype = {
 	 * Send @reply Twitter message
 	 * @param {GnipTweetActivity} tweetActivity The Gnip tweet activity object this is a reply to
 	 * @param {string} message The tweet text to send
+	 * @param {boolean} send with timestamp toggle
 	 * @param {function} success Callback function called on success
 	 */
-	_sendReplyTweet: function(tweetActivity, message, success) {
+	_sendReplyTweet: function(tweetActivity, message, addtimestamp, success) {
 		var self = this;
 
 		var usernameInBlacklist = false;
@@ -379,7 +380,7 @@ PowertrackDataSource.prototype = {
 			params.in_reply_to_status_id = originalTweetId;
 
 			message = '@' + tweetActivity.actor.preferredUsername + ' ' + message;
-			if ( self.config.twitter.addTimestamp ) message = message + " " + new Date().getTime();
+			if ( addTimestamp ) message = message + " " + new Date().getTime();
 
 			if (self.config.twitter.send_enabled === true){
 				self.reports.twitter.updateStatus(message, params, function(err, data){
@@ -457,8 +458,8 @@ PowertrackDataSource.prototype = {
 									var message = self._getMessage('thanks_text', tweetActivity);
 									// Append ID of user's report
 									message+=result.rows[0].pkey;
-									// Send the user a thank-you tweet; send this for every confirmed report
-									self._sendReplyTweet( tweetActivity, message );
+									// Send the user a thank-you tweet; send this for every confirmed report, timestamp not needed because of unique url
+									self._sendReplyTweet( tweetActivity, message, false );
 								}
 							);
 						}
