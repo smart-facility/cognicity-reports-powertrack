@@ -406,43 +406,43 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 		it( "sendReplyTweet calls updateStatus and executes callback", function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
 			test.value( successCallbackRan ).is( true );
 			test.value( updateStatusRan ).is( true );
 		});
 
 
 		it( "Tweet not sent to usernames in usernameReplyBlacklist", function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('zaphod'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('zaphod'), message, false, success );
 			test.value( successCallbackRan ).is( false );
 
-			powertrackDataSource._sendReplyTweet( createTweetActivity('ford'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('ford'), message, false, success );
 			test.value( successCallbackRan ).is( false );
 
-			powertrackDataSource._sendReplyTweet( createTweetActivity('arthur'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('arthur'), message, false, success );
 			test.value( successCallbackRan ).is( false );
 		});
 
 		it( 'Tweet not sent if send_enabled is false', function() {
 			powertrackDataSource.config.twitter.send_enabled = false;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
 			test.value( updateStatusRan ).is( false );
 		});
 
 		it( 'Callback executed if send_enabled is false', function() {
 			powertrackDataSource.config.twitter.send_enabled = false;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
 			test.value( successCallbackRan ).is( true );
 		});
 
 		it( 'Callback not executed if error tweeting occurs', function() {
 			powertrackDataSource.reports.twitter.tweetSendWillError = true;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
 			test.value( successCallbackRan ).is( false );
 		});
 
 		it( 'Tweet is reply to ID from tweetActivity', function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, success );
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
 			test.value( updateStatusParams.in_reply_to_status_id ).is( tweetId );
 		});
 
