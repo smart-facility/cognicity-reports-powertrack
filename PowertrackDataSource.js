@@ -138,7 +138,7 @@ PowertrackDataSource.prototype = {
 
 		self.logger.verbose("filter: Categorized tweetActivity via Gnip tags as " + tweetCategorizations);
 
-		// Perform the actions for the categorization of the tween
+		// Perform the actions for the categorization of the tweet
 		if ( geoInBoundingBox && addressed ) {
 			self.logger.verbose( 'filter: +BOUNDINGBOX +ADDRESSED = confirmed report' );
 
@@ -420,7 +420,7 @@ PowertrackDataSource.prototype = {
 					"$6, " +
 					"$7, " +
 					"ST_GeomFromText('POINT(' || $8 || ')',4326)" +
-					");",
+					") RETURNING pkey;",
 				values : [
 				    tweetActivity.postedTime,
 				    tweetActivity.body,
@@ -433,6 +433,7 @@ PowertrackDataSource.prototype = {
 				]
 			},
 			function(result) {
+				var report_id_foreign_key = result.rows[0].pkey; // primary key for tweet reports = foreign key for all_reports table
 				self.logger.info('Logged confirmed tweet report');
 				self.reports.dbQuery(
 					{
@@ -443,11 +444,24 @@ PowertrackDataSource.prototype = {
 					},
 					function(result) {
 						self.logger.info('Logged confirmed tweet user');
-						// Send the user a thank-you tweet; send this for every confirmed report
-						self._sendReplyTweet( tweetActivity, self.getMessage('thanks_text', tweetActivity) );
-					}
-				);
-			}
+						self.reports.dbQuery(
+							{
+								text: "SELECT pkey FROM "+self.config.pg.table_all_reports+" WHERE fkey = $1 AND source = 'twitter';",
+								values : [
+									report_id_foreign_key
+								]
+							},
+							function(result) {
+									self.logger.info('Logged confirmed tweet user');
+									// Send the user a thank-you tweet; send this for every confirmed report
+									var message = self._getMessage('thanks_text', tweetActivity);
+									message+=' https://petajakarta.org/banjir/en/map?report='+result.rows[0].pkey;
+									self._sendReplyTweet( tweetActivity, message );
+								}
+							);
+						}
+					);
+				}
 		);
 	},
 
