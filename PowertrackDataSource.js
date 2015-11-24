@@ -453,9 +453,11 @@ PowertrackDataSource.prototype = {
 							},
 							function(result) {
 									self.logger.info('Logged confirmed tweet user');
-									// Send the user a thank-you tweet; send this for every confirmed report
+									// Get correct response message
 									var message = self._getMessage('thanks_text', tweetActivity);
-									message+=' https://petajakarta.org/banjir/en/map?report='+result.rows[0].pkey;
+									// Append ID of user's report
+									message+=result.rows[0].pkey;
+									// Send the user a thank-you tweet; send this for every confirmed report
 									self._sendReplyTweet( tweetActivity, message );
 								}
 							);
