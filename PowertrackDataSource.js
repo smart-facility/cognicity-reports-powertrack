@@ -116,6 +116,11 @@ PowertrackDataSource.prototype = {
 
 		self.logger.verbose( 'filter: Received tweetActivity: screen_name="' + tweetActivity.actor.preferredUsername + '", text="' + tweetActivity.body.replace("\n", "") + '", coordinates="' + (tweetActivity.geo && tweetActivity.geo.coordinates ? tweetActivity.geo.coordinates[1]+", "+tweetActivity.geo.coordinates[0] : 'N/A') + '"' );
 
+		// Catch tweets from authorised user to verification
+		if ( tweetActivity.actor.preferredUsername == self.config.twitter.usernameVerify && tweetActivity.verb == 'share') {
+			self.logger.verbose(tweetActivity);
+		}
+
 		// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
 		var hasGeo = (tweetActivity.geo && tweetActivity.geo.coordinates);
 		var geoInBoundingBox = false;
@@ -411,7 +416,7 @@ PowertrackDataSource.prototype = {
 		self.reports.dbQuery(
 			{
 				text : "INSERT INTO " + self.config.pg.table_tweets + " " +
-					"(created_at, text, hashtags, text_urls, user_mentions, lang, url, the_geom) " +
+					"(created_at, text, hashtags, text_urls, user_mentions, lang, url, tweet_id, the_geom) " +
 					"VALUES (" +
 					"$1, " +
 					"$2, " +
@@ -420,7 +425,8 @@ PowertrackDataSource.prototype = {
 					"$5, " +
 					"$6, " +
 					"$7, " +
-					"ST_GeomFromText('POINT(' || $8 || ')',4326)" +
+					"$8, " +
+					"ST_GeomFromText('POINT(' || $9 || ')',4326)" +
 					") RETURNING pkey;",
 				values : [
 				    tweetActivity.postedTime,
@@ -430,6 +436,7 @@ PowertrackDataSource.prototype = {
 				    JSON.stringify(tweetActivity.twitter_entities.user_mentions),
 				    tweetActivity.twitter_lang,
 						tweetActivity.link,
+						tweetActivity.id.split(',')[1].split(':')[1], // get tweet id
 				    tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
 				]
 			},
