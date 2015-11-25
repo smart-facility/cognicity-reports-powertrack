@@ -501,7 +501,7 @@ PowertrackDataSource.prototype = {
 									// Append ID of user's report
 									message+=result.rows[0].pkey;
 									// Send the user a thank-you tweet; send this for every confirmed report, timestamp not needed because of unique url
-									self._sendReplyTweet( tweetActivity, message, false );
+									self._sendReplyTweet( tweetActivity, message, self.config.twitter.addTimestamp );
 								}
 							);
 						}
