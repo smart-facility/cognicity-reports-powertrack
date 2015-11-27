@@ -2,13 +2,13 @@ CogniCity
 ===========
 **Open Source GeoSocial Intelligence Framework**
 
-####cognicity-reports-powertrack: Module for for [cognicity-reports](https://github.com/smart-facility/cognicity-reports) module to collect unconfirmed reports from Twitter via Gnip PowerTrack and send verification requests.
+####cognicity-reports-powertrack: Module for [cognicity-reports](https://github.com/smart-facility/cognicity-reports) module to collect unconfirmed reports from Twitter via Gnip PowerTrack and send verification requests.
 
 [![Build Status](https://travis-ci.org/smart-facility/cognicity-reports-powertrack.svg)](https://travis-ci.org/smart-facility/cognicity-reports-powertrack)
 
 ### About
 Cognicity-reports-powertrack is the NodeJS reports module for collecting relevant tweets via Gnip PowerTrack as part of the Cognicity Framework, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
-This module is not designed to be run standalone but is designed to be run as a submodule of [cognicity-reports](https://github.com/smart-facility/cognicity-reports), which can run just with this submodule alone. For further information
+This module is not designed to be run standalone but is designed to be run as a submodule of [cognicity-reports](https://github.com/smart-facility/cognicity-reports), which can run just with this submodule alone.
 
 ### API Documentation
 [http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html](http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html)
