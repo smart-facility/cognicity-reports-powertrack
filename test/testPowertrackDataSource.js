@@ -1,7 +1,5 @@
 'use strict';
 
-/* global setTimeout:true */
-
 /* jshint -W079 */ // Ignore this error for this import only, as we get a redefinition problem
 var test = require('unit.js');
 /* jshint +W079 */
