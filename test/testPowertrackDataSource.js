@@ -325,29 +325,6 @@ describe( 'PowertrackDataSource', function() {
 			test.value( lastDelay ).is( 3 * 1000 ); // Expect 3 second reconnect, delays of 1, 2, 3, 3
 		});
 
-		it( 'Reconnection notification tweet is only sent once', function() {
-			powertrackDataSource.config.gnip.maxReconnectTimeout = 1000;
-			reconnectTimes = 3;
-			powertrackDataSource.reports.config = {
-				adminTwitterUsernames: "astro"
-			};
-			powertrackDataSource.start(); // Will get connection errors only
-			test.value( streamStarted ).is( 3 ); // Expect stream tried to reconnect 3 times
-			test.value( notifiedTimes ).is( 1 ); // Expect that we only notified the user once
-		});
-
-		it( 'Reconnection notification tweet is sent again if reconnected between disconnections', function() {
-			powertrackDataSource.config.gnip.maxReconnectTimeout = 1000;
-			reconnectTimes = 2;
-			powertrackDataSource.reports.config = {
-				adminTwitterUsernames: "astro"
-			};
-			powertrackDataSource.start(); // Will get connection errors only
-			streamReadyHandler(); // We reconnected to the stream
-			streamErrorHandler(); // And we were disconnected again
-			test.value( notifiedTimes ).is( 2 ); // Expect that we notified the user twice
-		});
-
 		after( function() {
 			/* jshint -W020 */ // We want to mock out a global function here
 			setTimeout = oldSetTimeout;
