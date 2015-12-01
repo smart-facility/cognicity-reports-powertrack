@@ -358,7 +358,7 @@ describe( 'PowertrackDataSource', function() {
 		var message = 'pan galactic gargle blaster';
 
 		before( function() {
-			powertrackDataSource.reports.twitter = {
+			powertrackDataSource.twitter = {
 				updateStatus: function(message,params,callback) {
 					updateStatusRan = true;
 					updateStatusParams = params;
@@ -422,7 +422,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 		after( function(){
-			powertrackDataSource.reports.twitter = {};
+			powertrackDataSource.twitter = {};
 			powertrackDataSource.config = {};
 		});
 	});
@@ -533,6 +533,7 @@ describe( 'PowertrackDataSource', function() {
 						jupiter: "europa"
 					}
 				},
+				null,
 				{
 					saturn: "enceladus"
 				}
@@ -544,6 +545,103 @@ describe( 'PowertrackDataSource', function() {
 
 	});
 
+	describe( "areTweetMessageLengthsOk", function() {
+		function createString(length) {
+			var s = "";
+			for (var i = 0; i<length; i++) {
+				s += "a";
+			}
+			return s;
+		}
+
+		before( function() {
+		});
+
+		beforeEach( function() {
+			powertrackDataSource.config = {
+				twitter: {}
+			};
+		});
+
+		it( 'Non-object properties are not tested', function() {
+			powertrackDataSource.config.twitter = {
+				singleProperty : createString(200)
+			};
+
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Single short message is ok', function() {
+			powertrackDataSource.config.twitter = {
+				messageObject : {
+					'en' : createString(1)
+				}
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Single long message is not ok', function() {
+			powertrackDataSource.config.twitter = {
+				messageObject : {
+					'en' : createString(124)
+				}
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+		});
+
+		it( 'Message over timestamp boundary is ok when timestamp is off', function() {
+			powertrackDataSource.config.twitter = {
+				messageObject : {
+					'en' : createString(120)
+				},
+				addTimestamp : false
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Message over timestamp boundary is not ok when timestamp is on', function() {
+			powertrackDataSource.config.twitter = {
+				messageObject : {
+					'en' : createString(120)
+				},
+				addTimestamp : true
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+		});
+
+		it( 'Multiple short messages are ok', function() {
+			powertrackDataSource.config.twitter = {
+				messageObject1 : {
+					'en' : createString(100),
+					'fr' : createString(100)
+				},
+				messageObject2 : {
+					'en' : createString(100),
+					'fr' : createString(100)
+				}
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Long message and multiple short messages are not ok', function() {
+			powertrackDataSource.config.twitter = {
+				messageObject1 : {
+					'en' : createString(100),
+					'fr' : createString(100)
+				},
+				messageObject2 : {
+					'en' : createString(100),
+					'fr' : createString(200)
+				}
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+		});
+
+		after( function(){
+			powertrackDataSource.config = {};
+		});
+	});
+	
 	// TODO _ifNewUser
 	// TODO _insertConfirmed
 	// TODO _insertInvitee

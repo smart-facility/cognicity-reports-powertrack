@@ -5,16 +5,19 @@
  * Connect to the Gnip Powertrack stream and process matching tweet data.
  * @constructor
  * @param {Reports} reports An instance of the reports object.
+ * @param {object} twitter Configured instance of twitter object from ntwitter module
  * @param {object} config Gnip powertrack specific configuration.
  */
 var PowertrackDataSource = function PowertrackDataSource(
 		reports,
+		twitter,
 		config
 	){
 
-	// Store references to reports and logger
+	// Store references to constructor arguments
 	this.reports = reports;
 	this.logger = reports.logger;
+	this.twitter = twitter;
 
 	// Copy reports config into our own config
 	this.config = reports.config;
@@ -51,6 +54,12 @@ PowertrackDataSource.prototype = {
 	 * @type {Reports}
 	 */
 	reports: null,
+	
+	/**
+	 * Configured instance of twitter object from ntwitter module
+	 * @type {object}
+	 */
+	twitter: null,
 
 	/**
 	 * Instance of the Winston logger.
@@ -423,7 +432,7 @@ PowertrackDataSource.prototype = {
 			if ( addTimestamp ) message = message + " " + new Date().getTime();
 
 			if (self.config.twitter.send_enabled === true){
-				self.reports.twitter.updateStatus(message, params, function(err, data){
+				self.twitter.updateStatus(message, params, function(err, data){
 					if (err) {
 						self.logger.error( 'Tweeting "' + message + '" with params "' + JSON.stringify(params) + '" failed: ' + err );
 					} else {
@@ -601,6 +610,68 @@ PowertrackDataSource.prototype = {
 		});
 	},
 
+	// TODO Integrate into verify config
+	/**
+	 * Verify that the twitter connection was successful.
+	 */
+	_verifyTwitterCredentials: function() {
+		var self = this;
+		
+		self.twitter.verifyCredentials(function (err, data) {
+			if (err) {
+				self.logger.error("twitter.verifyCredentials: Error verifying credentials: " + err);
+				self.logger.error("Fatal error: Application shutting down");
+				// TODO Failure
+			} else {
+				self.logger.info("twitter.verifyCredentials: Twitter credentials succesfully verified");
+			}
+		});
+	},
+	
+	// TODO Integrate into verify config
+	/**
+	 * Check that all tweetable message texts are of an acceptable length.
+	 * This is 109 characters max if timestamps are enabled, or 123 characters max if timestamps are not enabled.
+	 * @see {@link https://dev.twitter.com/overview/api/counting-characters} (max tweet = 140 chars)
+	 * @see {@link https://support.twitter.com/articles/14609-changing-your-username} (max username = 15 chars)
+	 * @return {boolean} True if message texts are all okay, false if any are not.
+	 */
+	_areTweetMessageLengthsOk: function() {
+		var self = this;
+		var lengthsOk = true;
+
+		Object.keys( self.config.twitter ).forEach( function(configItemKey) {
+			// We only want to process the objects containing language/message pairs here,
+			// not the single properties.
+			var configItem = self.config.twitter[configItemKey];
+			if (typeof configItem === "object") {
+				var maxLength = 140; // Maximum tweet length
+				maxLength -= 17; // Minus username, @ sign and space = 123
+				if ( self.config.twitter.addTimestamp ) maxLength -= 14; // Minus 13 digit timestamp + space = 109 (13 digit timestamp is ok until the year 2286)
+				Object.keys( configItem ).forEach( function(messageKey) {
+					var message = configItem[messageKey];
+					// Twitter shortens (or in some cases lengthens) all URLs to 23 characters
+					// https://support.twitter.com/articles/78124 incorrectly lists 22, I have triple checked with a test tweet.
+					// Thus here we subtract the length of the url and replace it with 23 characters
+					var length = message.length;
+					var matches = message.match(/http[^ ]*/g);
+					if (matches) {
+						for (var i = 0; i < matches.length; i++) {
+							length += 23 - matches[i].length;
+						}
+					}
+
+					if ( length > maxLength ) {
+						self.logger.error( "Message " + configItemKey + "." + messageKey + " '" + message + "' is too long (" + message.length + " chars)" );
+						lengthsOk = false;
+					}
+				});
+			}
+		});
+
+		return lengthsOk;
+	},
+	
 	/**
 	 * Stop realtime processing of tweets and start caching tweets until caching mode is disabled.
 	 */

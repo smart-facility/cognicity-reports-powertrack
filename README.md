@@ -18,6 +18,7 @@ This module is not designed to be run standalone but is designed to be run as a 
 
 #### Node Modules
 * [gnip](https://github.com/demian85/gnip) version 0.2.1 or compatible
+* [ntwitter](https://github.com/AvianFlu/ntwitter) version 0.5.0 or compatible
 
 #### Dev Modules
 * [jshint](https://github.com/jshint/node-jshint) version 2.5.8 or compatible
@@ -54,6 +55,30 @@ App configuration parameters are stored in a configuration file which is parsed 
 * rulesUrl - URL to fetch JSON rules from Gnip PowerTrack
 * rules - List of objects to configure Gnip PowerTrack rules. Objects contain a series of key-value properties, where the key is the Gnip PowerTrack tag for the rule, and the value is the rule as a string.
 * maxReconnectTimeout - Time in seconds that is the longest delay between reconnection attempts for the stream
+
+#### Twitter account configuration
+Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
+* usernameReplyBlacklist - Twitter usernames (without @, comma separated for multiples) which will never be sent to in response to tweet processing
+
+#### Twitter send parameters
+* send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
+* addTimestamp [true | false] - if true, append a timestamp to each sent tweet.
+
+#### Twitter message text
+The messages are stored in objects, where the object name is the name of the message.
+Within the object, the property name (key) is the language, and the value is the message text.
+There is also a top-level 'defaultLanguage' property which is used if the language code from the tweet cannot be resolved.
+
+##### Languages
+* in - Bahasa Indonesian (language code from Gnip)
+* id - Bahasa Indonesian (language code from Twitter)
+* en - English
+
+##### Messages
+Messages can be at most 109 characters long if addTimestamp is enabled, or 123 characters long if addTimestamp is disabled.
+* invite_text - Text for confirmation request tweets
+* askforgeo_text - Text for geolocation reminders
+* thanks_text - Thank-you message for confirmed tweet
 
 ### Development
 
