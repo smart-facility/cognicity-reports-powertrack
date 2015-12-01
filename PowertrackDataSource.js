@@ -18,14 +18,7 @@ var PowertrackDataSource = function PowertrackDataSource(
 	this.reports = reports;
 	this.logger = reports.logger;
 	this.twitter = twitter;
-
-	// Copy reports config into our own config
-	this.config = reports.config;
-	for (var prop in config) {
-		if (config.hasOwnProperty(prop)) {
-			this.config[prop] = config[prop];
-		}
-	}
+	this.config = config;
 
 	// Gnip PowerTrack interface module
 	this.Gnip = require('gnip');
@@ -44,7 +37,7 @@ PowertrackDataSource.prototype = {
 
 	/**
 	 * Data source configuration.
-	 * This contains the reports configuration and the data source specific configuration.
+	 * This contains the data source specific configuration.
 	 * @type {object}
 	 */
 	config: {},

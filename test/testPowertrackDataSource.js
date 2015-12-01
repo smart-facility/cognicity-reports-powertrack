@@ -524,27 +524,6 @@ describe( 'PowertrackDataSource', function() {
 
 	});
 
-	describe( "constructor", function() {
-
-		it( 'Config is merged from reports with data source', function() {
-			var pds = new PowertrackDataSource(
-				{
-					config: {
-						jupiter: "europa"
-					}
-				},
-				null,
-				{
-					saturn: "enceladus"
-				}
-			);
-
-			test.value( pds.config.jupiter ).is( 'europa' );
-			test.value( pds.config.saturn ).is( 'enceladus' );
-		});
-
-	});
-
 	describe( "areTweetMessageLengthsOk", function() {
 		function createString(length) {
 			var s = "";
