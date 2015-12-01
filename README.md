@@ -4,7 +4,7 @@ CogniCity
 
 ####cognicity-reports-powertrack: NodeJS app to collect unconfirmed reports from Twitter via Gnip PowerTrack and send verification requests.
 
-Travis build status: [![Build Status](https://travis-ci.org/smart-facility/cognicity-reports-powertrack.svg)](https://travis-ci.org/smart-facility/cognicity-reports-powertrack)
+Travis build status: [![Build Status](https://travis-ci.org/smart-facility/cognicity-reports-powertrack.svg?branch=master)](https://travis-ci.org/smart-facility/cognicity-reports-powertrack)
 
 DOI for current stable release [v1.0.4](https://github.com/smart-facility/cognicity-reports-powertrack/releases/tag/v1.0.4): [![DOI](https://zenodo.org/badge/19201/smart-facility/cognicity-reports-powertrack.svg)](https://zenodo.org/badge/latestdoi/19201/smart-facility/cognicity-reports-powertrack)
 
