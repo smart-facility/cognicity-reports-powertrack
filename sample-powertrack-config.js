@@ -37,6 +37,17 @@
  */
 var config = {};
 
+//Database tables
+config.pg = {};
+config.pg.all_reports = 'all_reports';
+config.pg.table_tweets = 'tweet_reports';
+config.pg.table_users = 'tweet_users';
+config.pg.table_invitees = 'tweet_invitees';
+config.pg.table_unconfirmed = 'tweet_reports_unconfirmed';
+config.pg.table_nonspatial_users = 'nonspatial_tweet_users';
+config.pg.table_nonspatial_tweet_reports = 'nonspatial_tweet_reports';
+config.pg.table_all_users = 'tweet_all_users';
+
 // Gnip Powertrack API
 config.gnip = {};
 config.gnip.stream = true; // Connect to stream and log reports
