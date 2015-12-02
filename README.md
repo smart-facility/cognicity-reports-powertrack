@@ -4,7 +4,7 @@ CogniCity
 
 ####cognicity-reports-powertrack: Module for [cognicity-reports](https://github.com/smart-facility/cognicity-reports) module to collect unconfirmed reports from Twitter via Gnip PowerTrack and send verification requests.
 
-[![Build Status](https://travis-ci.org/smart-facility/cognicity-reports-powertrack.svg)](https://travis-ci.org/smart-facility/cognicity-reports-powertrack)
+[![Build Status](https://travis-ci.org/smart-facility/cognicity-reports-powertrack.svg?branch=2.0.x)](https://travis-ci.org/smart-facility/cognicity-reports-powertrack)
 
 ### About
 Cognicity-reports-powertrack is the NodeJS reports module for collecting relevant tweets via Gnip PowerTrack as part of the Cognicity Framework, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
