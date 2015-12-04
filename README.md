@@ -2,27 +2,25 @@ CogniCity
 ===========
 **Open Source GeoSocial Intelligence Framework**
 
-####cognicity-reports-powertrack: NodeJS app to collect unconfirmed reports from Twitter via Gnip PowerTrack and send verification requests.
+####cognicity-reports-powertrack: Module for [cognicity-reports](https://github.com/smart-facility/cognicity-reports) module to collect unconfirmed reports from Twitter via Gnip PowerTrack and send verification requests.
 
 Travis build status: [![Build Status](https://travis-ci.org/smart-facility/cognicity-reports-powertrack.svg?branch=master)](https://travis-ci.org/smart-facility/cognicity-reports-powertrack)
 
 DOI for current stable release [v1.0.4](https://github.com/smart-facility/cognicity-reports-powertrack/releases/tag/v1.0.4): [![DOI](https://zenodo.org/badge/19201/smart-facility/cognicity-reports-powertrack.svg)](https://zenodo.org/badge/latestdoi/19201/smart-facility/cognicity-reports-powertrack)
 
 ### About
-Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity framework, responsible for collecting relevant tweets via Gnip PowerTrack, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
+Cognicity-reports-powertrack is the NodeJS reports module for collecting relevant tweets via Gnip PowerTrack as part of the Cognicity Framework, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
+This module is not designed to be run standalone but is designed to be run as a submodule of [cognicity-reports](https://github.com/smart-facility/cognicity-reports), which can run just with this submodule alone.
 
 ### API Documentation
 [http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html](http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html)
 
 ### Dependencies
 * [NodeJS](http://nodejs.org) version 0.10.16 or compatible
-* [PostgreSQL](http://www.postgresql.org) version 9.2 or later, with [PostGIS](http://postgis.org/) version 2.0 or compatible
 
 #### Node Modules
-* [Node-Postgres](https://github.com/brianc/node-postgres) version 3.0.0 or compatible
-* [ntwitter](https://github.com/AvianFlu/ntwitter) version 0.5.0 or compatible
 * [gnip](https://github.com/demian85/gnip) version 0.2.1 or compatible
-* [winston](https://github.com/flatiron/winston) version 0.8.1 or compatible
+* [ntwitter](https://github.com/AvianFlu/ntwitter) version 0.5.0 or compatible
 
 #### Dev Modules
 * [jshint](https://github.com/jshint/node-jshint) version 2.5.8 or compatible
@@ -34,9 +32,9 @@ Cognicity-reports-powertrack is the NodeJS reports module for the CogniCity fram
 If you're going to commit changes to the JavaScript, be sure to run 'npm test' first - and fix any issues that it complains about, otherwise the build will fail when you push the commit.
 
 ### Installation
-Download the source code for cognicity-reports-powertrack from github: [http://github.com/smart-facility/cognicity-reports-powertrack](https://github.com/smart-facility/cognicity-reports-powertrack) or view the CogniCity installation documentation at [http://cognicity.info](http://cognicity.info).
+Please install this as a submodule of [cognicity-reports](https://github.com/smart-facility/cognicity-reports). Please refer to the [documentation of that project](https://github.com/smart-facility/cognicity-reports/blob/2.0.x/README.md) for further information.
 
-Install the node dependencies in package.json using NPM: `npm install`
+Install the node dependencies for this submodule as listed in package.json using npm: `npm install`
 
 #### Platform-specific notes ####
 To build on OS X we recommend using [homebrew](http://brew.sh) to install node, npm, and required node modules as follows:
@@ -45,20 +43,10 @@ brew install node
 npm install
 ```
 
-To build on Windows we recommend installing all dependencies (making sure to use all 32 bit or all 64 bit, depending on your architecture) plus following the instructions (for Windows 7 follow the Windows 7/8 instructions) for [node-gyp](https://github.com/TooTallNate/node-gyp) and then:
-* You need to add *C:\Program Files\PostgreSQL\9.3\bin* (modifying that location if necessary to point to the installed version of PostgreSQL) to path so the build script finds `pg_config`, and
-* You need to create the *%APPDATA%\npm* folder and run cmd (and hence npm) as administrator. *%APPDATA%* is usually under *C:\Users\your_username\AppData\Remote*.
-* You may need to specify the version of the build tools installed by adding the argument `--msvs_version=2013` to the `npm` command (substituting the appropriate version)
-Then you can run `npm install`.
+To build on Windows we recommend installing all dependencies and running `npm install`.
 
 ### Configuration
-App configuration parameters are stored in a configuration file which is parsed by app.js. See sample-reports-config.js for an example configuration.
-
-#### Logging parameters
-* level - info or debug are most useful here, debug will give you more verbose logging output
-* maxFileSize - max size (in bytes) of each log file before a new one is created
-* maxFiles - number of log files to retain
-* logDirectory - Specify a full path to the log directory. If not specified, the application directory will be used.
+App configuration parameters are stored in a configuration file which is parsed by PowertrackDataSource.js. See sample-powertrack-config.js for an example configuration.
 
 #### Gnip parameters
 * stream [true | false] - set to true to connect to Gnip stream.
@@ -73,12 +61,6 @@ App configuration parameters are stored in a configuration file which is parsed 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
 * usernameReplyBlacklist - Twitter usernames (without @, comma separated for multiples) which will never be sent to in response to tweet processing
-
-#### Twitter warning configuration
-* adminTwitterUsernames - Enter twitter usernames here (without @, comma separated for multiples) to send a notification tweet on error conditions
-Notification conditions are:
-* Gnip stream is disconnected and reaches `maxReconnectTimeout` time trying to reconnect
-* Connection to postgres is lost and cannot be reconnected in `pg.reconnectionAttempts` number of attempts
 
 #### Twitter send parameters
 * send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
@@ -99,41 +81,6 @@ Messages can be at most 109 characters long if addTimestamp is enabled, or 123 c
 * invite_text - Text for confirmation request tweets
 * askforgeo_text - Text for geolocation reminders
 * thanks_text - Thank-you message for confirmed tweet
-
-#### Postgres connection
-* conString - PostgreSQL connection details string (see node-postgres module documenation)[https://github.com/brianc/node-postgres]
-* postgres tables as defined in database schema
-* reconnectionDelay - Delay between reconnection attempts if postgres connection lost
-* reconnectionAttempts - Number of times to attempt to reconnect before dying
-
-### PostgreSQL/PostGIS schema
-* see the [cognicity-schema](https://github.com/smart-facility/cognicity-schema) project for schema files
-
-### Run
-The app can be run as a background process using the [pm2 process manager](https://github.com/Unitech/pm2).
-
-To install pm2, run:
-```shell
-sudo npm install pm2 -g
-```
-The app can then be started using
-```shell
-pm2 start processes.json
-```
-To have pm2 started on OS startup run
-```shell
-pm2 startup
-```
-and then run the command as per the instructions that prints out. If that command errors then you may have to specify the system (note that systemd should be used on CentOS 7). Note that if the process is not running as root (recommended) you will need to change `/etc/init.d/pm2-init.sh` to set `export PM2_HOME="/path/to/user/home/.pm2"`, as per [these instructions](
-http://www.buildsucceeded.com/2015/solved-pm2-startup-at-boot-time-centos-7-red-hat-linux/)
-
-The file [processes.json](processes.json) contains a number of options that can be set, including the name of the process (default: "harvester") and the watch list. At the moment any paths or files starting with . (including .git), node_modules, git, test folders, and all \*.log files will be ignored, but any other changes (e.g. to a config file, or to the code itself) will automatically result in a restart of the process. Refer to the [documentation](http://pm2.keymetrics.io/docs/usage/application-declaration/) for more options in the [processes.json](processes.json) file.
-
-For further details refer to the [README for pm2](https://github.com/Unitech/PM2/blob/master/README.md).
-
-### Logging
-* Winston writes to project-name.log (and project-name#.log if configured for multiple files)
-* The log directory can be configured, by default it is the project directory
 
 ### Development
 
