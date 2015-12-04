@@ -47,7 +47,7 @@ PowertrackDataSource.prototype = {
 	 * @type {Reports}
 	 */
 	reports: null,
-	
+
 	/**
 	 * Configured instance of twitter object from ntwitter module
 	 * @type {object}
@@ -609,7 +609,7 @@ PowertrackDataSource.prototype = {
 	 */
 	_verifyTwitterCredentials: function() {
 		var self = this;
-		
+
 		self.twitter.verifyCredentials(function (err, data) {
 			if (err) {
 				self.logger.error("twitter.verifyCredentials: Error verifying credentials: " + err);
@@ -620,7 +620,7 @@ PowertrackDataSource.prototype = {
 			}
 		});
 	},
-	
+
 	// TODO Integrate into verify config
 	/**
 	 * Check that all tweetable message texts are of an acceptable length.
@@ -643,14 +643,14 @@ PowertrackDataSource.prototype = {
 				if ( self.config.twitter.addTimestamp ) maxLength -= 14; // Minus 13 digit timestamp + space = 109 (13 digit timestamp is ok until the year 2286)
 				Object.keys( configItem ).forEach( function(messageKey) {
 					var message = configItem[messageKey];
-					// Twitter shortens (or in some cases lengthens) all URLs to 23 characters
-					// https://support.twitter.com/articles/78124 incorrectly lists 22, I have triple checked with a test tweet.
-					// Thus here we subtract the length of the url and replace it with 23 characters
+					// Twitter shortens (or in some cases lengthens) all URLs to a length, which slowly varies over time.
+					// We use config.twitter.url_length to keep track of the current length, and here replace url length
+					// with the resulting t.co output length in calculations for checking tweet length
 					var length = message.length;
 					var matches = message.match(/http[^ ]*/g);
 					if (matches) {
 						for (var i = 0; i < matches.length; i++) {
-							length += 23 - matches[i].length;
+							length += config.twitter.url_length - matches[i].length;
 						}
 					}
 
@@ -664,7 +664,7 @@ PowertrackDataSource.prototype = {
 
 		return lengthsOk;
 	},
-	
+
 	/**
 	 * Stop realtime processing of tweets and start caching tweets until caching mode is disabled.
 	 */
