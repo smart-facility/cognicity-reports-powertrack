@@ -650,7 +650,7 @@ PowertrackDataSource.prototype = {
 					var matches = message.match(/http[^ ]*/g);
 					if (matches) {
 						for (var i = 0; i < matches.length; i++) {
-							length += config.twitter.url_length - matches[i].length;
+							length += self.config.twitter.url_length - matches[i].length;
 						}
 					}
 
