@@ -174,7 +174,7 @@ PowertrackDataSource.prototype = {
 		} else if ( !geoInBoundingBox && !hasGeo && locationMatch && !addressed ) {
 			self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
 
-			// If we haven't contacted the user beforem, send them an invite tweet
+			// If we haven't contacted the user before, send them an invite tweet
 			self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
 				self._sendReplyTweet(tweetActivity, self._getMessage('invite_text', tweetActivity), self.config.twitter.addTimestamp, function(){
 					self._insertInvitee(tweetActivity);
