@@ -65,6 +65,7 @@ Set the app authentication parameters as provided by Twitter. See the [ntwitter-
 #### Twitter send parameters
 * send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
 * addTimestamp [true | false] - if true, append a timestamp to each sent tweet.
+* url_length - The length of the twitter t.co URL shortened URLs (see https://dev.twitter.com/overview/t.co ).
 
 #### Twitter message text
 The messages are stored in objects, where the object name is the name of the message.
