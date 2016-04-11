@@ -79,6 +79,7 @@ There is also a top-level 'defaultLanguage' property which is used if the langua
 
 ##### Messages
 Messages can be at most 109 characters long if addTimestamp is enabled, or 123 characters long if addTimestamp is disabled.
+Note that this length includes one shortened URL at current lengths - see https://dev.twitter.com/overview/t.co for details.
 * invite_text - Text for confirmation request tweets
 * askforgeo_text - Text for geolocation reminders
 * thanks_text - Thank-you message for confirmed tweet
