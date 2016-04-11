@@ -616,6 +616,46 @@ describe( 'PowertrackDataSource', function() {
 			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
 		});
 
+		it( 'Message with one URL passes when under size limit', function() {
+			powertrackDataSource.config.twitter = {
+				url_length: 1,
+				messageObject1 : {
+					'en' : createString(121) + " http://example.com"
+				}
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Message with one URL fails when over size limit', function() {
+			powertrackDataSource.config.twitter = {
+				url_length: 2,
+				messageObject1 : {
+					'en' : createString(121) + " http://example.com"
+				}
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+		});
+
+		it( 'Message with two URLs passes when under size limit', function() {
+			powertrackDataSource.config.twitter = {
+				url_length: 1,
+				messageObject1 : {
+					'en' : createString(119) + " http://example" + " https://example.com.au/foo/bar.html?a=1&b=2"
+				}
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+		});
+
+		it( 'Message with two URLs fails when over size limit', function() {
+			powertrackDataSource.config.twitter = {
+				url_length: 2,
+				messageObject1 : {
+					'en' : createString(119) + " http://example" + " https://example.com.au/foo/bar.html?a=1&b=2"
+				}
+			};
+			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+		});
+
 		after( function(){
 			powertrackDataSource.config = {};
 		});
