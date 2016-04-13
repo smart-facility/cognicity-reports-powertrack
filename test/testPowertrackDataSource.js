@@ -547,7 +547,15 @@ describe( 'PowertrackDataSource', function() {
 				singleProperty : createString(200)
 			};
 
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		// pass
+		    	})
+		    	.catch(function(err){
+		    		test.fail(err.message);
+		    	})
+		      	.done();
 		});
 
 		it( 'Single short message is ok', function() {
@@ -556,7 +564,16 @@ describe( 'PowertrackDataSource', function() {
 					'en' : createString(1)
 				}
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		// pass
+		    	})
+		    	.catch(function(err){
+		    		test.fail(err.message);
+		    	})
+		      	.done();
 		});
 
 		it( 'Single long message is not ok', function() {
@@ -565,7 +582,16 @@ describe( 'PowertrackDataSource', function() {
 					'en' : createString(124)
 				}
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		test.fail(value);
+		    	})
+		    	.catch(function(err){
+		    		// Error / validation failure case
+		    	})
+		      	.done();
 		});
 
 		it( 'Message over timestamp boundary is ok when timestamp is off', function() {
@@ -575,7 +601,16 @@ describe( 'PowertrackDataSource', function() {
 				},
 				addTimestamp : false
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		// pass
+		    	})
+		    	.catch(function(err){
+		    		test.fail(err.message);
+		    	})
+		      	.done();
 		});
 
 		it( 'Message over timestamp boundary is not ok when timestamp is on', function() {
@@ -585,7 +620,16 @@ describe( 'PowertrackDataSource', function() {
 				},
 				addTimestamp : true
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		test.fail(value);
+		    	})
+		    	.catch(function(err){
+		    		// Error / validation failure case
+		    	})
+		      	.done();
 		});
 
 		it( 'Multiple short messages are ok', function() {
@@ -599,7 +643,16 @@ describe( 'PowertrackDataSource', function() {
 					'fr' : createString(100)
 				}
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		// pass
+		    	})
+		    	.catch(function(err){
+		    		test.fail(err.message);
+		    	})
+		      	.done();
 		});
 
 		it( 'Long message and multiple short messages are not ok', function() {
@@ -613,7 +666,16 @@ describe( 'PowertrackDataSource', function() {
 					'fr' : createString(200)
 				}
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		test.fail(value);
+		    	})
+		    	.catch(function(err){
+		    		// Error / validation failure case
+		    	})
+		      	.done();
 		});
 
 		it( 'Message with one URL passes when under size limit', function() {
@@ -623,7 +685,16 @@ describe( 'PowertrackDataSource', function() {
 					'en' : createString(121) + " http://example.com"
 				}
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		// pass
+		    	})
+		    	.catch(function(err){
+		    		test.fail(err.message);
+		    	})
+		      	.done();
 		});
 
 		it( 'Message with one URL fails when over size limit', function() {
@@ -633,7 +704,17 @@ describe( 'PowertrackDataSource', function() {
 					'en' : createString(121) + " http://example.com"
 				}
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		test.fail(value);
+		    	})
+		    	.catch(function(err){
+		    		// Error / validation failure case
+		    	})
+		      	.done();
+
 		});
 
 		it( 'Message with two URLs passes when under size limit', function() {
@@ -643,7 +724,16 @@ describe( 'PowertrackDataSource', function() {
 					'en' : createString(119) + " http://example" + " https://example.com.au/foo/bar.html?a=1&b=2"
 				}
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( true );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		// pass
+		    	})
+		    	.catch(function(err){
+		    		test.fail(err.message);
+		    	})
+		      	.done();
 		});
 
 		it( 'Message with two URLs fails when over size limit', function() {
@@ -653,7 +743,17 @@ describe( 'PowertrackDataSource', function() {
 					'en' : createString(119) + " http://example" + " https://example.com.au/foo/bar.html?a=1&b=2"
 				}
 			};
-			test.value( powertrackDataSource._areTweetMessageLengthsOk() ).is( false );
+			
+		    test.promise
+		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
+		    	.then(function(value) {
+		    		test.fail(value);
+		    	})
+		    	.catch(function(err){
+		    		// Error / validation failure case
+		    	})
+		      	.done();
+
 		});
 
 		after( function(){

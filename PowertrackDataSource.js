@@ -1,5 +1,8 @@
 'use strict';
 
+// RSVP promises module
+var RSVP = require('rsvp');
+
 /**
  * The Gnip Powertrack data source.
  * Connect to the Gnip Powertrack stream and process matching tweet data.
@@ -602,67 +605,89 @@ PowertrackDataSource.prototype = {
 			);
 		});
 	},
+	
+	/**
+	 * Validate the data source configuration.
+	 * Check twitter credentials and tweet message lengths.
+	 * @return {Promise} Validation promise, throws an error on any validation error
+	 */
+	validateConfig: function() {
+		var self = this;
+		
+		// Contain separate validation promises in one 'all' promise
+		return RSVP.all([
+		    self._verifyTwitterCredentials(),
+		    self._areTweetMessageLengthsOk()
+		]);
+	},
 
-	// TODO Integrate into verify config
 	/**
 	 * Verify that the twitter connection was successful.
+	 * @return {Promise} Validation promise, throws an error if twitter credentials cannot be verified
 	 */
 	_verifyTwitterCredentials: function() {
 		var self = this;
 
-		self.twitter.verifyCredentials(function (err, data) {
-			if (err) {
-				self.logger.error("twitter.verifyCredentials: Error verifying credentials: " + err);
-				self.logger.error("Fatal error: Application shutting down");
-				// TODO Failure
-			} else {
-				self.logger.info("twitter.verifyCredentials: Twitter credentials succesfully verified");
-			}
+		return new RSVP.Promise( function(resolve, reject) {
+			self.twitter.verifyCredentials(function (err, data) {
+				if (err) {
+					self.logger.error("twitter.verifyCredentials: Error verifying credentials: " + err);
+					self.logger.error("Fatal error: Application shutting down");
+					reject("twitter.verifyCredentials: Error verifying credentials: " + err);
+				} else {
+					self.logger.info("twitter.verifyCredentials: Twitter credentials succesfully verified");
+					resolve();
+				}
+			});
 		});
 	},
 
-	// TODO Integrate into verify config
 	/**
 	 * Check that all tweetable message texts are of an acceptable length.
 	 * This is 109 characters max if timestamps are enabled, or 123 characters max if timestamps are not enabled.
 	 * @see {@link https://dev.twitter.com/overview/api/counting-characters} (max tweet = 140 chars)
 	 * @see {@link https://support.twitter.com/articles/14609-changing-your-username} (max username = 15 chars)
-	 * @return {boolean} True if message texts are all okay, false if any are not.
+	 * @return {Promise} Validation promise, throws an error if any message lengths are not acceptable
 	 */
 	_areTweetMessageLengthsOk: function() {
 		var self = this;
-		var lengthsOk = true;
-
-		Object.keys( self.config.twitter ).forEach( function(configItemKey) {
-			// We only want to process the objects containing language/message pairs here,
-			// not the single properties.
-			var configItem = self.config.twitter[configItemKey];
-			if (typeof configItem === "object") {
-				var maxLength = 140; // Maximum tweet length
-				maxLength -= 17; // Minus username, @ sign and space = 123
-				if ( self.config.twitter.addTimestamp ) maxLength -= 14; // Minus 13 digit timestamp + space = 109 (13 digit timestamp is ok until the year 2286)
-				Object.keys( configItem ).forEach( function(messageKey) {
-					var message = configItem[messageKey];
-					// Twitter shortens (or in some cases lengthens) all URLs to a length, which slowly varies over time.
-					// We use config.twitter.url_length to keep track of the current length, and here replace url length
-					// with the resulting t.co output length in calculations for checking tweet length
-					var length = message.length;
-					var matches = message.match(/http[^ ]*/g);
-					if (matches) {
-						for (var i = 0; i < matches.length; i++) {
-							length += self.config.twitter.url_length - matches[i].length;
+		
+		return new RSVP.Promise( function(resolve, reject) {
+			var valid = true;
+			Object.keys( self.config.twitter ).forEach( function(configItemKey) {
+				// We only want to process the objects containing language/message pairs here,
+				// not the single properties.
+				var configItem = self.config.twitter[configItemKey];
+				if (typeof configItem === "object") {
+					var maxLength = 140; // Maximum tweet length
+					maxLength -= 17; // Minus username, @ sign and space = 123
+					if ( self.config.twitter.addTimestamp ) maxLength -= 14; // Minus 13 digit timestamp + space = 109 (13 digit timestamp is ok until the year 2286)
+					Object.keys( configItem ).forEach( function(messageKey) {
+						var message = configItem[messageKey];
+						// Twitter shortens (or in some cases lengthens) all URLs to a length, which slowly varies over time.
+						// We use config.twitter.url_length to keep track of the current length, and here replace url length
+						// with the resulting t.co output length in calculations for checking tweet length
+						var length = message.length;
+						var matches = message.match(/http[^ ]*/g);
+						if (matches) {
+							for (var i = 0; i < matches.length; i++) {
+								length += self.config.twitter.url_length - matches[i].length;
+							}
 						}
-					}
 
-					if ( length > maxLength ) {
-						self.logger.error( "Message " + configItemKey + "." + messageKey + " '" + message + "' is too long (" + message.length + " chars)" );
-						lengthsOk = false;
-					}
-				});
+						if ( length > maxLength ) {
+							valid = false;
+							self.logger.error( "Message " + configItemKey + "." + messageKey + " '" + message + "' is too long (" + message.length + " chars)" );
+							reject( "Message " + configItemKey + "." + messageKey + " '" + message + "' is too long (" + message.length + " chars)" );
+						}
+					});
+				}
+			});
+			
+			if (valid) {
+				resolve();
 			}
 		});
-
-		return lengthsOk;
 	},
 
 	/**
