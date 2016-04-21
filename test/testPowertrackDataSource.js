@@ -393,6 +393,7 @@ describe( 'PowertrackDataSource', function() {
 		var successCallbackRan;
 		var updateStatusRan;
 		var updateStatusParams;
+		var updateStatusMessage;
 		var tweetId = "5377776775";
 
 		function createTweetActivity(username) {
@@ -411,6 +412,7 @@ describe( 'PowertrackDataSource', function() {
 		before( function() {
 			powertrackDataSource.twitter = {
 				updateStatus: function(message,params,callback) {
+					updateStatusMessage = message;
 					updateStatusRan = true;
 					updateStatusParams = params;
 					callback( powertrackDataSource.reports.twitter.tweetSendWillError, {} );
@@ -429,6 +431,7 @@ describe( 'PowertrackDataSource', function() {
 			successCallbackRan = false;
 			updateStatusRan = false;
 			updateStatusParams = {};
+			updateStatusMessage = null;
 		});
 
 		it( "sendReplyTweet calls updateStatus and executes callback", function() {
@@ -472,6 +475,12 @@ describe( 'PowertrackDataSource', function() {
 			test.value( updateStatusParams.in_reply_to_status_id ).is( tweetId );
 		});
 
+		it( 'Timestamp is added to tweet', function() {
+			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, true, success );
+			test.string( updateStatusMessage ).contains( message );
+			test.string( updateStatusMessage ).match( / [0-9]*$/ );
+		});
+		
 		after( function(){
 			powertrackDataSource.twitter = {};
 			powertrackDataSource.config = {};
