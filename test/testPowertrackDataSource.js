@@ -116,9 +116,13 @@ describe( 'PowertrackDataSource', function() {
 		var oldSendReplyTweet;
 		var oldGetMessage;
 		var oldIfNewUser;
-
+		var oldProcessVerifiedReport;
+		var oldConfig;
+		
 		// Store the last message we logged; this lets us do some neat testing of code paths
 		var lastLog = "";
+		
+		var processVerifiedReportId;
 
 		before( function() {
 			// Mock logging functions to store the log message so we can inspect it
@@ -139,6 +143,8 @@ describe( 'PowertrackDataSource', function() {
 			oldSendReplyTweet = powertrackDataSource._sendReplyTweet;
 			oldGetMessage = powertrackDataSource._getMessage;
 			oldIfNewUser = powertrackDataSource._ifNewUser;
+			oldProcessVerifiedReport = powertrackDataSource._processVerifiedReport; 
+			oldConfig = powertrackDataSource.config;
 
 			// Mock these methods as we will look at the log message to check the code path
 			powertrackDataSource._insertConfirmed = function(){};
@@ -148,6 +154,13 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource._sendReplyTweet = function(){};
 			powertrackDataSource._getMessage = function(){};
 			powertrackDataSource._ifNewUser = function(){};
+			powertrackDataSource._processVerifiedReport = function(tweetId) {
+				processVerifiedReportId = tweetId;
+			};
+		});
+
+		beforeEach( function() {
+			processVerifiedReportId = null;
 		});
 
 		// Test all the variants of the 4 true/false categorization switches
@@ -227,6 +240,42 @@ describe( 'PowertrackDataSource', function() {
 			test.value( lastLog ).contains( noMatchString );
 		});
 
+		it( 'Calls _processVerifiedReport when username matches with correct tweet ID', function() {
+			var tweetActivity = createTweetActivity(false, false, false, false);
+			tweetActivity.object = {
+				id: 'tag:search.twitter.com,2005:tweetid'	
+			};
+			tweetActivity.verb = "share";
+			
+			tweetActivity.actor.preferredUsername = "userid";
+			powertrackDataSource.config = {
+				twitter: {
+					usernameVerify: "userid"
+				}	
+			};
+			
+			powertrackDataSource.filter( tweetActivity );
+			test.value( processVerifiedReportId ).is( 'tweetid' );
+		});
+
+		it( 'Does not call _processVerifiedReport when username does not match', function() {
+			var tweetActivity = createTweetActivity(false, false, false, false);
+			tweetActivity.object = {
+				id: 'tag:search.twitter.com,2005:tweetid'	
+			};
+			tweetActivity.verb = "share";
+			
+			tweetActivity.actor.preferredUsername = "userid";
+			powertrackDataSource.config = {
+				twitter: {
+					usernameVerify: "anotheruserid"
+				}	
+			};
+			
+			powertrackDataSource.filter( tweetActivity );
+			test.value( processVerifiedReportId ).isNull();
+		});
+
 		// Restore/erase mocked functions
 		after( function() {
 			powertrackDataSource.logger = oldLogger;
@@ -237,6 +286,8 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource._sendReplyTweet = oldSendReplyTweet;
 			powertrackDataSource._getMessage = oldGetMessage;
 			powertrackDataSource._ifNewUser = oldIfNewUser;
+			powertrackDataSource._processVerifiedReport = oldProcessVerifiedReport; 
+			powertrackDataSource.config = oldConfig;
 		});
 	});
 
