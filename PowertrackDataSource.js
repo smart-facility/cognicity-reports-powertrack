@@ -284,7 +284,7 @@ PowertrackDataSource.prototype = {
 						self.filter(tweetActivity);
 					} else {
 						// This looks like a system message
-						self.log.info("connectStream: Received system message: " + JSON.stringify(tweetActivity));
+						self.logger.info("connectStream: Received system message: " + JSON.stringify(tweetActivity));
 					}
 				} catch (err) {
 					self.logger.error("connectStream: stream.on('tweet'): Error on handler:" + err.message + ", " + err.stack);

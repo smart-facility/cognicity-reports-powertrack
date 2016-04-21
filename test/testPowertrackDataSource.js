@@ -524,6 +524,60 @@ describe( 'PowertrackDataSource', function() {
 
 	});
 
+	describe( "on.tweet", function() {
+		var streamTweetHandler; // Capture the tweet handler so we can call it explicitly during test
+		var oldFilter; // Capture server filter method
+		var tweetActivity;
+
+		var filterCalledTimes;
+
+		before( function() {
+			powertrackDataSource.config.gnip = {};
+			powertrackDataSource.Gnip = {
+				Stream: function() {
+					return {
+						start: function(){},
+						// Capture the error handler so we can call it immediately
+						on: function( event, callback ) {
+							if (event==='tweet') streamTweetHandler = callback;
+						}
+					};
+				},
+				// Mock the rules object and just call the callback immediately
+				Rules: function() {
+					return {
+						live: {
+							update: function(rules, success){ success(); }
+						}
+					};
+				}
+			};
+			oldFilter = powertrackDataSource.filter;
+			powertrackDataSource.filter = function(){ filterCalledTimes++; };
+		});
+
+		beforeEach( function() {
+			filterCalledTimes = 0;
+			powertrackDataSource._cachedData = [];
+			powertrackDataSource._cacheMode = false;
+			tweetActivity = {actor:'actor'};
+		});
+
+		it( 'System message does not call filter', function() {
+			powertrackDataSource.start(); // Start processing stream
+			delete tweetActivity.actor;
+			streamTweetHandler(tweetActivity); // Simulate incoming system message
+			test.value( filterCalledTimes ).is( 0 );
+			test.value( powertrackDataSource._cachedData.length ).is( 0 );
+		});
+		
+		// Restore/erase mocked functions
+		after( function(){
+			powertrackDataSource.filter = oldFilter;
+		});
+
+	});
+	
 	describe( "areTweetMessageLengthsOk", function() {
 		function createString(length) {
 			var s = "";
@@ -758,6 +812,55 @@ describe( 'PowertrackDataSource', function() {
 
 		after( function(){
 			powertrackDataSource.config = {};
+		});
+	});
+	
+	describe( "_verifyTwitterCredentials", function() {
+		var oldTwitter;
+		var failVerify;
+		
+		before( function() {
+			oldTwitter = powertrackDataSource.twitter;
+			powertrackDataSource.twitter = {
+				verifyCredentials: function(callback) {
+					if (failVerify) callback(true, null);
+					else callback(null, []);
+				}	
+			};
+		});
+
+		beforeEach( function() {
+			failVerify = false;
+		});
+
+		it( 'VerifyCredentials success resolves promise', function() {			
+		    test.promise
+		    	.given( powertrackDataSource._verifyTwitterCredentials() )
+		    	.then(function(value) {
+		    		// success case expected
+		    	})
+		    	.catch(function(err){
+		    		test.fail(err);
+		    	})
+		      	.done();
+		});
+
+		it( 'VerifyCredentials failure rejects promise', function() {
+			failVerify = true;
+			
+		    test.promise
+		    	.given( powertrackDataSource._verifyTwitterCredentials() )
+		    	.then(function(value) {
+		    		test.fail(value);
+		    	})
+		    	.catch(function(err){
+		    		// failure case expected
+		    	})
+		      	.done();
+		});
+
+		after( function(){
+			powertrackDataSource.twitter = oldTwitter;
 		});
 	});
 	
