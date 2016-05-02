@@ -579,7 +579,6 @@ describe( 'PowertrackDataSource', function() {
 	
 	// TODO _ifNewUser
 	// TODO _insertConfirmed
-	// TODO _insertInvitee
 	// TODO _insertUnConfirmed
 	// TODO _insertNonSpatial
 

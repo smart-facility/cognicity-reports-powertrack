@@ -452,15 +452,7 @@ PowertrackDataSource.prototype._insertConfirmed = function(tweetActivity) {
 PowertrackDataSource.prototype._insertInvitee = function(tweetActivity) {
 	var self = this;
 
-	self.reports.dbQuery(
-		{
-			text : "INSERT INTO " + self.config.pg.table_invitees + " (user_hash) VALUES (md5($1));",
-			values : [ tweetActivity.actor.preferredUsername ]
-		},
-		function(result) {
-			self.logger.info('Logged new invitee');
-		}
-	);
+	self._baseInsertInvitee(tweetActivity.actor.preferredUsername);
 };
 
 /**
