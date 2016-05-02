@@ -94,7 +94,7 @@ PowertrackDataSource.prototype.filter = function(tweetActivity) {
 
 	// Catch tweets from authorised user to verification
 	if ( tweetActivity.actor.preferredUsername === self.config.twitter.usernameVerify && tweetActivity.verb === 'share') {
-		self._processVerifiedReport(tweetActivity.object.id.split(',')[1].split(':')[1]);
+		self._processVerifiedReport( self._parseTweetIdFromActivity(tweetActivity) );
 	}
 
 	// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
@@ -132,9 +132,13 @@ PowertrackDataSource.prototype.filter = function(tweetActivity) {
 
 		// If we haven't contacted the user before, send them an invite tweet
 		self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-			self._sendReplyTweet(tweetActivity, self._getMessage('invite_text', tweetActivity), self.config.twitter.addTimestamp, function(){
-				self._insertInvitee(tweetActivity);
-			});
+			self._sendReplyTweet( 
+				tweetActivity, 
+				self._getMessage('invite_text', tweetActivity),
+				function(){
+					self._insertInvitee(tweetActivity);
+				}
+			);
 		});
 
 	} else if ( !geoInBoundingBox && !hasGeo && locationMatch && addressed ) {
@@ -143,16 +147,20 @@ PowertrackDataSource.prototype.filter = function(tweetActivity) {
 		self._insertNonSpatial(tweetActivity); //User sent us a message but no geo, log as such
 
 		// Ask them to enable geo-location
-		self._sendReplyTweet( tweetActivity, self._getMessage('askforgeo_text', tweetActivity), self.config.twitter.addTimestamp );
+		self._sendReplyTweet( tweetActivity, self._getMessage('askforgeo_text', tweetActivity) );
 
 	} else if ( !geoInBoundingBox && !hasGeo && locationMatch && !addressed ) {
 		self.logger.verbose( 'filter: -BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask user to participate' );
 
 		// If we haven't contacted the user before, send them an invite tweet
 		self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-			self._sendReplyTweet(tweetActivity, self._getMessage('invite_text', tweetActivity), self.config.twitter.addTimestamp, function(){
-				self._insertInvitee(tweetActivity);
-			});
+			self._sendReplyTweet(
+				tweetActivity, 
+				self._getMessage('invite_text', tweetActivity), 
+				function(){
+					self._insertInvitee(tweetActivity);
+				}
+			);
 		});
 
 	} else {
@@ -367,55 +375,6 @@ PowertrackDataSource.prototype._processVerifiedReport = function(retweet_id) {
 };
 
 /**
- * Send @reply Twitter message
- * @param {GnipTweetActivity} tweetActivity The Gnip tweet activity object this is a reply to
- * @param {string} message The tweet text to send
- * @param {boolean} send with timestamp toggle
- * @param {function} success Callback function called on success
- */
-PowertrackDataSource.prototype._sendReplyTweet = function(tweetActivity, message, addTimestamp, success) {
-	var self = this;
-
-	var usernameInBlacklist = false;
-	if (self.config.twitter.usernameReplyBlacklist) {
-		self.config.twitter.usernameReplyBlacklist.split(",").forEach( function(blacklistUsername){
-			if ( tweetActivity.actor.preferredUsername === blacklistUsername.trim() ) usernameInBlacklist = true;
-		});
-	}
-
-	if ( usernameInBlacklist ) {
-		// Never send tweets to usernames in blacklist
-		self.logger.info( '_sendReplyTweet: Tweet user is in usernameReplyBlacklist, not sending' );
-	} else {
-		// Tweet is not to ourself, attempt to send
-		var originalTweetId = tweetActivity.id;
-		originalTweetId = originalTweetId.split(':');
-		originalTweetId = originalTweetId[originalTweetId.length-1];
-
-		var params = {};
-		params.in_reply_to_status_id = originalTweetId;
-
-		message = '@' + tweetActivity.actor.preferredUsername + ' ' + message;
-		if ( addTimestamp ) message = message + " " + new Date().getTime();
-
-		if (self.config.twitter.send_enabled === true){
-			self.twitter.updateStatus(message, params, function(err, data){
-				if (err) {
-					self.logger.error( 'Tweeting "' + message + '" with params "' + JSON.stringify(params) + '" failed: ' + err );
-				} else {
-					self.logger.debug( 'Sent tweet: "' + message + '" with params ' + JSON.stringify(params) );
-					if (success) success();
-				}
-			});
-		} else { // for testing
-			self.logger.info( '_sendReplyTweet: In test mode - no message will be sent. Callback will still run.' );
-			self.logger.info( '_sendReplyTweet: Would have tweeted: "' + message + '" with params ' + JSON.stringify(params) );
-			if (success) success();
-		}
-	}
-};
-
-/**
  * Insert a confirmed report - i.e. has geo coordinates and is addressed.
  * Store both the tweet information and the user hash.
  * @param {GnipTweetActivity} tweetActivity Gnip PowerTrack tweet activity object
@@ -446,8 +405,8 @@ PowertrackDataSource.prototype._insertConfirmed = function(tweetActivity) {
 			    JSON.stringify(tweetActivity.twitter_entities.urls),
 			    JSON.stringify(tweetActivity.twitter_entities.user_mentions),
 			    tweetActivity.twitter_lang,
-					tweetActivity.link,
-					tweetActivity.id.split(',')[1].split(':')[1], // get tweet id
+				tweetActivity.link,
+				self._parseTweetIdFromActivity(tweetActivity),
 			    tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
 			]
 		},
@@ -477,7 +436,7 @@ PowertrackDataSource.prototype._insertConfirmed = function(tweetActivity) {
 								// Append ID of user's report
 								message+=result.rows[0].pkey;
 								// Send the user a thank-you tweet; send this for every confirmed report, timestamp not needed because of unique url
-								self._sendReplyTweet( tweetActivity, message, self.config.twitter.addTimestamp );
+								self._sendReplyTweet( tweetActivity, message );
 							}
 						);
 					}
@@ -575,6 +534,33 @@ PowertrackDataSource.prototype._insertNonSpatial = function(tweetActivity) {
 			}
 		);
 	});
+};
+
+
+/**
+ * Send @reply Twitter message
+ * @param {GnipTweetActivity} tweetActivity The Gnip tweet activity object this is a reply to
+ * @param {string} message The tweet text to send
+ * @param {function} success Callback function called on success
+ */
+PowertrackDataSource.prototype._sendReplyTweet = function(tweetActivity, message, success) {
+	var self = this;
+	
+	self._baseSendReplyTweet(
+		tweetActivity.actor.preferredUsername, 
+		self._parseTweetIdFromActivity(tweetActivity), 
+		message, 
+		success
+	);
+};
+
+/**
+ * Get tweet ID from Gnip tweet activity.
+ * @param {string} tweetActivity The Gnip tweet activity object to fetch ID from
+ * @return {string} Tweet ID
+ */
+PowertrackDataSource.prototype._parseTweetIdFromActivity = function(tweetActivity) {
+	return tweetActivity.id.split(':')[2];
 };
 
 // Export the PowertrackDataSource constructor

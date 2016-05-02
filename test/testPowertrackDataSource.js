@@ -242,9 +242,7 @@ describe( 'PowertrackDataSource', function() {
 
 		it( 'Calls _processVerifiedReport when username matches with correct tweet ID', function() {
 			var tweetActivity = createTweetActivity(false, false, false, false);
-			tweetActivity.object = {
-				id: 'tag:search.twitter.com,2005:tweetid'	
-			};
+			tweetActivity.id = 'tag:search.twitter.com,2005:tweetid';
 			tweetActivity.verb = "share";
 			
 			tweetActivity.actor.preferredUsername = "userid";
@@ -260,9 +258,7 @@ describe( 'PowertrackDataSource', function() {
 
 		it( 'Does not call _processVerifiedReport when username does not match', function() {
 			var tweetActivity = createTweetActivity(false, false, false, false);
-			tweetActivity.object = {
-				id: 'tag:search.twitter.com,2005:tweetid'	
-			};
+			tweetActivity.id = 'tag:search.twitter.com,2005:tweetid';
 			tweetActivity.verb = "share";
 			
 			tweetActivity.actor.preferredUsername = "userid";
@@ -390,100 +386,43 @@ describe( 'PowertrackDataSource', function() {
 	});
 
 	describe( "sendReplyTweet", function() {
-		var successCallbackRan;
-		var updateStatusRan;
-		var updateStatusParams;
-		var updateStatusMessage;
-		var tweetId = "5377776775";
-
-		function createTweetActivity(username) {
-			return {
-				id : 'tag:search.twitter.com,2005:'+tweetId,
-				actor: {
-					preferredUsername: username
-				}
-			};
-		}
-		function success(){
-			successCallbackRan = true;
-		}
-		var message = 'pan galactic gargle blaster';
-
+		var tweetId = '12345678';
+		var tweetUser = 'ragnar';
+		var tweetActivity = {
+			actor: {
+				preferredUsername: tweetUser
+			},
+			id: 'tag:search.twitter.com,2005:' + tweetId
+		};
+		var oldBaseSendReplyTweet;
+		var baseSendReplyTweetArgs = {};
+		
 		before( function() {
-			powertrackDataSource.twitter = {
-				updateStatus: function(message,params,callback) {
-					updateStatusMessage = message;
-					updateStatusRan = true;
-					updateStatusParams = params;
-					callback( powertrackDataSource.reports.twitter.tweetSendWillError, {} );
-				}
-			};
-			powertrackDataSource.config = {
-				twitter: {
-					usernameReplyBlacklist : 'zaphod, ford,arthur'
-				}
+			oldBaseSendReplyTweet = powertrackDataSource._baseSendReplyTweet;
+			powertrackDataSource._baseSendReplyTweet = function(user, id, msg, success) {
+				baseSendReplyTweetArgs.user = user;
+				baseSendReplyTweetArgs.id = id;
+				baseSendReplyTweetArgs.msg = msg;
+				baseSendReplyTweetArgs.success = success;
 			};
 		});
 
 		beforeEach( function() {
-			powertrackDataSource.reports.twitter.tweetSendWillError = false;
-			powertrackDataSource.config.twitter.send_enabled = true;
-			successCallbackRan = false;
-			updateStatusRan = false;
-			updateStatusParams = {};
-			updateStatusMessage = null;
+			baseSendReplyTweetArgs = {};
 		});
 
-		it( "sendReplyTweet calls updateStatus and executes callback", function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( successCallbackRan ).is( true );
-			test.value( updateStatusRan ).is( true );
+		it( "Username extracted from tweet activity", function() {
+			powertrackDataSource._sendReplyTweet( tweetActivity, 'a', 'b' );
+			test.value( baseSendReplyTweetArgs.user ).is( tweetUser );
 		});
 
-
-		it( "Tweet not sent to usernames in usernameReplyBlacklist", function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('zaphod'), message, false, success );
-			test.value( successCallbackRan ).is( false );
-
-			powertrackDataSource._sendReplyTweet( createTweetActivity('ford'), message, false, success );
-			test.value( successCallbackRan ).is( false );
-
-			powertrackDataSource._sendReplyTweet( createTweetActivity('arthur'), message, false, success );
-			test.value( successCallbackRan ).is( false );
+		it( "ID extracted from tweet activity", function() {
+			powertrackDataSource._sendReplyTweet( tweetActivity, 'a', 'b' );
+			test.value( baseSendReplyTweetArgs.id ).is( tweetId );
 		});
 
-		it( 'Tweet not sent if send_enabled is false', function() {
-			powertrackDataSource.config.twitter.send_enabled = false;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( updateStatusRan ).is( false );
-		});
-
-		it( 'Callback executed if send_enabled is false', function() {
-			powertrackDataSource.config.twitter.send_enabled = false;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( successCallbackRan ).is( true );
-		});
-
-		it( 'Callback not executed if error tweeting occurs', function() {
-			powertrackDataSource.reports.twitter.tweetSendWillError = true;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( successCallbackRan ).is( false );
-		});
-
-		it( 'Tweet is reply to ID from tweetActivity', function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( updateStatusParams.in_reply_to_status_id ).is( tweetId );
-		});
-
-		it( 'Timestamp is added to tweet', function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, true, success );
-			test.string( updateStatusMessage ).contains( message );
-			test.string( updateStatusMessage ).match( / [0-9]*$/ );
-		});
-		
 		after( function(){
-			powertrackDataSource.twitter = {};
-			powertrackDataSource.config = {};
+			powertrackDataSource._baseSendReplyTweet = oldBaseSendReplyTweet;
 		});
 	});
 	
