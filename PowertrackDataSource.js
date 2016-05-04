@@ -306,29 +306,6 @@ PowertrackDataSource.prototype.start = function() {
 };
 
 /**
- * Only execute the success callback if the user is not currently in the all users table.
- * @param {string} user The twitter screen name to check if exists
- * @param {DbQuerySuccess} callback Callback to execute if the user doesn't exist
- */
-PowertrackDataSource.prototype._ifNewUser = function(user, success) {
-	var self = this;
-
-	self.reports.dbQuery(
-		{
-			text: "SELECT user_hash FROM " + self.config.pg.table_all_users + " WHERE user_hash = md5($1);",
-			values: [ user ]
-		},
-		function(result) {
-			if (result && result.rows && result.rows.length === 0) {
-				success(result);
-			} else {
-				self.logger.debug("Not performing callback as user already exists");
-			}
-		}
-	);
-};
-
-/**
  * Update a report status to verified if a matching tweet_id is found in the tweet_reports table
  * @param {integer} retweet_id The retweeted twitter ID which may be a confirmed report
  */
@@ -464,44 +441,15 @@ PowertrackDataSource.prototype._insertUnConfirmed = function(tweetActivity) {
 PowertrackDataSource.prototype._insertNonSpatial = function(tweetActivity) {
 	var self = this;
 
-	self.reports.dbQuery(
-		{
-			text : "INSERT INTO " + self.config.pg.table_nonspatial_tweet_reports + " " +
-				"(created_at, text, hashtags, urls, user_mentions, lang) " +
-				"VALUES (" +
-				"$1, " +
-				"$2, " +
-				"$3, " +
-				"$4, " +
-				"$5, " +
-				"$6" +
-				");",
-			values : [
-				tweetActivity.postedTime,
-				tweetActivity.body,
-				JSON.stringify(tweetActivity.twitter_entities.hashtags),
-				JSON.stringify(tweetActivity.twitter_entities.urls),
-				JSON.stringify(tweetActivity.twitter_entities.user_mentions),
-				tweetActivity.twitter_lang
-			]
-		},
-
-		function(result) {
-			self.logger.info('Inserted non-spatial tweet');
-		}
+	self._baseInsertNonSpatial(
+		tweetActivity.actor.preferredUsername,
+		tweetActivity.postedTime,
+		tweetActivity.body,
+		JSON.stringify(tweetActivity.twitter_entities.hashtags),
+		JSON.stringify(tweetActivity.twitter_entities.urls),
+		JSON.stringify(tweetActivity.twitter_entities.user_mentions),
+		tweetActivity.twitter_lang
 	);
-
-	self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-		self.reports.dbQuery(
-			{
-				text : "INSERT INTO " + self.config.pg.table_nonspatial_users + " (user_hash) VALUES (md5($1));",
-				values : [ tweetActivity.actor.preferredUsername ]
-			},
-			function(result) {
-				self.logger.info("Inserted non-spatial user");
-			}
-		);
-	});
 };
 
 
