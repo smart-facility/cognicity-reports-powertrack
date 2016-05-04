@@ -56,12 +56,7 @@ PowertrackDataSource.prototype.config = {};
 PowertrackDataSource.prototype._getMessage = function(code, tweetActivity) {
 	var self = this;
 
-	// Fetch the language codes from both twitter and Gnip data, if present
-	var langs = [];
-	if (tweetActivity.twitter_lang) langs.push(tweetActivity.twitter_lang);
-	if (tweetActivity.gnip && tweetActivity.gnip.language && tweetActivity.gnip.language.value) langs.push(tweetActivity.gnip.language.value);
-
-	return self._baseGetMessage(code, langs);
+	return self._baseGetMessage(code, self._parseLangsFromActivity(tweetActivity));
 };
 
 /**
@@ -348,66 +343,18 @@ PowertrackDataSource.prototype._processVerifiedReport = function(retweet_id) {
 PowertrackDataSource.prototype._insertConfirmed = function(tweetActivity) {
 	var self = this;
 
-	//insertUser with count -> upsert
-	self.reports.dbQuery(
-		{
-			text : "INSERT INTO " + self.config.pg.table_tweets + " " +
-				"(created_at, text, hashtags, text_urls, user_mentions, lang, url, tweet_id, the_geom) " +
-				"VALUES (" +
-				"$1, " +
-				"$2, " +
-				"$3, " +
-				"$4, " +
-				"$5, " +
-				"$6, " +
-				"$7, " +
-				"$8, " +
-				"ST_GeomFromText('POINT(' || $9 || ')',4326)" +
-				") RETURNING pkey;",
-			values : [
-			    tweetActivity.postedTime,
-			    tweetActivity.body,
-			    JSON.stringify(tweetActivity.twitter_entities.hashtags),
-			    JSON.stringify(tweetActivity.twitter_entities.urls),
-			    JSON.stringify(tweetActivity.twitter_entities.user_mentions),
-			    tweetActivity.twitter_lang,
-				tweetActivity.link,
-				self._parseTweetIdFromActivity(tweetActivity),
-			    tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
-			]
-		},
-		function(result) {
-			var report_id_foreign_key = result.rows[0].pkey; // primary key for tweet reports = foreign key for all_reports table
-			self.logger.info('Logged confirmed tweet report');
-			self.reports.dbQuery(
-				{
-					text : "SELECT upsert_tweet_users(md5($1));",
-					values : [
-					    tweetActivity.actor.preferredUsername
-					]
-				},
-				function(result) {
-					self.logger.info('Logged confirmed tweet user');
-					self.reports.dbQuery(
-						{
-							text: "SELECT pkey FROM "+self.config.pg.table_all_reports+" WHERE fkey = $1 AND source = 'twitter';",
-							values : [
-								report_id_foreign_key
-							]
-						},
-						function(result) {
-								self.logger.info('Logged confirmed tweet user');
-								// Get correct response message
-								var message = self._getMessage('thanks_text', tweetActivity);
-								// Append ID of user's report
-								message+=result.rows[0].pkey;
-								// Send the user a thank-you tweet; send this for every confirmed report, timestamp not needed because of unique url
-								self._sendReplyTweet( tweetActivity, message );
-							}
-						);
-					}
-				);
-			}
+	self._baseInsertConfirmed(
+		tweetActivity.actor.preferredUsername, 
+		self._parseLangsFromActivity(tweetActivity), 
+		self._parseTweetIdFromActivity(tweetActivity), 
+		tweetActivity.postedTime, 
+		tweetActivity.body, 
+		JSON.stringify(tweetActivity.twitter_entities.hashtags), 
+		JSON.stringify(tweetActivity.twitter_entities.urls), 
+		JSON.stringify(tweetActivity.twitter_entities.user_mentions), 
+		tweetActivity.twitter_lang, 
+		tweetActivity.link, 
+		tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
 	);
 };
 
@@ -477,6 +424,19 @@ PowertrackDataSource.prototype._sendReplyTweet = function(tweetActivity, message
  */
 PowertrackDataSource.prototype._parseTweetIdFromActivity = function(tweetActivity) {
 	return tweetActivity.id.split(':')[2];
+};
+
+/**
+ * TODO
+ */
+PowertrackDataSource.prototype._parseLangsFromActivity = function(tweetActivity) {
+	// Fetch the language codes from both twitter and Gnip data, if present
+	var langs = [];
+	
+	if (tweetActivity.twitter_lang) langs.push(tweetActivity.twitter_lang);
+	if (tweetActivity.gnip && tweetActivity.gnip.language && tweetActivity.gnip.language.value) langs.push(tweetActivity.gnip.language.value);
+	
+	return langs;
 };
 
 // Export the PowertrackDataSource constructor
