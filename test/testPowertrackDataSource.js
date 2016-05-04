@@ -15,7 +15,7 @@ var reports = {
 // We will mock these objects as required for each test suite
 var powertrackDataSource = new PowertrackDataSource(
 	reports,
-	{}
+	{ twitter: {} }
 );
 
 // Mocked logger we can use to let code run without error when trying to call logger messages
@@ -73,8 +73,12 @@ describe( 'PowertrackDataSource', function() {
 		it( 'Should return null if code cannot be resolved', function() {
 			test.value( powertrackDataSource._getMessage( 'farewell', createTweetActivity('human') ) ).is( null );
 		});
+		
+		after( function() {
+			powertrackDataSource.config = {};
+		});
 	});
-
+	
 	// Test suite for filter function
 	describe( 'filter', function() {
 		// The strings we look for in the log messages
@@ -161,6 +165,11 @@ describe( 'PowertrackDataSource', function() {
 
 		beforeEach( function() {
 			processVerifiedReportId = null;
+			powertrackDataSource.config = {
+				twitter: {
+					usernameVerify: ""
+				}
+			};
 		});
 
 		// Test all the variants of the 4 true/false categorization switches
@@ -347,7 +356,9 @@ describe( 'PowertrackDataSource', function() {
 
 		beforeEach( function() {
 			// Setup object for Gnip configuration
-			powertrackDataSource.config.gnip = {};
+			powertrackDataSource.config = {
+				gnip: {}
+			};
 
 			// Reset the counters and handler references
 			streamStarted = 0;

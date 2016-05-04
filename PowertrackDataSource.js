@@ -61,18 +61,7 @@ PowertrackDataSource.prototype._getMessage = function(code, tweetActivity) {
 	if (tweetActivity.twitter_lang) langs.push(tweetActivity.twitter_lang);
 	if (tweetActivity.gnip && tweetActivity.gnip.language && tweetActivity.gnip.language.value) langs.push(tweetActivity.gnip.language.value);
 
-	// Find a matching code if we can
-	if (self.config.twitter[code]) {
-		for (var i=0; i<langs.length; i++) {
-			var lang = langs[i];
-			if (self.config.twitter[code][lang]) return self.config.twitter[code][lang];
-		}
-		// If we haven't found a code, try the default language
-		if (self.config.twitter[code][self.config.twitter.defaultLanguage]) return self.config.twitter[code][self.config.twitter.defaultLanguage];
-	}
-
-	self.logger.warn( "_getMessage: Code could not be resolved for '" + code + "' and langs '" + langs +"'" );
-	return null;
+	return self._baseGetMessage(code, langs);
 };
 
 /**
