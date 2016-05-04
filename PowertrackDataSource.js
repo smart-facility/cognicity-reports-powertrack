@@ -462,22 +462,9 @@ PowertrackDataSource.prototype._insertInvitee = function(tweetActivity) {
 PowertrackDataSource.prototype._insertUnConfirmed = function(tweetActivity) {
 	var self = this;
 
-	self.reports.dbQuery(
-		{
-			text : "INSERT INTO " + self.config.pg.table_unconfirmed + " " +
-				"(created_at, the_geom) " +
-				"VALUES ( " +
-				"$1, " +
-				"ST_GeomFromText('POINT(' || $2 || ')',4326)" +
-				");",
-			values : [
-			    tweetActivity.postedTime,
-			    tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
-			]
-		},
-		function(result) {
-			self.logger.info('Logged unconfirmed tweet report');
-		}
+	self._baseInsertUnConfirmed(
+	    tweetActivity.postedTime,
+	    tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
 	);
 };
 
