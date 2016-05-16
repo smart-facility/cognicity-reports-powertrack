@@ -5,5 +5,7 @@ sudo: false
 before_install:
     - git clone --depth=50 --branch=refactor https://github.com/smart-facility/cognicity-reports.git smart-facility/cognicity-reports
     - git clone --depth=50 --branch=refactor https://github.com/smart-facility/cognicity-reports-powertrack.git smart-facility/cognicity-reports/gnip-powertrack
+    - cd smart-facility/cognicity-reports
+    - npm install
     - cd smart-facility/cognicity-reports/gnip-powertrack
-    - npm install rsvp@^3.2.1
+    
