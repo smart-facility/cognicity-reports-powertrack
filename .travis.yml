@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-   - "4.2.1"
+	- "4.2.1"
 sudo: false
 before_install:
 	- git clone --depth=50 --branch=refactor https://github.com/smart-facility/cognicity-reports.git smart-facility/cognicity-reports
