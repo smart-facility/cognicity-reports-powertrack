@@ -351,47 +351,6 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 	});
-
-	describe( "sendReplyTweet", function() {
-		var tweetId = '12345678';
-		var tweetUser = 'ragnar';
-		var tweetActivity = {
-			actor: {
-				preferredUsername: tweetUser
-			},
-			id: 'tag:search.twitter.com,2005:' + tweetId
-		};
-		var oldBaseSendReplyTweet;
-		var baseSendReplyTweetArgs = {};
-		
-		before( function() {
-			oldBaseSendReplyTweet = powertrackDataSource._baseSendReplyTweet;
-			powertrackDataSource._baseSendReplyTweet = function(user, id, msg, success) {
-				baseSendReplyTweetArgs.user = user;
-				baseSendReplyTweetArgs.id = id;
-				baseSendReplyTweetArgs.msg = msg;
-				baseSendReplyTweetArgs.success = success;
-			};
-		});
-
-		beforeEach( function() {
-			baseSendReplyTweetArgs = {};
-		});
-
-		it( "Username extracted from tweet activity", function() {
-			powertrackDataSource._sendReplyTweet( tweetActivity, 'a', 'b' );
-			test.value( baseSendReplyTweetArgs.user ).is( tweetUser );
-		});
-
-		it( "ID extracted from tweet activity", function() {
-			powertrackDataSource._sendReplyTweet( tweetActivity, 'a', 'b' );
-			test.value( baseSendReplyTweetArgs.id ).is( tweetId );
-		});
-
-		after( function(){
-			powertrackDataSource._baseSendReplyTweet = oldBaseSendReplyTweet;
-		});
-	});
 	
 	describe( "cacheMode", function() {
 		var streamTweetHandler; // Capture the tweet handler so we can call it explicitly during test
