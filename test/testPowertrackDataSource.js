@@ -601,6 +601,38 @@ describe( 'PowertrackDataSource', function() {
 
 	});
 	
+	describe( "_parseTweetIdFromActivity", function() {
+		
+		var tweetId = "12345678";
+		var activityId = "tag:search.twitter.com,2005:" + tweetId;
+		
+		it( 'Tweet ID parsed from activity IRI', function() {
+			var activity = {
+				id: activityId 	
+			};
+			var response = powertrackDataSource._parseTweetIdFromActivity(activity);
+			test.value( response ).is( tweetId );
+		});
+
+	});
+	
+	describe( "_parseRetweetOriginalTweetIdFromActivity", function() {
+		
+		var tweetId = "12345678";
+		var activityId = "tag:search.twitter.com,2005:" + tweetId;
+		
+		it( 'Tweet ID parsed from activity IRI', function() {
+			var activity = {
+				object: {
+					id: activityId 	
+				}
+			};
+			var response = powertrackDataSource._parseRetweetOriginalTweetIdFromActivity(activity);
+			test.value( response ).is( tweetId );
+		});
+
+	});
+	
 	// TODO _ifNewUser
 	// TODO _insertConfirmed
 	// TODO _insertUnConfirmed
