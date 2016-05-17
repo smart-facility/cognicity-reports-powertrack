@@ -251,7 +251,9 @@ describe( 'PowertrackDataSource', function() {
 
 		it( 'Calls _processVerifiedReport when username matches with correct tweet ID', function() {
 			var tweetActivity = createTweetActivity(false, false, false, false);
-			tweetActivity.id = 'tag:search.twitter.com,2005:tweetid';
+			tweetActivity.object = {
+				id: 'tag:search.twitter.com,2005:tweetid'
+			};
 			tweetActivity.verb = "share";
 			
 			tweetActivity.actor.preferredUsername = "userid";
@@ -267,7 +269,9 @@ describe( 'PowertrackDataSource', function() {
 
 		it( 'Does not call _processVerifiedReport when username does not match', function() {
 			var tweetActivity = createTweetActivity(false, false, false, false);
-			tweetActivity.id = 'tag:search.twitter.com,2005:tweetid';
+			tweetActivity.object = {
+				id: 'tag:search.twitter.com,2005:tweetid'	
+			};
 			tweetActivity.verb = "share";
 			
 			tweetActivity.actor.preferredUsername = "userid";

@@ -78,7 +78,7 @@ PowertrackDataSource.prototype.filter = function(tweetActivity) {
 
 	// Catch tweets from authorised user to verification
 	if ( tweetActivity.actor.preferredUsername === self.config.twitter.usernameVerify && tweetActivity.verb === 'share') {
-		self._processVerifiedReport( self._parseTweetIdFromActivity(tweetActivity) );
+		self._processVerifiedReport( self._parseRetweetOriginalTweetIdFromActivity(tweetActivity) );
 	}
 
 	// Everything incoming has a keyword already, so we now try and categorize it using the Gnip tags
@@ -301,41 +301,6 @@ PowertrackDataSource.prototype.start = function() {
 };
 
 /**
- * Update a report status to verified if a matching tweet_id is found in the tweet_reports table
- * @param {integer} retweet_id The retweeted twitter ID which may be a confirmed report
- */
-PowertrackDataSource.prototype._processVerifiedReport = function(retweet_id) {
-	var self = this;
-	// Check to see if the referenced report is confirmed
-	self.reports.dbQuery(
-		{
-			text: "SELECT pkey FROM " + self.config.pg.table_tweets + " WHERE tweet_id = $1;",
-			values : [retweet_id]
-		},
-		// Update status
-		function(result) {
-			if (result && result.rows && result.rows.length === 1 && result.rows[0]) {
-				self.reports.dbQuery(
-					{
-						text : "UPDATE " + self.config.pg.table_all_reports + " " +
-							"SET STATUS = 'verified' WHERE fkey = $1 AND source = 'twitter';",
-						values : [
-							result.rows[0].pkey
-						]
-					},
-					function(result) {
-						self.logger.info('Logged verified tweet report');
-					}
-				);
-			}
-				else {
-					self.logger.debug("Not performing callback as tweet not found in database");
-			}
-		}
-	);
-};
-
-/**
  * Insert a confirmed report - i.e. has geo coordinates and is addressed.
  * Store both the tweet information and the user hash.
  * @param {GnipTweetActivity} tweetActivity Gnip PowerTrack tweet activity object
@@ -424,6 +389,15 @@ PowertrackDataSource.prototype._sendReplyTweet = function(tweetActivity, message
  */
 PowertrackDataSource.prototype._parseTweetIdFromActivity = function(tweetActivity) {
 	return tweetActivity.id.split(':')[2];
+};
+
+/**
+ * Get retweet's original tweet ID from Gnip tweet activity.
+ * @param {string} tweetActivity The Gnip tweet activity object to fetch retweet's original tweet ID from
+ * @return {string} Tweet ID
+ */
+PowertrackDataSource.prototype._parseRetweetOriginalTweetIdFromActivity = function(tweetActivity) {
+	return tweetActivity.object.id.split(':')[2];
 };
 
 /**
