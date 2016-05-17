@@ -30,54 +30,6 @@ powertrackDataSource.reports.logger = powertrackDataSource.logger;
 
 // Test harness for CognicityReportsPowertrack object
 describe( 'PowertrackDataSource', function() {
-
-	// Test suite for i18n getMessage function
-	describe( '_getMessage', function() {
-		// Setup by adding some codes and a defaultLanguage to the config
-		before( function() {
-			powertrackDataSource.config = {
-				'twitter' : {
-					'greeting' : {
-						'human' : 'hi',
-						'monkey' : 'eek'
-					},
-					'defaultLanguage' : 'human'
-				}
-			};
-		});
-
-		// Create a dummy tweet activity object based on the language codes passed in
-		function createTweetActivity(lang1, lang2) {
-			var tweetActivity = {};
-			if (lang1) tweetActivity.twitter_lang = lang1;
-			if (lang2) tweetActivity.gnip = {
-				language: {
-					value: lang2
-				}
-			};
-			return tweetActivity;
-		}
-
-		it( 'Should resolve a string for twitter language code', function() {
-			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('human') ) ).is( 'hi' );
-		});
-		it( 'Should resolve a string for Gnip language code', function() {
-			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity(null,'monkey') ) ).is( 'eek' );
-		});
-		it( 'Should resolve twitter code if both twitter and Gnip codes present', function() {
-			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('monkey','human') ) ).is( 'eek' );
-		});
-		it( 'Should resolve a string for default language', function() {
-			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('cat') ) ).is( 'hi' );
-		});
-		it( 'Should return null if code cannot be resolved', function() {
-			test.value( powertrackDataSource._getMessage( 'farewell', createTweetActivity('human') ) ).is( null );
-		});
-		
-		after( function() {
-			powertrackDataSource.config = {};
-		});
-	});
 	
 	// Test suite for filter function
 	describe( 'filter', function() {
@@ -588,6 +540,63 @@ describe( 'PowertrackDataSource', function() {
 		// Restore/erase mocked functions
 		after( function(){
 			powertrackDataSource.filter = oldFilter;
+		});
+
+	});
+	
+	describe( "_parseLangsFromActivity", function() {
+		
+		var expectedTwitter = "moo";
+		var expectedGnip = "baa";
+		
+		it( 'Twitter code is parsed', function() {
+			var activity = {
+				twitter_lang: expectedTwitter 	
+			};
+			var response = powertrackDataSource._parseLangsFromActivity(activity);
+			test.array( response ).hasLength( 1 );
+			test.array( response ).hasValue( expectedTwitter );
+		});
+
+		it( 'Gnip code is parsed', function() {
+			var activity = {
+				gnip: {
+					language: {
+						value: expectedGnip
+					} 	
+				}
+			};
+			var response = powertrackDataSource._parseLangsFromActivity(activity);
+			test.array( response ).hasLength( 1 );
+			test.array( response ).hasValue( expectedGnip );
+		});
+
+		it( 'Both codes are parsed', function() {
+			var activity = {
+				twitter_lang: expectedTwitter,
+				gnip: {
+					language: {
+						value: expectedGnip
+					} 	
+				}
+			};
+			var response = powertrackDataSource._parseLangsFromActivity(activity);
+			test.array( response ).hasLength( 2 );
+			test.array( response ).hasValue( expectedTwitter );
+			test.array( response ).hasValue( expectedGnip );
+		});
+		
+		it( 'No codes are parsed', function() {
+			var activity = {
+				twitter_langz: expectedTwitter,
+				gnip: {
+					language: {
+						valuez: expectedGnip
+					} 	
+				}
+			};
+			var response = powertrackDataSource._parseLangsFromActivity(activity);
+			test.array( response ).hasLength( 0 );
 		});
 
 	});
