@@ -384,7 +384,7 @@ PowertrackDataSource.prototype._sendReplyTweet = function(tweetActivity, message
 
 /**
  * Get tweet ID from Gnip tweet activity.
- * @param {string} tweetActivity The Gnip tweet activity object to fetch ID from
+ * @param {GnipTweetActivity} tweetActivity The Gnip tweet activity object to fetch ID from
  * @return {string} Tweet ID
  */
 PowertrackDataSource.prototype._parseTweetIdFromActivity = function(tweetActivity) {
@@ -393,7 +393,7 @@ PowertrackDataSource.prototype._parseTweetIdFromActivity = function(tweetActivit
 
 /**
  * Get retweet's original tweet ID from Gnip tweet activity.
- * @param {string} tweetActivity The Gnip tweet activity object to fetch retweet's original tweet ID from
+ * @param {GnipTweetActivity} tweetActivity The Gnip tweet activity object to fetch retweet's original tweet ID from
  * @return {string} Tweet ID
  */
 PowertrackDataSource.prototype._parseRetweetOriginalTweetIdFromActivity = function(tweetActivity) {
@@ -401,7 +401,8 @@ PowertrackDataSource.prototype._parseRetweetOriginalTweetIdFromActivity = functi
 };
 
 /**
- * TODO
+ * Get language codes from the activity.
+ * @param {GnipTweetActivity} tweetActivity The Gnip tweet activity object to fetch languages from
  */
 PowertrackDataSource.prototype._parseLangsFromActivity = function(tweetActivity) {
 	// Fetch the language codes from both twitter and Gnip data, if present
