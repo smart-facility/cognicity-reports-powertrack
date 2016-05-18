@@ -75,6 +75,7 @@ config.twitter.access_token_secret = ''; // Take from the twitter dev admin inte
 
 // Twitter parameters
 config.twitter.send_enabled = false; // Enable sending of tweets?
+config.twitter.url_length = 23; // t.co url shortener length
 
 // Twitter message texts
 // Note we use IN and ID because twitter and Gnip return different language codes for Indonesian

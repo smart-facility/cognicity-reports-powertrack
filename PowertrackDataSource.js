@@ -605,7 +605,7 @@ PowertrackDataSource.prototype = {
 			);
 		});
 	},
-
+	
 	/**
 	 * Validate the data source configuration.
 	 * Check twitter credentials and tweet message lengths.
@@ -613,7 +613,7 @@ PowertrackDataSource.prototype = {
 	 */
 	validateConfig: function() {
 		var self = this;
-
+		
 		// Contain separate validation promises in one 'all' promise
 		return RSVP.all([
 		    self._verifyTwitterCredentials(),
@@ -651,7 +651,7 @@ PowertrackDataSource.prototype = {
 	 */
 	_areTweetMessageLengthsOk: function() {
 		var self = this;
-
+		
 		return new RSVP.Promise( function(resolve, reject) {
 			var valid = true;
 			Object.keys( self.config.twitter ).forEach( function(configItemKey) {
@@ -664,8 +664,18 @@ PowertrackDataSource.prototype = {
 					if ( self.config.twitter.addTimestamp ) maxLength -= 14; // Minus 13 digit timestamp + space = 109 (13 digit timestamp is ok until the year 2286)
 					Object.keys( configItem ).forEach( function(messageKey) {
 						var message = configItem[messageKey];
+						// Twitter shortens (or in some cases lengthens) all URLs to a length, which slowly varies over time.
+						// We use config.twitter.url_length to keep track of the current length, and here replace url length
+						// with the resulting t.co output length in calculations for checking tweet length
+						var length = message.length;
+						var matches = message.match(/http[^ ]*/g);
+						if (matches) {
+							for (var i = 0; i < matches.length; i++) {
+								length += self.config.twitter.url_length - matches[i].length;
+							}
+						}
 
-						if ( message.length > maxLength ) {
+						if ( length > maxLength ) {
 							valid = false;
 							self.logger.error( "Message " + configItemKey + "." + messageKey + " '" + message + "' is too long (" + message.length + " chars)" );
 							reject( "Message " + configItemKey + "." + messageKey + " '" + message + "' is too long (" + message.length + " chars)" );
@@ -673,7 +683,7 @@ PowertrackDataSource.prototype = {
 					});
 				}
 			});
-
+			
 			if (valid) {
 				resolve();
 			}
