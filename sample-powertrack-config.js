@@ -32,6 +32,8 @@
  * @property {string} twitter.consumer_secret Take from the twitter dev admin interface
  * @property {string} twitter.access_token_key Take from the twitter dev admin interface
  * @property {string} twitter.access_token_secret Take from the twitter dev admin interface
+ * @property {boolen} twitter.send_enabled If true, send tweets to users asking them to verify their reports
+ * @property {number} twitter.url_length Length that URLs in tweets are shortened to 
  * @property {string} twitter.defaultLanguage The default language code to use if we can't resolve one from the tweet
  * @property {object} twitter.invite_text Object of twitter message texts mapping a language code to a message
  * @property {string} twitter.invite_text.(name) Language code to resolve

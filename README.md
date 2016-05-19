@@ -61,6 +61,7 @@ App configuration parameters are stored in a configuration file which is parsed 
 #### Twitter account configuration
 Set the app authentication parameters as provided by Twitter. See the [ntwitter-module](https://github.com/AvianFlu/ntwitter) documentation for more details.
 * usernameReplyBlacklist - Twitter usernames (without @, comma separated for multiples) which will never be sent to in response to tweet processing
+* usernameVerify - Twitter username (without @) authorised to verify reports via retweet functionality
 
 #### Twitter send parameters
 * send_enabled [true | false] - set to true to enable confirmation request tweets to be sent.
@@ -73,6 +74,7 @@ Within the object, the property name (key) is the language, and the value is the
 There is also a top-level 'defaultLanguage' property which is used if the language code from the tweet cannot be resolved.
 
 ##### Languages
+twitter.defaultLanguage Sets the default language code used in responses if one can't be determined in the tweet.
 * in - Bahasa Indonesian (language code from Gnip)
 * id - Bahasa Indonesian (language code from Twitter)
 * en - English
