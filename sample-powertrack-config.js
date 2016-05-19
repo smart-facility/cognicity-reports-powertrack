@@ -5,6 +5,15 @@
 /**
  * Configuration for cognicity-reports-powertrack
  * @namespace {object} config
+ * @property {object} pg Postgres configuration object
+ * @property {string} pg.table_all_reports Postgres table name for normalised report data 
+ * @property {string} pg.table_tweets Postgres table name for tweet records
+ * @property {string} pg.table_users Postgres table name for user records
+ * @property {string} pg.table_invitees Postgres table name for invited user records
+ * @property {string} pg.table_unconfirmed Postgres table name for unconfirmed reports
+ * @property {string} pg.table_nonspatial_users Postgres table name for non-spatial users
+ * @property {string} pg.table_nonspatial_tweet_reports Postgres table name for non-spatial tweet reports
+ * @property {string} pg.table_all_users Postgres table name for all user records
  * @property {object} gnip Configuration object for Gnip PowerTrack interface
  * @property {boolean} gnip.stream If true, connect to the Gnip stream and process tweets
  * @property {number} gnip.streamTimeout Network timeout for Gnip stream connection, in milliseconds. Must be >30s as a keep-alive is sent at least every 30s. {@link http://support.gnip.com/apis/consuming_streaming_data.html#keepalive_signals}
