@@ -6,7 +6,7 @@ CogniCity
 
 Travis build status: [![Build Status](https://travis-ci.org/smart-facility/cognicity-reports-powertrack.svg?branch=master)](https://travis-ci.org/smart-facility/cognicity-reports-powertrack)
 
-DOI for current stable release [v1.0.4](https://github.com/smart-facility/cognicity-reports-powertrack/releases/tag/v1.0.4): [![DOI](https://zenodo.org/badge/19201/smart-facility/cognicity-reports-powertrack.svg)](https://zenodo.org/badge/latestdoi/19201/smart-facility/cognicity-reports-powertrack)
+DOI for current stable release [v2.0.0](https://github.com/smart-facility/cognicity-reports-powertrack/releases/tag/v2.0.0): [![DOI](https://zenodo.org/badge/19201/smart-facility/cognicity-reports-powertrack.svg)](https://zenodo.org/badge/latestdoi/19201/smart-facility/cognicity-reports-powertrack)
 
 ### About
 Cognicity-reports-powertrack is the NodeJS reports module for collecting relevant tweets via Gnip PowerTrack as part of the Cognicity Framework, and sending users verification messages via Twitter. For detailed framework documentation see [http://cognicity.info](http://cognicity.info).
@@ -16,7 +16,7 @@ This module is not designed to be run standalone but is designed to be run as a 
 [http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html](http://cognicity.info/cognicity/api-docs/cognicity-reports-powertrack/index.html)
 
 ### Dependencies
-* [NodeJS](http://nodejs.org) version 0.10.16 or compatible
+* [NodeJS](http://nodejs.org) version 4.2.1 or compatible
 
 #### Node Modules
 * [gnip](https://github.com/demian85/gnip) version 0.2.1 or compatible
