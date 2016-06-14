@@ -15,7 +15,7 @@ var reports = {
 // We will mock these objects as required for each test suite
 var powertrackDataSource = new PowertrackDataSource(
 	reports,
-	{}
+	{ twitter: {} }
 );
 
 // Mocked logger we can use to let code run without error when trying to call logger messages
@@ -30,51 +30,7 @@ powertrackDataSource.reports.logger = powertrackDataSource.logger;
 
 // Test harness for CognicityReportsPowertrack object
 describe( 'PowertrackDataSource', function() {
-
-	// Test suite for i18n getMessage function
-	describe( '_getMessage', function() {
-		// Setup by adding some codes and a defaultLanguage to the config
-		before( function() {
-			powertrackDataSource.config = {
-				'twitter' : {
-					'greeting' : {
-						'human' : 'hi',
-						'monkey' : 'eek'
-					},
-					'defaultLanguage' : 'human'
-				}
-			};
-		});
-
-		// Create a dummy tweet activity object based on the language codes passed in
-		function createTweetActivity(lang1, lang2) {
-			var tweetActivity = {};
-			if (lang1) tweetActivity.twitter_lang = lang1;
-			if (lang2) tweetActivity.gnip = {
-				language: {
-					value: lang2
-				}
-			};
-			return tweetActivity;
-		}
-
-		it( 'Should resolve a string for twitter language code', function() {
-			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('human') ) ).is( 'hi' );
-		});
-		it( 'Should resolve a string for Gnip language code', function() {
-			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity(null,'monkey') ) ).is( 'eek' );
-		});
-		it( 'Should resolve twitter code if both twitter and Gnip codes present', function() {
-			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('monkey','human') ) ).is( 'eek' );
-		});
-		it( 'Should resolve a string for default language', function() {
-			test.string( powertrackDataSource._getMessage( 'greeting', createTweetActivity('cat') ) ).is( 'hi' );
-		});
-		it( 'Should return null if code cannot be resolved', function() {
-			test.value( powertrackDataSource._getMessage( 'farewell', createTweetActivity('human') ) ).is( null );
-		});
-	});
-
+	
 	// Test suite for filter function
 	describe( 'filter', function() {
 		// The strings we look for in the log messages
@@ -161,6 +117,11 @@ describe( 'PowertrackDataSource', function() {
 
 		beforeEach( function() {
 			processVerifiedReportId = null;
+			powertrackDataSource.config = {
+				twitter: {
+					usernameVerify: ""
+				}
+			};
 		});
 
 		// Test all the variants of the 4 true/false categorization switches
@@ -243,7 +204,7 @@ describe( 'PowertrackDataSource', function() {
 		it( 'Calls _processVerifiedReport when username matches with correct tweet ID', function() {
 			var tweetActivity = createTweetActivity(false, false, false, false);
 			tweetActivity.object = {
-				id: 'tag:search.twitter.com,2005:tweetid'	
+				id: 'tag:search.twitter.com,2005:tweetid'
 			};
 			tweetActivity.verb = "share";
 			
@@ -351,7 +312,9 @@ describe( 'PowertrackDataSource', function() {
 
 		beforeEach( function() {
 			// Setup object for Gnip configuration
-			powertrackDataSource.config.gnip = {};
+			powertrackDataSource.config = {
+				gnip: {}
+			};
 
 			// Reset the counters and handler references
 			streamStarted = 0;
@@ -388,105 +351,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 	});
-
-	describe( "sendReplyTweet", function() {
-		var successCallbackRan;
-		var updateStatusRan;
-		var updateStatusParams;
-		var updateStatusMessage;
-		var tweetId = "5377776775";
-
-		function createTweetActivity(username) {
-			return {
-				id : 'tag:search.twitter.com,2005:'+tweetId,
-				actor: {
-					preferredUsername: username
-				}
-			};
-		}
-		function success(){
-			successCallbackRan = true;
-		}
-		var message = 'pan galactic gargle blaster';
-
-		before( function() {
-			powertrackDataSource.twitter = {
-				updateStatus: function(message,params,callback) {
-					updateStatusMessage = message;
-					updateStatusRan = true;
-					updateStatusParams = params;
-					callback( powertrackDataSource.reports.twitter.tweetSendWillError, {} );
-				}
-			};
-			powertrackDataSource.config = {
-				twitter: {
-					usernameReplyBlacklist : 'zaphod, ford,arthur'
-				}
-			};
-		});
-
-		beforeEach( function() {
-			powertrackDataSource.reports.twitter.tweetSendWillError = false;
-			powertrackDataSource.config.twitter.send_enabled = true;
-			successCallbackRan = false;
-			updateStatusRan = false;
-			updateStatusParams = {};
-			updateStatusMessage = null;
-		});
-
-		it( "sendReplyTweet calls updateStatus and executes callback", function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( successCallbackRan ).is( true );
-			test.value( updateStatusRan ).is( true );
-		});
-
-
-		it( "Tweet not sent to usernames in usernameReplyBlacklist", function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('zaphod'), message, false, success );
-			test.value( successCallbackRan ).is( false );
-
-			powertrackDataSource._sendReplyTweet( createTweetActivity('ford'), message, false, success );
-			test.value( successCallbackRan ).is( false );
-
-			powertrackDataSource._sendReplyTweet( createTweetActivity('arthur'), message, false, success );
-			test.value( successCallbackRan ).is( false );
-		});
-
-		it( 'Tweet not sent if send_enabled is false', function() {
-			powertrackDataSource.config.twitter.send_enabled = false;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( updateStatusRan ).is( false );
-		});
-
-		it( 'Callback executed if send_enabled is false', function() {
-			powertrackDataSource.config.twitter.send_enabled = false;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( successCallbackRan ).is( true );
-		});
-
-		it( 'Callback not executed if error tweeting occurs', function() {
-			powertrackDataSource.reports.twitter.tweetSendWillError = true;
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( successCallbackRan ).is( false );
-		});
-
-		it( 'Tweet is reply to ID from tweetActivity', function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, false, success );
-			test.value( updateStatusParams.in_reply_to_status_id ).is( tweetId );
-		});
-
-		it( 'Timestamp is added to tweet', function() {
-			powertrackDataSource._sendReplyTweet( createTweetActivity('trillian'), message, true, success );
-			test.string( updateStatusMessage ).contains( message );
-			test.string( updateStatusMessage ).match( / [0-9]*$/ );
-		});
-		
-		after( function(){
-			powertrackDataSource.twitter = {};
-			powertrackDataSource.config = {};
-		});
-	});
-
+	
 	describe( "cacheMode", function() {
 		var streamTweetHandler; // Capture the tweet handler so we can call it explicitly during test
 		var oldFilter; // Capture server filter method
@@ -638,295 +503,97 @@ describe( 'PowertrackDataSource', function() {
 
 	});
 	
-	describe( "areTweetMessageLengthsOk", function() {
-		function createString(length) {
-			var s = "";
-			for (var i = 0; i<length; i++) {
-				s += "a";
-			}
-			return s;
-		}
-
-		before( function() {
-		});
-
-		beforeEach( function() {
-			powertrackDataSource.config = {
-				twitter: {}
+	describe( "_parseLangsFromActivity", function() {
+		
+		var expectedTwitter = "moo";
+		var expectedGnip = "baa";
+		
+		it( 'Twitter code is parsed', function() {
+			var activity = {
+				twitter_lang: expectedTwitter 	
 			};
+			var response = powertrackDataSource._parseLangsFromActivity(activity);
+			test.array( response ).hasLength( 1 );
+			test.array( response ).hasValue( expectedTwitter );
 		});
 
-		it( 'Non-object properties are not tested', function() {
-			powertrackDataSource.config.twitter = {
-				singleProperty : createString(200)
-			};
-
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		// pass
-		    	})
-		    	.catch(function(err){
-		    		test.fail(err.message);
-		    	})
-		      	.done();
-		});
-
-		it( 'Single short message is ok', function() {
-			powertrackDataSource.config.twitter = {
-				messageObject : {
-					'en' : createString(1)
+		it( 'Gnip code is parsed', function() {
+			var activity = {
+				gnip: {
+					language: {
+						value: expectedGnip
+					} 	
 				}
 			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		// pass
-		    	})
-		    	.catch(function(err){
-		    		test.fail(err.message);
-		    	})
-		      	.done();
+			var response = powertrackDataSource._parseLangsFromActivity(activity);
+			test.array( response ).hasLength( 1 );
+			test.array( response ).hasValue( expectedGnip );
 		});
 
-		it( 'Single long message is not ok', function() {
-			powertrackDataSource.config.twitter = {
-				messageObject : {
-					'en' : createString(124)
+		it( 'Both codes are parsed', function() {
+			var activity = {
+				twitter_lang: expectedTwitter,
+				gnip: {
+					language: {
+						value: expectedGnip
+					} 	
 				}
 			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		test.fail(value);
-		    	})
-		    	.catch(function(err){
-		    		// Error / validation failure case
-		    	})
-		      	.done();
+			var response = powertrackDataSource._parseLangsFromActivity(activity);
+			test.array( response ).hasLength( 2 );
+			test.array( response ).hasValue( expectedTwitter );
+			test.array( response ).hasValue( expectedGnip );
 		});
-
-		it( 'Message over timestamp boundary is ok when timestamp is off', function() {
-			powertrackDataSource.config.twitter = {
-				messageObject : {
-					'en' : createString(120)
-				},
-				addTimestamp : false
-			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		// pass
-		    	})
-		    	.catch(function(err){
-		    		test.fail(err.message);
-		    	})
-		      	.done();
-		});
-
-		it( 'Message over timestamp boundary is not ok when timestamp is on', function() {
-			powertrackDataSource.config.twitter = {
-				messageObject : {
-					'en' : createString(120)
-				},
-				addTimestamp : true
-			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		test.fail(value);
-		    	})
-		    	.catch(function(err){
-		    		// Error / validation failure case
-		    	})
-		      	.done();
-		});
-
-		it( 'Multiple short messages are ok', function() {
-			powertrackDataSource.config.twitter = {
-				messageObject1 : {
-					'en' : createString(100),
-					'fr' : createString(100)
-				},
-				messageObject2 : {
-					'en' : createString(100),
-					'fr' : createString(100)
+		
+		it( 'No codes are parsed', function() {
+			var activity = {
+				twitter_langz: expectedTwitter,
+				gnip: {
+					language: {
+						valuez: expectedGnip
+					} 	
 				}
 			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		// pass
-		    	})
-		    	.catch(function(err){
-		    		test.fail(err.message);
-		    	})
-		      	.done();
+			var response = powertrackDataSource._parseLangsFromActivity(activity);
+			test.array( response ).hasLength( 0 );
 		});
 
-		it( 'Long message and multiple short messages are not ok', function() {
-			powertrackDataSource.config.twitter = {
-				messageObject1 : {
-					'en' : createString(100),
-					'fr' : createString(100)
-				},
-				messageObject2 : {
-					'en' : createString(100),
-					'fr' : createString(200)
-				}
-			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		test.fail(value);
-		    	})
-		    	.catch(function(err){
-		    		// Error / validation failure case
-		    	})
-		      	.done();
-		});
-
-		it( 'Message with one URL passes when under size limit', function() {
-			powertrackDataSource.config.twitter = {
-				url_length: 1,
-				messageObject1 : {
-					'en' : createString(121) + " http://example.com"
-				}
-			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		// pass
-		    	})
-		    	.catch(function(err){
-		    		test.fail(err.message);
-		    	})
-		      	.done();
-		});
-
-		it( 'Message with one URL fails when over size limit', function() {
-			powertrackDataSource.config.twitter = {
-				url_length: 2,
-				messageObject1 : {
-					'en' : createString(121) + " http://example.com"
-				}
-			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		test.fail(value);
-		    	})
-		    	.catch(function(err){
-		    		// Error / validation failure case
-		    	})
-		      	.done();
-
-		});
-
-		it( 'Message with two URLs passes when under size limit', function() {
-			powertrackDataSource.config.twitter = {
-				url_length: 1,
-				messageObject1 : {
-					'en' : createString(119) + " http://example" + " https://example.com.au/foo/bar.html?a=1&b=2"
-				}
-			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		// pass
-		    	})
-		    	.catch(function(err){
-		    		test.fail(err.message);
-		    	})
-		      	.done();
-		});
-
-		it( 'Message with two URLs fails when over size limit', function() {
-			powertrackDataSource.config.twitter = {
-				url_length: 2,
-				messageObject1 : {
-					'en' : createString(119) + " http://example" + " https://example.com.au/foo/bar.html?a=1&b=2"
-				}
-			};
-			
-		    test.promise
-		    	.given( powertrackDataSource._areTweetMessageLengthsOk() )
-		    	.then(function(value) {
-		    		test.fail(value);
-		    	})
-		    	.catch(function(err){
-		    		// Error / validation failure case
-		    	})
-		      	.done();
-
-		});
-
-		after( function(){
-			powertrackDataSource.config = {};
-		});
 	});
 	
-	describe( "_verifyTwitterCredentials", function() {
-		var oldTwitter;
-		var failVerify;
+	describe( "_parseTweetIdFromActivity", function() {
 		
-		before( function() {
-			oldTwitter = powertrackDataSource.twitter;
-			powertrackDataSource.twitter = {
-				verifyCredentials: function(callback) {
-					if (failVerify) callback(true, null);
-					else callback(null, []);
-				}	
+		var tweetId = "12345678";
+		var activityId = "tag:search.twitter.com,2005:" + tweetId;
+		
+		it( 'Tweet ID parsed from activity IRI', function() {
+			var activity = {
+				id: activityId 	
 			};
+			var response = powertrackDataSource._parseTweetIdFromActivity(activity);
+			test.value( response ).is( tweetId );
 		});
 
-		beforeEach( function() {
-			failVerify = false;
+	});
+	
+	describe( "_parseRetweetOriginalTweetIdFromActivity", function() {
+		
+		var tweetId = "12345678";
+		var activityId = "tag:search.twitter.com,2005:" + tweetId;
+		
+		it( 'Tweet ID parsed from activity IRI', function() {
+			var activity = {
+				object: {
+					id: activityId 	
+				}
+			};
+			var response = powertrackDataSource._parseRetweetOriginalTweetIdFromActivity(activity);
+			test.value( response ).is( tweetId );
 		});
 
-		it( 'VerifyCredentials success resolves promise', function() {			
-		    test.promise
-		    	.given( powertrackDataSource._verifyTwitterCredentials() )
-		    	.then(function(value) {
-		    		// success case expected
-		    	})
-		    	.catch(function(err){
-		    		test.fail(err);
-		    	})
-		      	.done();
-		});
-
-		it( 'VerifyCredentials failure rejects promise', function() {
-			failVerify = true;
-			
-		    test.promise
-		    	.given( powertrackDataSource._verifyTwitterCredentials() )
-		    	.then(function(value) {
-		    		test.fail(value);
-		    	})
-		    	.catch(function(err){
-		    		// failure case expected
-		    	})
-		      	.done();
-		});
-
-		after( function(){
-			powertrackDataSource.twitter = oldTwitter;
-		});
 	});
 	
 	// TODO _ifNewUser
 	// TODO _insertConfirmed
-	// TODO _insertInvitee
 	// TODO _insertUnConfirmed
 	// TODO _insertNonSpatial
 
