@@ -6,7 +6,7 @@
  * Configuration for cognicity-reports-powertrack
  * @namespace {object} config
  * @property {object} pg Postgres configuration object
- * @property {string} pg.table_all_reports Postgres table name for normalised report data 
+ * @property {string} pg.table_all_reports Postgres table name for normalised report data
  * @property {string} pg.table_tweets Postgres table name for tweet records
  * @property {string} pg.table_users Postgres table name for user records
  * @property {string} pg.table_invitees Postgres table name for invited user records
@@ -33,7 +33,7 @@
  * @property {string} twitter.access_token_key Take from the twitter dev admin interface
  * @property {string} twitter.access_token_secret Take from the twitter dev admin interface
  * @property {boolen} twitter.send_enabled If true, send tweets to users asking them to verify their reports
- * @property {number} twitter.url_length Length that URLs in tweets are shortened to 
+ * @property {number} twitter.url_length Length that URLs in tweets are shortened to
  * @property {string} twitter.defaultLanguage The default language code to use if we can't resolve one from the tweet
  * @property {object} twitter.invite_text Object of twitter message texts mapping a language code to a message
  * @property {string} twitter.invite_text.(name) Language code to resolve
@@ -86,7 +86,7 @@ config.twitter.access_token_secret = ''; // Take from the twitter dev admin inte
 
 // Twitter parameters
 config.twitter.send_enabled = false; // Enable sending of tweets?
-config.twitter.url_length = 0; // t.co url shortener length
+config.twitter.url_length = 0; // URLs no longer count as part of tweet limits so this should be 0
 
 // Twitter message texts
 // Note we use IN and ID because twitter and Gnip return different language codes for Indonesian
