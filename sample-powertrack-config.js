@@ -50,7 +50,7 @@ var config = {};
 
 //Database tables
 config.pg = {};
-config.pg.all_reports = 'all_reports';
+config.pg.table_all_reports = 'all_reports';
 config.pg.table_tweets = 'tweet_reports';
 config.pg.table_users = 'tweet_users';
 config.pg.table_invitees = 'tweet_invitees';
