@@ -8,7 +8,8 @@ var PowertrackDataSource = require('../PowertrackDataSource');
 // Mock reports
 var reports = {
 	logger: {},
-	tweetAdmin: function(){}
+	tweetAdmin: function(){},
+	dbQuery: function(){}
 };
 
 // Create server with empty objects
@@ -30,7 +31,7 @@ powertrackDataSource.reports.logger = powertrackDataSource.logger;
 
 // Test harness for CognicityReportsPowertrack object
 describe( 'PowertrackDataSource', function() {
-	
+
 	// Test suite for filter function
 	describe( 'filter', function() {
 		// The strings we look for in the log messages
@@ -74,10 +75,12 @@ describe( 'PowertrackDataSource', function() {
 		var oldIfNewUser;
 		var oldProcessVerifiedReport;
 		var oldConfig;
-		
+		var oldStoreTweetID;
+		var oldLastTweetID;
+
 		// Store the last message we logged; this lets us do some neat testing of code paths
 		var lastLog = "";
-		
+
 		var processVerifiedReportId;
 
 		before( function() {
@@ -99,8 +102,11 @@ describe( 'PowertrackDataSource', function() {
 			oldSendReplyTweet = powertrackDataSource._sendReplyTweet;
 			oldGetMessage = powertrackDataSource._getMessage;
 			oldIfNewUser = powertrackDataSource._ifNewUser;
-			oldProcessVerifiedReport = powertrackDataSource._processVerifiedReport; 
+			oldProcessVerifiedReport = powertrackDataSource._processVerifiedReport;
 			oldConfig = powertrackDataSource.config;
+			oldStoreTweetID = powertrackDataSource._storeTweetID;
+			oldLastTweetID = powertrackDataSource._lastTweetID;
+
 
 			// Mock these methods as we will look at the log message to check the code path
 			powertrackDataSource._insertConfirmed = function(){};
@@ -113,6 +119,11 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource._processVerifiedReport = function(tweetId) {
 				processVerifiedReportId = tweetId;
 			};
+			powertrackDataSource._storeTweetID = function(tweetActivity,tweetProcessor) {
+				tweetProcessor(tweetActivity);
+			};
+			powertrackDataSource._lastTweetID = function(){};
+
 		});
 
 		beforeEach( function() {
@@ -207,14 +218,14 @@ describe( 'PowertrackDataSource', function() {
 				id: 'tag:search.twitter.com,2005:tweetid'
 			};
 			tweetActivity.verb = "share";
-			
+
 			tweetActivity.actor.preferredUsername = "userid";
 			powertrackDataSource.config = {
 				twitter: {
 					usernameVerify: "userid"
-				}	
+				}
 			};
-			
+
 			powertrackDataSource.filter( tweetActivity );
 			test.value( processVerifiedReportId ).is( 'tweetid' );
 		});
@@ -222,17 +233,17 @@ describe( 'PowertrackDataSource', function() {
 		it( 'Does not call _processVerifiedReport when username does not match', function() {
 			var tweetActivity = createTweetActivity(false, false, false, false);
 			tweetActivity.object = {
-				id: 'tag:search.twitter.com,2005:tweetid'	
+				id: 'tag:search.twitter.com,2005:tweetid'
 			};
 			tweetActivity.verb = "share";
-			
+
 			tweetActivity.actor.preferredUsername = "userid";
 			powertrackDataSource.config = {
 				twitter: {
 					usernameVerify: "anotheruserid"
-				}	
+				}
 			};
-			
+
 			powertrackDataSource.filter( tweetActivity );
 			test.value( processVerifiedReportId ).isNull();
 		});
@@ -247,7 +258,7 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource._sendReplyTweet = oldSendReplyTweet;
 			powertrackDataSource._getMessage = oldGetMessage;
 			powertrackDataSource._ifNewUser = oldIfNewUser;
-			powertrackDataSource._processVerifiedReport = oldProcessVerifiedReport; 
+			powertrackDataSource._processVerifiedReport = oldProcessVerifiedReport;
 			powertrackDataSource.config = oldConfig;
 		});
 	});
@@ -351,7 +362,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 	});
-	
+
 	describe( "cacheMode", function() {
 		var streamTweetHandler; // Capture the tweet handler so we can call it explicitly during test
 		var oldFilter; // Capture server filter method
@@ -495,22 +506,22 @@ describe( 'PowertrackDataSource', function() {
 			test.value( filterCalledTimes ).is( 0 );
 			test.value( powertrackDataSource._cachedData.length ).is( 0 );
 		});
-		
+
 		// Restore/erase mocked functions
 		after( function(){
 			powertrackDataSource.filter = oldFilter;
 		});
 
 	});
-	
+
 	describe( "_parseLangsFromActivity", function() {
-		
+
 		var expectedTwitter = "moo";
 		var expectedGnip = "baa";
-		
+
 		it( 'Twitter code is parsed', function() {
 			var activity = {
-				twitter_lang: expectedTwitter 	
+				twitter_lang: expectedTwitter
 			};
 			var response = powertrackDataSource._parseLangsFromActivity(activity);
 			test.array( response ).hasLength( 1 );
@@ -522,7 +533,7 @@ describe( 'PowertrackDataSource', function() {
 				gnip: {
 					language: {
 						value: expectedGnip
-					} 	
+					}
 				}
 			};
 			var response = powertrackDataSource._parseLangsFromActivity(activity);
@@ -536,7 +547,7 @@ describe( 'PowertrackDataSource', function() {
 				gnip: {
 					language: {
 						value: expectedGnip
-					} 	
+					}
 				}
 			};
 			var response = powertrackDataSource._parseLangsFromActivity(activity);
@@ -544,14 +555,14 @@ describe( 'PowertrackDataSource', function() {
 			test.array( response ).hasValue( expectedTwitter );
 			test.array( response ).hasValue( expectedGnip );
 		});
-		
+
 		it( 'No codes are parsed', function() {
 			var activity = {
 				twitter_langz: expectedTwitter,
 				gnip: {
 					language: {
 						valuez: expectedGnip
-					} 	
+					}
 				}
 			};
 			var response = powertrackDataSource._parseLangsFromActivity(activity);
@@ -559,31 +570,31 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 	});
-	
+
 	describe( "_parseTweetIdFromActivity", function() {
-		
+
 		var tweetId = "12345678";
 		var activityId = "tag:search.twitter.com,2005:" + tweetId;
-		
+
 		it( 'Tweet ID parsed from activity IRI', function() {
 			var activity = {
-				id: activityId 	
+				id: activityId
 			};
 			var response = powertrackDataSource._parseTweetIdFromActivity(activity);
 			test.value( response ).is( tweetId );
 		});
 
 	});
-	
+
 	describe( "_parseRetweetOriginalTweetIdFromActivity", function() {
-		
+
 		var tweetId = "12345678";
 		var activityId = "tag:search.twitter.com,2005:" + tweetId;
-		
+
 		it( 'Tweet ID parsed from activity IRI', function() {
 			var activity = {
 				object: {
-					id: activityId 	
+					id: activityId
 				}
 			};
 			var response = powertrackDataSource._parseRetweetOriginalTweetIdFromActivity(activity);
@@ -591,7 +602,7 @@ describe( 'PowertrackDataSource', function() {
 		});
 
 	});
-	
+
 	// TODO _ifNewUser
 	// TODO _insertConfirmed
 	// TODO _insertUnConfirmed

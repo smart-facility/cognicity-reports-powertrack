@@ -26,6 +26,8 @@ var PowertrackDataSource = function PowertrackDataSource(
 	// Gnip PowerTrack interface module
 	this.Gnip = require('gnip');
 
+	this.reports = reports;
+
 	this.lastTweetID = 0;
 
 	// Set constructor reference (used to print the name of this data source)
