@@ -1,14 +1,14 @@
 language: node_js
 
 node_js:
-    - "4.2.1"
+    - "6.7.0"
 
 sudo: false
 
 # We need to check out cognicity-reports as the parent folder of this data source, so that the references to the base object will work.
 # We do this here as a custom 'before_install' script which Travis will execute.
 # If cognicity-reports has a branch with the same name as ours, use that. Otherwise use the master branch on cognicity-reports.
-# Make sure we're in the right location at the end - i.e. this data source's source folder - as this is where the build and test will occur. 
+# Make sure we're in the right location at the end - i.e. this data source's source folder - as this is where the build and test will occur.
 
 before_install:
     - export BASE_BRANCH=master

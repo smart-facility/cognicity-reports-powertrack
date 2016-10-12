@@ -84,8 +84,8 @@ PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,tweetProce
 			 self.logger.verbose('Recorded tweet ' + id + ' as having been seen.');
 		 }
 	 }
- )
-}
+ );
+};
 
 /**
  * Retrieve and set the last seen tweetID
@@ -102,8 +102,8 @@ PowertrackDataSource.prototype._lastTweetID = function(callback) {
 			self.lastTweetID = Number(result.rows[0]);
 			callback();
 		}
-	)
-}
+	);
+};
 
 /**
  * Gnip PowerTrack Tweet Activity object.
