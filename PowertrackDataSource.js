@@ -20,11 +20,13 @@ var PowertrackDataSource = function PowertrackDataSource(
 
 	// Store references to constructor arguments
 	this.config = config;
-	
+
 	BaseTwitterDataSource.call(this, reports, twitter);
 
 	// Gnip PowerTrack interface module
 	this.Gnip = require('gnip');
+
+	this.lastTweetID = 0;
 
 	// Set constructor reference (used to print the name of this data source)
 	this.constructor = PowertrackDataSource;
@@ -58,6 +60,50 @@ PowertrackDataSource.prototype._getMessage = function(code, tweetActivity) {
 
 	return self._baseGetMessage(code, self._parseLangsFromActivity(tweetActivity));
 };
+
+
+/**
+ * Store the last seen tweet ID and then call the tweet processor.
+ @param {GnipTweetActivity} tweetActivity Tweet activity object
+ @param {function} tweetProcessor function to process the tweet once the ID has been stored
+ */
+
+PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,tweetProcessor) {
+ var self=this;
+
+ self.reports.dbQuery(
+	 {
+		 text: "UPDATE seen_tweet_id SET id=$1;",
+		 values: [self._parseTweetIdFromActivity(tweetActivity)]
+	 },
+	 function(result) {
+		 let id = Number(self._parseTweetIdFromActivity(tweetActivity));
+		 if (id > self.lastTweetID) {
+			 self.lastTweetID = id;
+			 tweetProcessor(tweetActivity);
+			 self.logger.verbose('Recorded tweet ' + id + ' as having been seen.');
+		 }
+	 }
+ )
+}
+
+/**
+ * Retrieve and set the last seen tweetID
+ @param {function} tweetProcessor function to call once the last seen tweet ID has been loaded.
+ */
+
+PowertrackDataSource.prototype._lastTweetID = function(callback) {
+	var self=this;
+	self.reports.dbQuery(
+		{
+			text: "SELECT id FROM seen_tweet_id;"
+		},
+		function(result) {
+			self.lastTweetID = Number(result.rows[0]);
+			callback();
+		}
+	)
+}
 
 /**
  * Gnip PowerTrack Tweet Activity object.
@@ -123,8 +169,8 @@ PowertrackDataSource.prototype.filter = function(tweetActivity) {
 
 		// If we haven't contacted the user before, send them an invite tweet
 		self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
-			self._sendReplyTweet( 
-				tweetActivity, 
+			self._sendReplyTweet(
+				tweetActivity,
 				self._getMessage('invite_text', tweetActivity),
 				function(){
 					self._insertInvitee(tweetActivity);
@@ -146,8 +192,8 @@ PowertrackDataSource.prototype.filter = function(tweetActivity) {
 		// If we haven't contacted the user before, send them an invite tweet
 		self._ifNewUser( tweetActivity.actor.preferredUsername, function(result) {
 			self._sendReplyTweet(
-				tweetActivity, 
-				self._getMessage('invite_text', tweetActivity), 
+				tweetActivity,
+				self._getMessage('invite_text', tweetActivity),
 				function(){
 					self._insertInvitee(tweetActivity);
 				}
@@ -203,7 +249,7 @@ PowertrackDataSource.prototype.start = function() {
 
 		// Attempt to reconnect
 		self.logger.info( 'connectStream: Attempting to reconnect stream' );
-		stream.start();
+		self._lastTweetID(stream.start());
 	}
 
 	// TODO We get called twice for disconnect, once from error once from end
@@ -251,7 +297,7 @@ PowertrackDataSource.prototype.start = function() {
 			try {
 				if (tweetActivity.actor) {
 					// This looks like a tweet in Gnip activity format
-					self.filter(tweetActivity);
+					self._storeTweetID(tweetActivity,self.filter);
 				} else {
 					// This looks like a system message
 					self.logger.info("connectStream: Received system message: " + JSON.stringify(tweetActivity));
@@ -316,16 +362,16 @@ PowertrackDataSource.prototype._insertConfirmed = function(tweetActivity) {
 	var self = this;
 
 	self._baseInsertConfirmed(
-		tweetActivity.actor.preferredUsername, 
-		self._parseLangsFromActivity(tweetActivity), 
-		self._parseTweetIdFromActivity(tweetActivity), 
-		tweetActivity.postedTime, 
-		tweetActivity.body, 
-		JSON.stringify(tweetActivity.twitter_entities.hashtags), 
-		JSON.stringify(tweetActivity.twitter_entities.urls), 
-		JSON.stringify(tweetActivity.twitter_entities.user_mentions), 
-		tweetActivity.twitter_lang, 
-		tweetActivity.link, 
+		tweetActivity.actor.preferredUsername,
+		self._parseLangsFromActivity(tweetActivity),
+		self._parseTweetIdFromActivity(tweetActivity),
+		tweetActivity.postedTime,
+		tweetActivity.body,
+		JSON.stringify(tweetActivity.twitter_entities.hashtags),
+		JSON.stringify(tweetActivity.twitter_entities.urls),
+		JSON.stringify(tweetActivity.twitter_entities.user_mentions),
+		tweetActivity.twitter_lang,
+		tweetActivity.link,
 		tweetActivity.geo.coordinates[1] + " " + tweetActivity.geo.coordinates[0]
 	);
 };
@@ -380,11 +426,11 @@ PowertrackDataSource.prototype._insertNonSpatial = function(tweetActivity) {
  */
 PowertrackDataSource.prototype._sendReplyTweet = function(tweetActivity, message, success) {
 	var self = this;
-	
+
 	self._baseSendReplyTweet(
-		tweetActivity.actor.preferredUsername, 
-		self._parseTweetIdFromActivity(tweetActivity), 
-		message, 
+		tweetActivity.actor.preferredUsername,
+		self._parseTweetIdFromActivity(tweetActivity),
+		message,
 		success
 	);
 };
@@ -414,10 +460,10 @@ PowertrackDataSource.prototype._parseRetweetOriginalTweetIdFromActivity = functi
 PowertrackDataSource.prototype._parseLangsFromActivity = function(tweetActivity) {
 	// Fetch the language codes from both twitter and Gnip data, if present
 	var langs = [];
-	
+
 	if (tweetActivity.twitter_lang) langs.push(tweetActivity.twitter_lang);
 	if (tweetActivity.gnip && tweetActivity.gnip.language && tweetActivity.gnip.language.value) langs.push(tweetActivity.gnip.language.value);
-	
+
 	return langs;
 };
 
