@@ -42,6 +42,9 @@
     "maxcomplexity" : false,    // {int} Max cyclomatic complexity per function
     "maxlen"        : false,    // {int} Max number of characters per line
 
+    // ES6
+    "esversion"     : 6,
+
     // Relaxing
     "asi"           : false,     // true: Tolerate Automatic Semicolon Insertion (no semicolons)
     "boss"          : false,     // true: Tolerate assignments where comparisons would be expected
