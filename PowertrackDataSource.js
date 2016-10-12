@@ -68,7 +68,7 @@ PowertrackDataSource.prototype._getMessage = function(code, tweetActivity) {
  @param {function} tweetProcessor function to process the tweet once the ID has been stored
  */
 
-PowertrackDataSource._storeTweetID = function(tweetActivity,tweetProcessor) {
+PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,tweetProcessor) {
  var self=this;
 
  self.reports.dbQuery(
@@ -92,7 +92,7 @@ PowertrackDataSource._storeTweetID = function(tweetActivity,tweetProcessor) {
  @param {function} tweetProcessor function to call once the last seen tweet ID has been loaded.
  */
 
-PowertrackDataSource._lastTweetID = function(callback) {
+PowertrackDataSource.prototype._lastTweetID = function(callback) {
 	var self=this;
 	self.reports.dbQuery(
 		{
