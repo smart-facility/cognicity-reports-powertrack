@@ -70,7 +70,7 @@ PowertrackDataSource.prototype._getMessage = function(code, tweetActivity) {
  @param {function} tweetProcessor function to process the tweet once the ID has been stored
  */
 
-PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,self,tweetProcessor) {
+PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,tweetProcessor) {
  var self=this;
 
  self.reports.dbQuery(
@@ -120,7 +120,6 @@ PowertrackDataSource.prototype._lastTweetID = function(stream) {
  * @param {GnipTweetActivity} tweetActivity The tweet activity from Gnip
  */
 PowertrackDataSource.prototype.filter = function(self,tweetActivity) {
-	var self = self;
 
 	self.logger.verbose( 'filter: Received tweetActivity: screen_name="' + tweetActivity.actor.preferredUsername + '", text="' + tweetActivity.body.replace("\n", "") + '", coordinates="' + (tweetActivity.geo && tweetActivity.geo.coordinates ? tweetActivity.geo.coordinates[1]+", "+tweetActivity.geo.coordinates[0] : 'N/A') + '"' );
 
@@ -300,7 +299,7 @@ PowertrackDataSource.prototype.start = function() {
 			try {
 				if (tweetActivity.actor) {
 					// This looks like a tweet in Gnip activity format
-					self._storeTweetID(tweetActivity,self,self.filter);
+					self._storeTweetID(tweetActivity,self.filter);
 				} else {
 					// This looks like a system message
 					self.logger.info("connectStream: Received system message: " + JSON.stringify(tweetActivity));

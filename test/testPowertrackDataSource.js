@@ -122,7 +122,7 @@ describe( 'PowertrackDataSource', function() {
 			powertrackDataSource._storeTweetID = function(tweetActivity,tweetProcessor) {
 				tweetProcessor(tweetActivity);
 			};
-			powertrackDataSource._lastTweetID = function(){};
+			powertrackDataSource._lastTweetID = function(stream){stream.start();};
 
 		});
 
@@ -139,21 +139,21 @@ describe( 'PowertrackDataSource', function() {
 
 		// Location T/F
 		it( '+BOUNDINGBOX +GEO +ADDRESSED +LOCATION = confirmed', function() {
-			powertrackDataSource.filter( createTweetActivity(true, true, true, true) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(true, true, true, true) );
 			test.value( lastLog ).contains( confirmedString );
 		});
 		it( '+BOUNDINGBOX +GEO +ADDRESSED -LOCATION = confirmed', function() {
-			powertrackDataSource.filter( createTweetActivity(true, true, true, false) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(true, true, true, false) );
 			test.value( lastLog ).contains( confirmedString );
 		});
 
 		// Addressed F + above
 		it( '+BOUNDINGBOX +GEO -ADDRESSED +LOCATION = unconfirmed', function() {
-			powertrackDataSource.filter( createTweetActivity(true, true, false, true) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(true, true, false, true) );
 			test.value( lastLog ).contains( unconfirmedString );
 		});
 		it( '+BOUNDINGBOX +GEO -ADDRESSED -LOCATION = unconfirmed', function() {
-			powertrackDataSource.filter( createTweetActivity(true, true, false, false) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(true, true, false, false) );
 			test.value( lastLog ).contains( unconfirmedString );
 		});
 
@@ -162,53 +162,53 @@ describe( 'PowertrackDataSource', function() {
 		// filter code, as a BOUNDINGBOX hit without explicit tweet GEO is not enough
 		// - so these actually fall in to filter cases like '-BOUNDINGBOX -GEO ...'
 		it( '+BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask for geo', function() {
-			powertrackDataSource.filter( createTweetActivity(true, false, true, true) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(true, false, true, true) );
 			test.value( lastLog ).contains( askForGeoString );
 		});
 		it( '+BOUNDINGBOX -GEO +ADDRESSED -LOCATION = no match', function() {
-			powertrackDataSource.filter( createTweetActivity(true, false, true, false) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(true, false, true, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '+BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask to participate', function() {
-			powertrackDataSource.filter( createTweetActivity(true, false, false, true) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(true, false, false, true) );
 			test.value( lastLog ).contains( askToParticipateString );
 		});
 		it( '+BOUNDINGBOX -GEO -ADDRESSED -LOCATION = no match', function() {
-			powertrackDataSource.filter( createTweetActivity(true, false, false, false) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(true, false, false, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 
 		// Boundingbox F + above
 		it( '-BOUNDINGBOX +GEO +ADDRESSED +LOCATION = no match', function() {
-			powertrackDataSource.filter( createTweetActivity(false, true, true, true) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(false, true, true, true) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX +GEO +ADDRESSED -LOCATION = no match', function() {
-			powertrackDataSource.filter( createTweetActivity(false, true, true, false) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(false, true, true, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX +GEO -ADDRESSED +LOCATION = no match', function() {
-			powertrackDataSource.filter( createTweetActivity(false, true, false, true) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(false, true, false, true) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX +GEO -ADDRESSED -LOCATION = no match', function() {
-			powertrackDataSource.filter( createTweetActivity(false, true, false, false) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(false, true, false, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX -GEO +ADDRESSED +LOCATION = ask for geo', function() {
-			powertrackDataSource.filter( createTweetActivity(false, false, true, true) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(false, false, true, true) );
 			test.value( lastLog ).contains( askForGeoString );
 		});
 		it( '-BOUNDINGBOX -GEO +ADDRESSED -LOCATION = no match', function() {
-			powertrackDataSource.filter( createTweetActivity(false, false, true, false) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(false, false, true, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 		it( '-BOUNDINGBOX -GEO -ADDRESSED +LOCATION = ask to participate', function() {
-			powertrackDataSource.filter( createTweetActivity(false, false, false, true) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(false, false, false, true) );
 			test.value( lastLog ).contains( askToParticipateString );
 		});
 		it( '-BOUNDINGBOX -GEO -ADDRESSED -LOCATION = no match', function() {
-			powertrackDataSource.filter( createTweetActivity(false, false, false, false) );
+			powertrackDataSource.filter(powertrackDataSource, createTweetActivity(false, false, false, false) );
 			test.value( lastLog ).contains( noMatchString );
 		});
 
@@ -226,7 +226,7 @@ describe( 'PowertrackDataSource', function() {
 				}
 			};
 
-			powertrackDataSource.filter( tweetActivity );
+			powertrackDataSource.filter(powertrackDataSource, tweetActivity );
 			test.value( processVerifiedReportId ).is( 'tweetid' );
 		});
 
@@ -244,7 +244,7 @@ describe( 'PowertrackDataSource', function() {
 				}
 			};
 
-			powertrackDataSource.filter( tweetActivity );
+			powertrackDataSource.filter(powertrackDataSource, tweetActivity );
 			test.value( processVerifiedReportId ).isNull();
 		});
 
