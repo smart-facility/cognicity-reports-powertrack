@@ -70,7 +70,7 @@ PowertrackDataSource.prototype._getMessage = function(code, tweetActivity) {
  @param {function} tweetProcessor function to process the tweet once the ID has been stored
  */
 
-PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,tweetProcessor) {
+PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,self,tweetProcessor) {
  var self=this;
 
  self.reports.dbQuery(
@@ -82,7 +82,7 @@ PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,tweetProce
 		 let id = Number(self._parseTweetIdFromActivity(tweetActivity));
 		 if (id > self.lastTweetID) {
 			 self.lastTweetID = id;
-			 tweetProcessor(tweetActivity);
+			 tweetProcessor(self,tweetActivity);
 			 self.logger.verbose('Recorded tweet ' + id + ' as having been seen.');
 		 }
 	 }
@@ -94,15 +94,15 @@ PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,tweetProce
  @param {function} tweetProcessor function to call once the last seen tweet ID has been loaded.
  */
 
-PowertrackDataSource.prototype._lastTweetID = function(callback) {
+PowertrackDataSource.prototype._lastTweetID = function(stream) {
 	var self=this;
 	self.reports.dbQuery(
 		{
 			text: "SELECT id FROM seen_tweet_id;"
 		},
 		function(result) {
-			self.lastTweetID = Number(result.rows[0]);
-			callback();
+			self.lastTweetID = Number(result.rows[0].id);
+			stream.start();
 		}
 	);
 };
@@ -119,8 +119,8 @@ PowertrackDataSource.prototype._lastTweetID = function(callback) {
  * confirmed report, ask for geo, ask user to participate, or nothing
  * @param {GnipTweetActivity} tweetActivity The tweet activity from Gnip
  */
-PowertrackDataSource.prototype.filter = function(tweetActivity) {
-	var self = this;
+PowertrackDataSource.prototype.filter = function(self,tweetActivity) {
+	var self = self;
 
 	self.logger.verbose( 'filter: Received tweetActivity: screen_name="' + tweetActivity.actor.preferredUsername + '", text="' + tweetActivity.body.replace("\n", "") + '", coordinates="' + (tweetActivity.geo && tweetActivity.geo.coordinates ? tweetActivity.geo.coordinates[1]+", "+tweetActivity.geo.coordinates[0] : 'N/A') + '"' );
 
@@ -251,7 +251,7 @@ PowertrackDataSource.prototype.start = function() {
 
 		// Attempt to reconnect
 		self.logger.info( 'connectStream: Attempting to reconnect stream' );
-		self._lastTweetID(stream.start());
+		stream.start();
 	}
 
 	// TODO We get called twice for disconnect, once from error once from end
@@ -270,7 +270,8 @@ PowertrackDataSource.prototype.start = function() {
 	stream = new self.Gnip.Stream({
 	    url : self.config.gnip.streamUrl,
 	    user : self.config.gnip.username,
-	    password : self.config.gnip.password
+	    password : self.config.gnip.password,
+			backfillMinutes : self.config.gnip.backfillMinutes
 	});
 
 	// When stream is connected, setup the stream timeout handler
@@ -299,7 +300,7 @@ PowertrackDataSource.prototype.start = function() {
 			try {
 				if (tweetActivity.actor) {
 					// This looks like a tweet in Gnip activity format
-					self._storeTweetID(tweetActivity,self.filter);
+					self._storeTweetID(tweetActivity,self,self.filter);
 				} else {
 					// This looks like a system message
 					self.logger.info("connectStream: Received system message: " + JSON.stringify(tweetActivity));
@@ -350,7 +351,7 @@ PowertrackDataSource.prototype.start = function() {
 	    if (err) throw err;
 		self.logger.info('connectStream: Connecting stream...');
 		// If we pushed the rules successfully, now try and connect the stream
-		stream.start();
+		self._lastTweetID(stream);
 	});
 
 };
