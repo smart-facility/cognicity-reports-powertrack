@@ -81,7 +81,6 @@ PowertrackDataSource.prototype._storeTweetID = function(tweetActivity,tweetProce
 	 function(result) {
 		 let id = Number(self._parseTweetIdFromActivity(tweetActivity));
 		 if (id > self.lastTweetID) {
-			 self.lastTweetID = id;
 			 tweetProcessor(self,tweetActivity);
 			 self.logger.verbose('Recorded tweet ' + id + ' as having been seen.');
 		 }
